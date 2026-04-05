@@ -8,3 +8,47 @@
 export interface HealthStatus {
   status: string;
 }
+
+export type GenerateLessonPlanBodyGradeLevel =
+  (typeof GenerateLessonPlanBodyGradeLevel)[keyof typeof GenerateLessonPlanBodyGradeLevel];
+
+export const GenerateLessonPlanBodyGradeLevel = {
+  Grade_3: "Grade 3",
+  Grade_4: "Grade 4",
+  Grade_5: "Grade 5",
+} as const;
+
+export type GenerateLessonPlanBodyWidaBand =
+  (typeof GenerateLessonPlanBodyWidaBand)[keyof typeof GenerateLessonPlanBodyWidaBand];
+
+export const GenerateLessonPlanBodyWidaBand = {
+  "WIDA_1-2": "WIDA 1-2",
+  "WIDA_2-3": "WIDA 2-3",
+  "WIDA_3-4": "WIDA 3-4",
+} as const;
+
+export interface GenerateLessonPlanBody {
+  /** Rough planning notes from the teacher */
+  notes: string;
+  gradeLevel: GenerateLessonPlanBodyGradeLevel;
+  widaBand: GenerateLessonPlanBodyWidaBand;
+  /** Topic or subject for the lesson */
+  topic: string;
+}
+
+export interface LessonPlan {
+  title: string;
+  contentObjective: string;
+  languageObjective: string;
+  keyVocabulary: string[];
+  sentenceFrames: string[];
+  warmUp: string;
+  mainActivity: string;
+  speakingActivity: string;
+  exitTicket: string;
+  teacherNotes: string;
+}
+
+export interface ErrorResponse {
+  error: string;
+}

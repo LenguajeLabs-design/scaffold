@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: lessonPlan
+    description: Lesson plan generation operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /lesson-plan/generate:
+    post:
+      operationId: generateLessonPlan
+      tags: [lessonPlan]
+      summary: Generate a lesson plan from teacher notes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateLessonPlanBody"
+      responses:
+        "200":
+          description: Generated lesson plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonPlan"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +65,68 @@ components:
           type: string
       required:
         - status
-
+    GenerateLessonPlanBody:
+      type: object
+      properties:
+        notes:
+          type: string
+          description: Rough planning notes from the teacher
+        gradeLevel:
+          type: string
+          enum: ["Grade 3", "Grade 4", "Grade 5"]
+        widaBand:
+          type: string
+          enum: ["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]
+        topic:
+          type: string
+          description: Topic or subject for the lesson
+      required:
+        - notes
+        - gradeLevel
+        - widaBand
+        - topic
+    LessonPlan:
+      type: object
+      properties:
+        title:
+          type: string
+        contentObjective:
+          type: string
+        languageObjective:
+          type: string
+        keyVocabulary:
+          type: array
+          items:
+            type: string
+        sentenceFrames:
+          type: array
+          items:
+            type: string
+        warmUp:
+          type: string
+        mainActivity:
+          type: string
+        speakingActivity:
+          type: string
+        exitTicket:
+          type: string
+        teacherNotes:
+          type: string
+      required:
+        - title
+        - contentObjective
+        - languageObjective
+        - keyVocabulary
+        - sentenceFrames
+        - warmUp
+        - mainActivity
+        - speakingActivity
+        - exitTicket
+        - teacherNotes
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

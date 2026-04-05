@@ -1,0 +1,56 @@
+Build a simple, clean web app called “Speak Your Lesson Into Existence.”
+
+Purpose:
+This tool helps teachers turn messy spoken or written planning notes into a ready-to-teach lesson plan.
+
+Core functionality:
+- A large text box where the teacher can paste rough planning thoughts or a voice transcript
+- A dropdown for Grade Level with options: Grade 3, Grade 4, Grade 5
+- A dropdown for WIDA band with options: WIDA 1–2, WIDA 2–3, WIDA 3–4
+- A text input for topic or subject
+- A button labeled “Generate Lesson Plan”
+- A results area that displays a structured lesson plan
+
+The lesson plan output should include:
+1. Lesson Title
+2. Content Objective
+3. Language Objective
+4. Key Vocabulary
+5. Sentence Frames
+6. Warm-Up
+7. Main Activity
+8. Speaking Activity
+9. Exit Ticket
+10. Teacher Notes
+
+Design requirements:
+- Use a clean, modern teacher-friendly interface
+- Make it mobile-friendly
+- Use card sections for the output
+- Use Montserrat font
+- Use this color palette:
+  - Primary blue: #142550
+  - Accent red: #C82C39
+  - White: #FFFFFF
+  - Light background: #F4F6FA
+
+Technical requirements:
+- Build as a single-page app
+- Use fetch to call the OpenAI API
+- Put the API call in JavaScript
+- Include a placeholder for the API key using a Replit secret
+- Structure the output cleanly in the page
+- Add loading state while generating
+- Add error handling if the API request fails
+
+Prompt behavior:
+When the teacher clicks Generate Lesson Plan, send the pasted notes plus the selected grade level, WIDA band, and topic to OpenAI with a prompt that says:
+
+“Turn these rough teacher planning notes into a clear, low-prep, high-impact lesson plan for an elementary multilingual learner classroom. Include a content objective, language objective, key vocabulary, sentence frames, warm-up, main activity, speaking task, exit ticket, and teacher notes. Make it practical and ready to teach tomorrow.”
+
+Also:
+- Make the output clear, practical, and not overly verbose
+- Keep the tone professional and teacher-friendly
+- Return the lesson in structured JSON if possible so it can be displayed cleanly
+
+Please generate all the code needed for this app.

@@ -6,4 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./errorResponse";
+export * from "./generateLessonPlanBody";
+export * from "./generateLessonPlanBodyGradeLevel";
+export * from "./generateLessonPlanBodyWidaBand";
 export * from "./healthStatus";
+export * from "./lessonPlan";

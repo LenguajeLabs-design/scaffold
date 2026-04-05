@@ -14,3 +14,26 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary Generate a lesson plan from teacher notes
+ */
+export const GenerateLessonPlanBody = zod.object({
+  notes: zod.string().describe("Rough planning notes from the teacher"),
+  gradeLevel: zod.enum(["Grade 3", "Grade 4", "Grade 5"]),
+  widaBand: zod.enum(["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]),
+  topic: zod.string().describe("Topic or subject for the lesson"),
+});
+
+export const GenerateLessonPlanResponse = zod.object({
+  title: zod.string(),
+  contentObjective: zod.string(),
+  languageObjective: zod.string(),
+  keyVocabulary: zod.array(zod.string()),
+  sentenceFrames: zod.array(zod.string()),
+  warmUp: zod.string(),
+  mainActivity: zod.string(),
+  speakingActivity: zod.string(),
+  exitTicket: zod.string(),
+  teacherNotes: zod.string(),
+});

@@ -5,18 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ErrorResponse,
+  GenerateLessonPlanBody,
+  HealthStatus,
+  LessonPlan,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +107,89 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Generate a lesson plan from teacher notes
+ */
+export const getGenerateLessonPlanUrl = () => {
+  return `/api/lesson-plan/generate`;
+};
+
+export const generateLessonPlan = async (
+  generateLessonPlanBody: GenerateLessonPlanBody,
+  options?: RequestInit,
+): Promise<LessonPlan> => {
+  return customFetch<LessonPlan>(getGenerateLessonPlanUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateLessonPlanBody),
+  });
+};
+
+export const getGenerateLessonPlanMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateLessonPlan>>,
+    TError,
+    { data: BodyType<GenerateLessonPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateLessonPlan>>,
+  TError,
+  { data: BodyType<GenerateLessonPlanBody> },
+  TContext
+> => {
+  const mutationKey = ["generateLessonPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateLessonPlan>>,
+    { data: BodyType<GenerateLessonPlanBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateLessonPlan(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateLessonPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateLessonPlan>>
+>;
+export type GenerateLessonPlanMutationBody = BodyType<GenerateLessonPlanBody>;
+export type GenerateLessonPlanMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Generate a lesson plan from teacher notes
+ */
+export const useGenerateLessonPlan = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateLessonPlan>>,
+    TError,
+    { data: BodyType<GenerateLessonPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateLessonPlan>>,
+  TError,
+  { data: BodyType<GenerateLessonPlanBody> },
+  TContext
+> => {
+  return useMutation(getGenerateLessonPlanMutationOptions(options));
+};
