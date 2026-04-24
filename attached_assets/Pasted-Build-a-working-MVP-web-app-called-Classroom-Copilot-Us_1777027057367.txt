@@ -1,0 +1,85 @@
+Build a working MVP web app called Classroom Copilot.
+
+Use React for the frontend and a simple Node/Express backend.
+
+Purpose:
+This app helps EAL teachers quickly generate classroom support for multilingual learners. The teacher enters a topic, lesson problem, or student need. The app returns simple EAL-friendly teaching support.
+
+Core UI:
+1. Title: Classroom Copilot
+2. Subtitle: Fast EAL support for live teaching
+3. Large text input:
+   Placeholder: “What do your students need help with right now?”
+4. Dropdown: Grade Level
+   Options:
+   - Grade 2
+   - Grade 3
+   - Grade 4
+   - Grade 5
+5. Dropdown: WIDA Level
+   Options:
+   - WIDA 1–2
+   - WIDA 2–3
+   - WIDA 3–4
+6. Button: Generate Support
+7. Loading state while generating
+8. Output cards:
+   - Simple Explanation
+   - Key Vocabulary
+   - Sentence Frames
+   - Quick Activity
+   - Extension Question
+   - Teacher Move
+9. Copy All button
+
+Design:
+Make it clean, calm, modern, and classroom-friendly.
+Use large readable text.
+Use rounded cards.
+Make it work well on laptop, iPad, and phone.
+
+Backend:
+Use the OpenAI API.
+Use environment variable OPENAI_API_KEY.
+Do not hardcode the API key.
+
+Use model:
+gpt-5-mini
+
+AI instructions:
+The AI should act like an expert elementary EAL teacher.
+Responses should be practical, short, and usable immediately.
+Use clear student-friendly language.
+Match the selected WIDA level.
+Avoid long explanations.
+Avoid generic advice.
+
+Output format:
+Return JSON with these exact keys:
+simpleExplanation
+keyVocabulary
+sentenceFrames
+quickActivity
+extensionQuestion
+teacherMove
+
+Example user input:
+“My Grade 5 students are confused about how to explain their PYPX action step.”
+
+Example output:
+{
+  "simpleExplanation": "An action step is something you do to help solve a problem.",
+  "keyVocabulary": ["action step", "problem", "solution", "community", "help"],
+  "sentenceFrames": ["My action step is ____.", "This helps because ____.", "The problem is ____.", "I want to help by ____."],
+  "quickActivity": "Students turn and tell a partner: “My action step is…” Then they write one sentence.",
+  "extensionQuestion": "How will your action step help other people?",
+  "teacherMove": "Model one example first, then have students repeat the frame with their own idea."
+}
+
+Important:
+Create the simplest working version first.
+Do not add authentication.
+Do not add database.
+Do not add document upload.
+Do not add web search.
+Do not add extra features until the MVP works.

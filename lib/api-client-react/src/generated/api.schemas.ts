@@ -49,6 +49,41 @@ export interface LessonPlan {
   teacherNotes: string;
 }
 
+export type GenerateClassroomSupportBodyGradeLevel =
+  (typeof GenerateClassroomSupportBodyGradeLevel)[keyof typeof GenerateClassroomSupportBodyGradeLevel];
+
+export const GenerateClassroomSupportBodyGradeLevel = {
+  Grade_2: "Grade 2",
+  Grade_3: "Grade 3",
+  Grade_4: "Grade 4",
+  Grade_5: "Grade 5",
+} as const;
+
+export type GenerateClassroomSupportBodyWidaLevel =
+  (typeof GenerateClassroomSupportBodyWidaLevel)[keyof typeof GenerateClassroomSupportBodyWidaLevel];
+
+export const GenerateClassroomSupportBodyWidaLevel = {
+  "WIDA_1-2": "WIDA 1-2",
+  "WIDA_2-3": "WIDA 2-3",
+  "WIDA_3-4": "WIDA 3-4",
+} as const;
+
+export interface GenerateClassroomSupportBody {
+  /** What the students need help with right now */
+  need: string;
+  gradeLevel: GenerateClassroomSupportBodyGradeLevel;
+  widaLevel: GenerateClassroomSupportBodyWidaLevel;
+}
+
+export interface ClassroomSupport {
+  simpleExplanation: string;
+  keyVocabulary: string[];
+  sentenceFrames: string[];
+  quickActivity: string;
+  extensionQuestion: string;
+  teacherMove: string;
+}
+
 export interface ErrorResponse {
   error: string;
 }

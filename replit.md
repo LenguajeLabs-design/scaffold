@@ -43,11 +43,23 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 - **Colors**: Navy #142550, Red #C82C39, Background #F4F6FA
 - **Font**: Montserrat (Google Fonts)
 
-### API Server (`artifacts/api-server`)
+#### Classroom Copilot (`artifacts/speak-your-lesson` — `/classroom-copilot` route)
+- **Type**: React page within the same web artifact
+- **Purpose**: Instant EAL classroom support for live teaching moments
+- **Features**:
+  - Text area: "What do your students need help with right now?"
+  - Grade Level dropdown (Grade 2–5)
+  - WIDA Level dropdown (WIDA 1-2, 2-3, 3-4)
+  - 6 output cards: Simple Explanation, Key Vocabulary, Sentence Frames, Quick Activity, Extension Question, Teacher Move
+  - "Copy All" button to copy all support to clipboard
+- **Model**: gpt-5-mini (fast, cost-effective)
+
+## API Server (`artifacts/api-server`)
 - **Type**: Express 5 REST API
 - **Routes**:
   - `GET /api/healthz` — health check
   - `POST /api/lesson-plan/generate` — generate lesson plan via OpenAI gpt-5.2
+  - `POST /api/classroom-copilot/generate` — generate quick EAL support via OpenAI gpt-5-mini
 - **AI Integration**: `@workspace/integrations-openai-ai-server` using Replit AI Integrations proxy
 
 ## AI Integration Notes

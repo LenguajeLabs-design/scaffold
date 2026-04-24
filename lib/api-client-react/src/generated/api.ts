@@ -17,7 +17,9 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ClassroomSupport,
   ErrorResponse,
+  GenerateClassroomSupportBody,
   GenerateLessonPlanBody,
   HealthStatus,
   LessonPlan,
@@ -192,4 +194,91 @@ export const useGenerateLessonPlan = <
   TContext
 > => {
   return useMutation(getGenerateLessonPlanMutationOptions(options));
+};
+
+/**
+ * @summary Generate quick EAL classroom support
+ */
+export const getGenerateClassroomSupportUrl = () => {
+  return `/api/classroom-copilot/generate`;
+};
+
+export const generateClassroomSupport = async (
+  generateClassroomSupportBody: GenerateClassroomSupportBody,
+  options?: RequestInit,
+): Promise<ClassroomSupport> => {
+  return customFetch<ClassroomSupport>(getGenerateClassroomSupportUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateClassroomSupportBody),
+  });
+};
+
+export const getGenerateClassroomSupportMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateClassroomSupport>>,
+    TError,
+    { data: BodyType<GenerateClassroomSupportBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateClassroomSupport>>,
+  TError,
+  { data: BodyType<GenerateClassroomSupportBody> },
+  TContext
+> => {
+  const mutationKey = ["generateClassroomSupport"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateClassroomSupport>>,
+    { data: BodyType<GenerateClassroomSupportBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateClassroomSupport(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateClassroomSupportMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateClassroomSupport>>
+>;
+export type GenerateClassroomSupportMutationBody =
+  BodyType<GenerateClassroomSupportBody>;
+export type GenerateClassroomSupportMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Generate quick EAL classroom support
+ */
+export const useGenerateClassroomSupport = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateClassroomSupport>>,
+    TError,
+    { data: BodyType<GenerateClassroomSupportBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateClassroomSupport>>,
+  TError,
+  { data: BodyType<GenerateClassroomSupportBody> },
+  TContext
+> => {
+  return useMutation(getGenerateClassroomSupportMutationOptions(options));
 };

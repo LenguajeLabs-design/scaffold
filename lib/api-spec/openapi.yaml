@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: lessonPlan
     description: Lesson plan generation operations
+  - name: classroomCopilot
+    description: Classroom Copilot quick EAL support operations
 paths:
   /healthz:
     get:
@@ -44,6 +46,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LessonPlan"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /classroom-copilot/generate:
+    post:
+      operationId: generateClassroomSupport
+      tags: [classroomCopilot]
+      summary: Generate quick EAL classroom support
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateClassroomSupportBody"
+      responses:
+        "200":
+          description: Generated classroom support
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomSupport"
         "400":
           description: Bad request
           content:
@@ -123,6 +155,48 @@ components:
         - speakingActivity
         - exitTicket
         - teacherNotes
+    GenerateClassroomSupportBody:
+      type: object
+      properties:
+        need:
+          type: string
+          description: What the students need help with right now
+        gradeLevel:
+          type: string
+          enum: ["Grade 2", "Grade 3", "Grade 4", "Grade 5"]
+        widaLevel:
+          type: string
+          enum: ["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]
+      required:
+        - need
+        - gradeLevel
+        - widaLevel
+    ClassroomSupport:
+      type: object
+      properties:
+        simpleExplanation:
+          type: string
+        keyVocabulary:
+          type: array
+          items:
+            type: string
+        sentenceFrames:
+          type: array
+          items:
+            type: string
+        quickActivity:
+          type: string
+        extensionQuestion:
+          type: string
+        teacherMove:
+          type: string
+      required:
+        - simpleExplanation
+        - keyVocabulary
+        - sentenceFrames
+        - quickActivity
+        - extensionQuestion
+        - teacherMove
     ErrorResponse:
       type: object
       properties:

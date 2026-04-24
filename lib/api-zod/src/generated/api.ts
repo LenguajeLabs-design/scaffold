@@ -37,3 +37,21 @@ export const GenerateLessonPlanResponse = zod.object({
   exitTicket: zod.string(),
   teacherNotes: zod.string(),
 });
+
+/**
+ * @summary Generate quick EAL classroom support
+ */
+export const GenerateClassroomSupportBody = zod.object({
+  need: zod.string().describe("What the students need help with right now"),
+  gradeLevel: zod.enum(["Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
+  widaLevel: zod.enum(["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]),
+});
+
+export const GenerateClassroomSupportResponse = zod.object({
+  simpleExplanation: zod.string(),
+  keyVocabulary: zod.array(zod.string()),
+  sentenceFrames: zod.array(zod.string()),
+  quickActivity: zod.string(),
+  extensionQuestion: zod.string(),
+  teacherMove: zod.string(),
+});

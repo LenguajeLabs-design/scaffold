@@ -6,7 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./classroomSupport";
 export * from "./errorResponse";
+export * from "./generateClassroomSupportBody";
+export * from "./generateClassroomSupportBodyGradeLevel";
+export * from "./generateClassroomSupportBodyWidaLevel";
 export * from "./generateLessonPlanBody";
 export * from "./generateLessonPlanBodyGradeLevel";
 export * from "./generateLessonPlanBodyWidaBand";
