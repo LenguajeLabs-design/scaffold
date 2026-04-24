@@ -8,6 +8,32 @@ import ClassroomCopilot from "@/pages/ClassroomCopilot";
 
 const queryClient = new QueryClient();
 
+function ScaffoldMark({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M3 21 L3 16 L9 16 L9 11 L15 11 L15 6 L21 6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 21 L21 21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function NavBar() {
   const [location] = useLocation();
 
@@ -17,25 +43,33 @@ function NavBar() {
   ];
 
   return (
-    <nav style={{ backgroundColor: "#0e1c3d" }} className="px-4">
-      <div className="max-w-3xl mx-auto flex gap-1">
-        {tabs.map((tab) => {
-          const isActive = tab.href === "/" ? location === "/" : location.startsWith(tab.href);
-          return (
-            <Link key={tab.href} href={tab.href}>
-              <span
-                className={`inline-block px-4 py-2.5 text-sm font-semibold cursor-pointer transition-colors border-b-2 ${
-                  isActive
-                    ? "border-b-2 text-white"
-                    : "text-white/55 hover:text-white/80 border-transparent"
-                }`}
-                style={isActive ? { borderColor: "#C82C39" } : {}}
-              >
-                {tab.label}
-              </span>
-            </Link>
-          );
-        })}
+    <nav className="border-b border-border bg-card">
+      <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-6">
+        <Link href="/" className="flex items-center gap-2 shrink-0 text-primary hover:opacity-80 transition-opacity">
+          <ScaffoldMark className="w-5 h-5 text-primary" />
+          <span className="text-sm font-semibold tracking-tight">Scaffold</span>
+        </Link>
+
+        <div className="w-px h-4 bg-border" aria-hidden="true" />
+
+        <div className="flex items-center gap-1">
+          {tabs.map((tab) => {
+            const isActive = tab.href === "/" ? location === "/" : location.startsWith(tab.href);
+            return (
+              <Link key={tab.href} href={tab.href}>
+                <span
+                  className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                    isActive
+                      ? "bg-primary/8 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  }`}
+                >
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

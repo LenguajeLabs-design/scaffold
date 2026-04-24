@@ -3,7 +3,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useGenerateLessonPlan, GenerateLessonPlanBodyGradeLevel, GenerateLessonPlanBodyWidaBand } from "@workspace/api-client-react";
-import { Loader2, BookOpen } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -43,112 +43,41 @@ export default function Home() {
     },
   });
 
-  const { mutate: generateLessonPlan, data: result, isPending, isError, error } = useGenerateLessonPlan();
+  const { mutate: generateLessonPlan, data: result, isPending, isError } = useGenerateLessonPlan();
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     generateLessonPlan({ data: values });
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-white">
-      <header className="bg-primary text-primary-foreground py-10 px-6 shadow-sm border-b-4 border-accent">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-            <BookOpen className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Speak Your Lesson Into Existence</h1>
-            <p className="text-primary-foreground/80 mt-1 text-lg font-medium">Your dedicated co-teacher for multilingual classrooms.</p>
-          </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">Lesson Planner</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Turn rough notes into a ready-to-teach lesson plan for multilingual learners.
+          </p>
         </div>
-      </header>
 
-      <main className="max-w-4xl mx-auto p-6 py-12 grid gap-12">
-        <section>
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary">Lesson Parameters</h2>
-            <p className="text-muted-foreground mt-1">Provide your rough notes or voice transcript below to generate a tailored lesson plan.</p>
-          </div>
+        <Card className="border border-border shadow-none">
+          <CardContent className="pt-5">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
-          <Card className="shadow-md border-muted/60">
-            <CardContent className="pt-6">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="topic"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-semibold text-primary">Topic / Subject</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. Fractions, Photosynthesis" data-testid="input-topic" className="bg-white" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="gradeLevel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-semibold text-primary">Grade Level</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-grade-level" className="bg-white">
-                                <SelectValue placeholder="Select a grade" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.values(GenerateLessonPlanBodyGradeLevel).map((grade) => (
-                                <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="widaBand"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-semibold text-primary">WIDA Band</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-wida-band" className="bg-white">
-                                <SelectValue placeholder="Select WIDA band" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.entries(GenerateLessonPlanBodyWidaBand).map(([key, value]) => (
-                                <SelectItem key={value} value={value}>{value}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+                <div className="grid md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
-                    name="notes"
+                    name="topic"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-semibold text-primary">Your Planning Notes</FormLabel>
+                        <FormLabel className="text-sm font-medium">Topic / Subject</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Paste your rough notes or voice transcript here..." 
-                            className="min-h-[200px] resize-y bg-white text-base leading-relaxed" 
-                            data-testid="input-notes"
-                            {...field} 
+                          <Input
+                            placeholder="e.g. Fractions, Photosynthesis"
+                            data-testid="input-topic"
+                            className="text-sm"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -156,175 +85,220 @@ export default function Home() {
                     )}
                   />
 
-                  <div className="flex items-center justify-end pt-2">
-                    <Button 
-                      type="submit" 
-                      size="lg" 
-                      className="w-full md:w-auto font-bold tracking-wide text-base bg-accent hover:bg-accent/90 text-white shadow-md hover:shadow-lg transition-all"
+                  <FormField
+                    control={form.control}
+                    name="gradeLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Grade Level</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-grade-level" className="text-sm">
+                              <SelectValue placeholder="Select a grade" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.values(GenerateLessonPlanBodyGradeLevel).map((grade) => (
+                              <SelectItem key={grade} value={grade} className="text-sm">{grade}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="widaBand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">WIDA Band</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-wida-band" className="text-sm">
+                              <SelectValue placeholder="Select WIDA band" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(GenerateLessonPlanBodyWidaBand).map(([, value]) => (
+                              <SelectItem key={value} value={value} className="text-sm">{value}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Planning Notes</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Paste your rough notes or voice transcript here..."
+                          className="min-h-[180px] resize-y text-sm leading-relaxed"
+                          data-testid="input-notes"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex items-center justify-between pt-1">
+                  {isError && (
+                    <p className="text-sm text-destructive font-medium">
+                      Failed to generate lesson plan. Please try again.
+                    </p>
+                  )}
+                  <div className="ml-auto">
+                    <Button
+                      type="submit"
                       disabled={isPending}
                       data-testid="button-generate"
+                      className="text-sm font-semibold"
                     >
                       {isPending ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Generating Lesson Plan...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
                         </>
                       ) : (
                         "Generate Lesson Plan"
                       )}
                     </Button>
                   </div>
-                  
-                  {isError && (
-                    <div className="p-4 bg-destructive/10 text-destructive rounded-md border border-destructive/20 font-medium">
-                      Failed to generate lesson plan. Please try again.
-                    </div>
-                  )}
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </section>
+                </div>
+
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
 
         {isPending && !result && (
-          <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-accent animate-spin"></div>
-            </div>
-            <h3 className="text-xl font-bold text-primary">Crafting your lesson...</h3>
-            <p className="text-muted-foreground">Structuring objectives, vocabulary, and activities for your learners.</p>
+          <div className="py-16 flex flex-col items-center justify-center gap-3 text-center animate-in fade-in duration-500">
+            <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
+            <p className="text-sm font-medium text-muted-foreground">Crafting your lesson plan...</p>
           </div>
         )}
 
         {result && (
-          <section data-testid="section-results" className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="border-b-2 border-accent/20 pb-4 mb-8">
-              <h2 className="text-3xl font-bold text-primary tracking-tight">{result.title}</h2>
-              <div className="flex gap-3 mt-3">
-                <Badge variant="secondary" className="bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20">{form.getValues().gradeLevel}</Badge>
-                <Badge variant="secondary" className="bg-accent/10 text-accent font-semibold text-sm hover:bg-accent/20">{form.getValues().widaBand}</Badge>
+          <section data-testid="section-results" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+            <div className="pb-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">{result.title}</h2>
+              <div className="flex gap-2 mt-2">
+                <Badge variant="secondary" className="text-xs font-medium">{form.getValues().gradeLevel}</Badge>
+                <Badge variant="outline" className="text-xs font-medium">{form.getValues().widaBand}</Badge>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="border-l-4 border-l-primary shadow-sm">
-                <CardHeader className="pb-3 bg-primary/5">
-                  <CardTitle className="text-lg text-primary">Content Objective</CardTitle>
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card className="border border-border shadow-none">
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Content Objective
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-4 text-base leading-relaxed">
+                <CardContent className="px-4 pb-4 text-sm leading-relaxed">
                   {result.contentObjective}
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-accent shadow-sm">
-                <CardHeader className="pb-3 bg-accent/5">
-                  <CardTitle className="text-lg text-accent">Language Objective</CardTitle>
+              <Card className="border border-border shadow-none">
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Language Objective
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-4 text-base leading-relaxed">
+                <CardContent className="px-4 pb-4 text-sm leading-relaxed">
                   {result.languageObjective}
                 </CardContent>
               </Card>
             </div>
 
-            <Card className="shadow-sm">
-              <CardHeader className="pb-3 border-b">
-                <CardTitle className="text-lg text-primary">Key Vocabulary</CardTitle>
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Key Vocabulary
+                </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap gap-2">
+              <CardContent className="px-4 pb-4">
+                <div className="flex flex-wrap gap-1.5">
                   {result.keyVocabulary.map((vocab, i) => (
-                    <Badge key={i} variant="outline" className="px-3 py-1.5 text-sm bg-white border-primary/20 text-primary font-medium shadow-sm">
+                    <span
+                      key={i}
+                      className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
+                    >
                       {vocab}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm bg-primary text-white">
-              <CardHeader className="pb-3 border-b border-white/20">
-                <CardTitle className="text-lg">Sentence Frames</CardTitle>
+            <Card className="border border-border shadow-none bg-primary text-primary-foreground">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
+                  Sentence Frames
+                </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <ul className="space-y-3">
+              <CardContent className="px-4 pb-4">
+                <ul className="space-y-2.5">
                   {result.sentenceFrames.map((frame, i) => (
-                    <li key={i} className="flex gap-3 items-start text-lg font-medium">
-                      <span className="shrink-0 w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold mt-0.5">{i + 1}</span>
-                      <span>{frame}</span>
+                    <li key={i} className="flex gap-3 items-start text-sm">
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span className="leading-relaxed">{frame}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
 
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-primary border-b pb-2">Lesson Flow</h3>
-              
-              <Card className="shadow-sm overflow-hidden">
-                <div className="border-l-4 border-primary">
-                  <CardHeader className="pb-2 bg-muted/30">
-                    <CardTitle className="text-lg text-primary flex items-center gap-2">
-                      <span className="bg-primary text-white text-xs px-2 py-1 rounded font-bold uppercase tracking-wider">Step 1</span>
-                      Warm-Up
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 text-base leading-relaxed">
-                    <div className="whitespace-pre-wrap">{result.warmUp}</div>
-                  </CardContent>
-                </div>
-              </Card>
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Lesson Flow</h3>
 
-              <Card className="shadow-sm overflow-hidden">
-                <div className="border-l-4 border-primary">
-                  <CardHeader className="pb-2 bg-muted/30">
-                    <CardTitle className="text-lg text-primary flex items-center gap-2">
-                      <span className="bg-primary text-white text-xs px-2 py-1 rounded font-bold uppercase tracking-wider">Step 2</span>
-                      Main Activity
+              {[
+                { step: "1", label: "Warm-Up", content: result.warmUp },
+                { step: "2", label: "Main Activity", content: result.mainActivity },
+                { step: "3", label: "Speaking Activity", content: result.speakingActivity },
+                { step: "4", label: "Exit Ticket", content: result.exitTicket },
+              ].map(({ step, label, content }) => (
+                <Card key={step} className="border border-border shadow-none">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <span className="w-5 h-5 rounded bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
+                        {step}
+                      </span>
+                      {label}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4 text-base leading-relaxed">
-                    <div className="whitespace-pre-wrap">{result.mainActivity}</div>
+                  <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                    {content}
                   </CardContent>
-                </div>
-              </Card>
-
-              <Card className="shadow-sm overflow-hidden">
-                <div className="border-l-4 border-primary">
-                  <CardHeader className="pb-2 bg-muted/30">
-                    <CardTitle className="text-lg text-primary flex items-center gap-2">
-                      <span className="bg-primary text-white text-xs px-2 py-1 rounded font-bold uppercase tracking-wider">Step 3</span>
-                      Speaking Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 text-base leading-relaxed">
-                    <div className="whitespace-pre-wrap">{result.speakingActivity}</div>
-                  </CardContent>
-                </div>
-              </Card>
-
-              <Card className="shadow-sm overflow-hidden">
-                <div className="border-l-4 border-primary">
-                  <CardHeader className="pb-2 bg-muted/30">
-                    <CardTitle className="text-lg text-primary flex items-center gap-2">
-                      <span className="bg-primary text-white text-xs px-2 py-1 rounded font-bold uppercase tracking-wider">Step 4</span>
-                      Exit Ticket
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 text-base leading-relaxed">
-                    <div className="whitespace-pre-wrap">{result.exitTicket}</div>
-                  </CardContent>
-                </div>
-              </Card>
+                </Card>
+              ))}
             </div>
 
-            <Card className="shadow-sm border-t-4 border-t-accent bg-accent/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-accent">Teacher Notes</CardTitle>
+            <Card className="border border-border shadow-none bg-muted/40">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Teacher Notes
+                </CardTitle>
               </CardHeader>
-              <CardContent className="pt-2 text-base leading-relaxed text-muted-foreground font-medium italic">
-                <div className="whitespace-pre-wrap">{result.teacherNotes}</div>
+              <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                {result.teacherNotes}
               </CardContent>
             </Card>
+
           </section>
         )}
       </main>
