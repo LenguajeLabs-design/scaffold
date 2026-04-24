@@ -29,29 +29,31 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ## Artifacts
 
-### Speak Your Lesson Into Existence (`artifacts/speak-your-lesson`)
+### Scaffold (`artifacts/speak-your-lesson`)
+- **App name**: Scaffold
 - **Type**: React + Vite web app
 - **Preview Path**: `/`
 - **Purpose**: Helps elementary teachers turn rough spoken/written planning notes into ready-to-teach lesson plans for multilingual learner (ELL) classrooms
-- **Features**:
-  - Large textarea for pasting rough notes or voice transcripts
-  - Grade Level dropdown (Grade 3, 4, 5)
-  - WIDA Band dropdown (WIDA 1-2, 2-3, 3-4)
-  - Topic/Subject input
-  - AI-generated lesson plan with 10 structured sections
-  - Loading state, error handling, clean card-based output layout
-- **Colors**: Navy #142550, Red #C82C39, Background #F4F6FA
-- **Font**: Montserrat (Google Fonts)
+- **Font**: Inter (Google Fonts, variable weight 400–700)
+- **Colors**: Navy #142550 (primary), Red #C82C39 (accent), Background #F4F6FA
+- **Logo**: SVG staircase mark — ascending 3-step outline with baseline, used in nav and as favicon
+- **Nav**: White top bar with Scaffold logo + name on the left, tab links on the right (GitHub-style)
+- **Typography scale**: App title/section titles font-weight 600, labels 500, body 400
 
-#### Classroom Copilot (`artifacts/speak-your-lesson` — `/classroom-copilot` route)
-- **Type**: React page within the same web artifact
+#### Lesson Planner (`/`)
+- **Features**:
+  - Topic/Subject input, Grade Level dropdown (Grade 3–5), WIDA Band dropdown (WIDA 1-2, 2-3, 3-4)
+  - Planning notes textarea
+  - AI-generated lesson plan with 10 structured sections in card layout
+  - Loading state, error handling
+
+#### Classroom Copilot (`/classroom-copilot`)
 - **Purpose**: Instant EAL classroom support for live teaching moments
 - **Features**:
+  - Grade Level dropdown (Grade 2–5), WIDA Level dropdown
   - Text area: "What do your students need help with right now?"
-  - Grade Level dropdown (Grade 2–5)
-  - WIDA Level dropdown (WIDA 1-2, 2-3, 3-4)
   - 6 output cards: Simple Explanation, Key Vocabulary, Sentence Frames, Quick Activity, Extension Question, Teacher Move
-  - "Copy All" button to copy all support to clipboard
+  - "Copy All" button
 - **Model**: gpt-5-mini (fast, cost-effective)
 
 ## API Server (`artifacts/api-server`)
