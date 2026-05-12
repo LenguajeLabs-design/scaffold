@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import {
   GenerateClassroomSupportBodyWidaLevel,
   type ClassroomSupport,
 } from "@workspace/api-client-react";
-import { Loader2, Copy, Check } from "lucide-react";
+import { Loader2, Copy, Check, BookMarked, Trash2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -27,12 +27,23 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  useSavedCopilotSessions,
+  type SavedCopilotSession,
+} from "@/hooks/use-saved-copilot-sessions";
 
 const formSchema = z.object({
   need: z.string().min(5, "Please describe what your students need help with"),
   gradeLevel: z.nativeEnum(GenerateClassroomSupportBodyGradeLevel),
   widaLevel: z.nativeEnum(GenerateClassroomSupportBodyWidaLevel),
 });
+
+interface DisplayedSession {
+  support: ClassroomSupport;
+  gradeLevel: string;
+  widaLevel: string;
+  need: string;
+}
 
 function SupportCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -49,6 +60,8 @@ function SupportCard({ title, children }: { title: string; children: React.React
 
 export default function ClassroomCopilot() {
   const [copied, setCopied] = useState(false);
+  const [displayed, setDisplayed] = useState<DisplayedSession | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,16 +73,50 @@ export default function ClassroomCopilot() {
   });
 
   const { mutate: generateSupport, data: result, isPending, isError, error } = useGenerateClassroomSupport();
+  const { sessions, save, remove } = useSavedCopilotSessions();
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setSavedId(null);
     generateSupport({ data: values });
+  }
+
+  useEffect(() => {
+    if (!result) return;
+    const vals = form.getValues() as { gradeLevel: string; widaLevel: string; need: string };
+    const id = save(result, {
+      gradeLevel: vals.gradeLevel,
+      widaLevel: vals.widaLevel,
+      need: vals.need,
+    });
+    setSavedId(id);
+    setDisplayed({ support: result, gradeLevel: vals.gradeLevel, widaLevel: vals.widaLevel, need: vals.need });
+  }, [result]);
+
+  function viewSession(entry: SavedCopilotSession) {
+    setSavedId(entry.id);
+    setDisplayed({
+      support: entry.support,
+      gradeLevel: entry.gradeLevel,
+      widaLevel: entry.widaLevel,
+      need: entry.need,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   }
 
   function formatAllForCopy(support: ClassroomSupport): string {
     return [
       `SIMPLE EXPLANATION\n${support.simpleExplanation}`,
       `KEY VOCABULARY\n${support.keyVocabulary.join(", ")}`,
-      `SENTENCE FRAMES\n${support.sentenceFrames.map((f) => `• ${f}`).join("\n")}`,
+      `SENTENCE FRAMES\n${support.sentenceFrames.map((f: string) => `• ${f}`).join("\n")}`,
       `QUICK ACTIVITY\n${support.quickActivity}`,
       `EXTENSION QUESTION\n${support.extensionQuestion}`,
       `TEACHER MOVE\n${support.teacherMove}`,
@@ -77,8 +124,8 @@ export default function ClassroomCopilot() {
   }
 
   async function handleCopyAll() {
-    if (!result) return;
-    await navigator.clipboard.writeText(formatAllForCopy(result));
+    if (!displayed) return;
+    await navigator.clipboard.writeText(formatAllForCopy(displayed.support));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -87,11 +134,19 @@ export default function ClassroomCopilot() {
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
 
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Classroom Copilot</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Fast EAL support for live teaching moments.
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">Classroom Copilot</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Fast EAL support for live teaching moments.
+            </p>
+          </div>
+          {sessions.length > 0 && (
+            <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1.5 bg-card mt-0.5">
+              <BookMarked className="w-3.5 h-3.5" />
+              {sessions.length} saved
+            </span>
+          )}
         </div>
 
         <Card className="border border-border shadow-none">
@@ -199,7 +254,7 @@ export default function ClassroomCopilot() {
           </CardContent>
         </Card>
 
-        {isPending && (
+        {isPending && !displayed && (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
             <p className="text-sm font-medium text-muted-foreground">
@@ -208,39 +263,52 @@ export default function ClassroomCopilot() {
           </div>
         )}
 
-        {result && !isPending && (
+        {displayed && !isPending && (
           <div data-testid="section-results" className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">Classroom Support</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyAll}
-                data-testid="button-copy-all"
-                className="gap-1.5 text-xs font-medium h-7 px-2.5"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    Copy All
-                  </>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-foreground">Classroom Support</h2>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {displayed.gradeLevel} · {displayed.widaLevel} · {displayed.need.slice(0, 60)}{displayed.need.length > 60 ? "…" : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {savedId && (
+                  <span className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    Saved
+                  </span>
                 )}
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyAll}
+                  data-testid="button-copy-all"
+                  className="gap-1.5 text-xs font-medium h-8 px-3"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      Copy All
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
             <SupportCard title="Simple Explanation">
-              <p className="text-sm leading-relaxed">{result.simpleExplanation}</p>
+              <p className="text-sm leading-relaxed">{displayed.support.simpleExplanation}</p>
             </SupportCard>
 
             <SupportCard title="Key Vocabulary">
               <div className="flex flex-wrap gap-1.5">
-                {result.keyVocabulary.map((word, i) => (
+                {displayed.support.keyVocabulary.map((word: string, i: number) => (
                   <span
                     key={i}
                     className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
@@ -253,7 +321,7 @@ export default function ClassroomCopilot() {
 
             <SupportCard title="Sentence Frames">
               <ul className="space-y-2">
-                {result.sentenceFrames.map((frame, i) => (
+                {displayed.support.sentenceFrames.map((frame: string, i: number) => (
                   <li key={i} className="flex items-start gap-2">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                     <span className="text-sm leading-relaxed">{frame}</span>
@@ -264,20 +332,75 @@ export default function ClassroomCopilot() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SupportCard title="Quick Activity">
-                <p className="text-sm leading-relaxed">{result.quickActivity}</p>
+                <p className="text-sm leading-relaxed">{displayed.support.quickActivity}</p>
               </SupportCard>
 
               <SupportCard title="Extension Question">
-                <p className="text-sm leading-relaxed">{result.extensionQuestion}</p>
+                <p className="text-sm leading-relaxed">{displayed.support.extensionQuestion}</p>
               </SupportCard>
             </div>
 
             <SupportCard title="Teacher Move">
-              <p className="text-sm leading-relaxed font-medium">{result.teacherMove}</p>
+              <p className="text-sm leading-relaxed font-medium">{displayed.support.teacherMove}</p>
             </SupportCard>
 
           </div>
         )}
+
+        {sessions.length > 0 && (
+          <section className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <BookMarked className="w-4 h-4 text-muted-foreground" />
+                Session History
+                <span className="text-xs font-medium text-muted-foreground">({sessions.length})</span>
+              </h2>
+            </div>
+
+            <div className="grid gap-2">
+              {sessions.map((entry) => {
+                const isActive = savedId === entry.id;
+                return (
+                  <div
+                    key={entry.id}
+                    className={`group flex items-start gap-3 px-4 py-3 rounded-lg border transition-colors cursor-pointer ${
+                      isActive
+                        ? "border-primary/30 bg-primary/5"
+                        : "border-border bg-card hover:bg-muted/40"
+                    }`}
+                    onClick={() => viewSession(entry)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{entry.preview}{entry.need.length > 80 ? "…" : ""}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-xs text-muted-foreground">{entry.gradeLevel}</span>
+                        <span className="text-xs text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">{entry.widaLevel}</span>
+                        <span className="text-xs text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(entry.savedAt)}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isActive) {
+                          setDisplayed(null);
+                          setSavedId(null);
+                        }
+                        remove(entry.id);
+                      }}
+                      className="shrink-0 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
+                      aria-label="Delete session"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
       </main>
     </div>
   );
