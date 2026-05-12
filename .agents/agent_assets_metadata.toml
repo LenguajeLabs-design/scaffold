@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "jamwS1RKygzGKF6R2yHou"
+uri = "file://artifacts/speak-your-lesson/public/favicon.svg"
+type = "image"
+title = "Scaffold Logo (SVG)"
