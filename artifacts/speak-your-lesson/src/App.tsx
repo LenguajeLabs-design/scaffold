@@ -43,7 +43,7 @@ function NavBar() {
   ];
 
   return (
-    <nav className="border-b border-border bg-card">
+    <nav className="border-b border-border bg-card print:hidden">
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-6">
         <Link href="/" className="flex items-center gap-2 shrink-0 text-primary hover:opacity-80 transition-opacity">
           <ScaffoldMark className="w-5 h-5 text-primary" />

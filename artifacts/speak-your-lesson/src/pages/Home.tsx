@@ -8,7 +8,7 @@ import {
   GenerateLessonPlanBodyWidaBand,
   type LessonPlan,
 } from "@workspace/api-client-react";
-import { Loader2, Trash2, BookMarked, X } from "lucide-react";
+import { Loader2, Trash2, BookMarked, Download } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -42,8 +42,247 @@ interface DisplayedLesson {
   lesson: LessonPlan;
   gradeLevel: string;
   widaBand: string;
+  topic: string;
 }
 
+// ---------------------------------------------------------------------------
+// Print-only view — hidden on screen, shown when window.print() is called.
+// Uses inline styles so it renders correctly regardless of Tailwind's
+// screen-mode styles being stripped or overridden by the browser's print CSS.
+// ---------------------------------------------------------------------------
+function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
+  const { lesson, gradeLevel, widaBand, topic } = displayed;
+  const printDate = new Date().toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const s: Record<string, React.CSSProperties> = {
+    root: {
+      fontFamily: "'Inter', system-ui, sans-serif",
+      fontSize: "11pt",
+      color: "#111",
+      lineHeight: "1.55",
+      maxWidth: "100%",
+    },
+    header: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: "10px",
+      paddingBottom: "10px",
+      borderBottom: "1.5px solid #e2e8f0",
+    },
+    brand: {
+      display: "flex",
+      alignItems: "center",
+      gap: "7px",
+    },
+    brandName: {
+      fontWeight: 600,
+      fontSize: "12pt",
+      color: "#142550",
+      letterSpacing: "-0.01em",
+    },
+    date: {
+      fontSize: "9pt",
+      color: "#64748b",
+    },
+    title: {
+      fontSize: "17pt",
+      fontWeight: 700,
+      color: "#111",
+      margin: "14px 0 6px",
+      lineHeight: "1.25",
+    },
+    meta: {
+      display: "flex",
+      gap: "10px",
+      fontSize: "9pt",
+      color: "#475569",
+      marginBottom: "14px",
+      flexWrap: "wrap" as const,
+    },
+    metaPill: {
+      background: "#f1f5f9",
+      border: "1px solid #e2e8f0",
+      borderRadius: "4px",
+      padding: "2px 8px",
+      fontWeight: 500,
+    },
+    divider: {
+      border: "none",
+      borderTop: "1px solid #e2e8f0",
+      margin: "0 0 14px",
+    },
+    sectionLabel: {
+      fontSize: "7.5pt",
+      fontWeight: 700,
+      textTransform: "uppercase" as const,
+      letterSpacing: "0.08em",
+      color: "#64748b",
+      marginBottom: "4px",
+    },
+    sectionBody: {
+      fontSize: "10.5pt",
+      color: "#1e293b",
+      margin: 0,
+      whiteSpace: "pre-wrap" as const,
+    },
+    grid2: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "12px",
+    },
+    box: {
+      border: "1px solid #e2e8f0",
+      borderRadius: "6px",
+      padding: "10px 12px",
+    },
+    vocabRow: {
+      display: "flex",
+      flexWrap: "wrap" as const,
+      gap: "6px",
+    },
+    vocabPill: {
+      background: "#eff6ff",
+      border: "1px solid #bfdbfe",
+      borderRadius: "4px",
+      padding: "2px 8px",
+      fontSize: "10pt",
+      fontWeight: 500,
+      color: "#1e40af",
+    },
+    frameItem: {
+      display: "flex",
+      gap: "8px",
+      alignItems: "flex-start",
+      marginBottom: "5px",
+    },
+    frameNum: {
+      minWidth: "18px",
+      height: "18px",
+      borderRadius: "50%",
+      background: "#142550",
+      color: "#fff",
+      fontSize: "8pt",
+      fontWeight: 700,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      marginTop: "1px",
+    },
+    stepBadge: {
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "18px",
+      height: "18px",
+      borderRadius: "3px",
+      background: "#142550",
+      color: "#fff",
+      fontSize: "8pt",
+      fontWeight: 700,
+      marginRight: "6px",
+      flexShrink: 0,
+    },
+    stepTitle: {
+      fontWeight: 600,
+      fontSize: "10.5pt",
+      color: "#111",
+      display: "flex",
+      alignItems: "center",
+      marginBottom: "4px",
+    },
+  };
+
+  return (
+    <div className="hidden print:block" style={s.root}>
+      {/* Branding header */}
+      <div style={s.header}>
+        <div style={s.brand}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3 21 L3 16 L9 16 L9 11 L15 11 L15 6 L21 6" stroke="#142550" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M3 21 L21 21" stroke="#142550" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <span style={s.brandName}>Scaffold</span>
+        </div>
+        <span style={s.date}>Generated {printDate}</span>
+      </div>
+
+      {/* Lesson title + metadata */}
+      <h1 style={s.title}>{lesson.title}</h1>
+      <div style={s.meta}>
+        <span style={s.metaPill}>{gradeLevel}</span>
+        <span style={s.metaPill}>{widaBand}</span>
+        {topic && <span style={s.metaPill}>{topic}</span>}
+      </div>
+      <hr style={s.divider} />
+
+      {/* Objectives */}
+      <div style={{ ...s.grid2, marginBottom: "12px" }}>
+        <div className="scaffold-print-section" style={s.box}>
+          <div style={s.sectionLabel}>Content Objective</div>
+          <p style={s.sectionBody}>{lesson.contentObjective}</p>
+        </div>
+        <div className="scaffold-print-section" style={s.box}>
+          <div style={s.sectionLabel}>Language Objective</div>
+          <p style={s.sectionBody}>{lesson.languageObjective}</p>
+        </div>
+      </div>
+
+      {/* Vocabulary */}
+      <div className="scaffold-print-section" style={{ ...s.box, marginBottom: "12px" }}>
+        <div style={s.sectionLabel}>Key Vocabulary</div>
+        <div style={s.vocabRow}>
+          {lesson.keyVocabulary.map((v: string, i: number) => (
+            <span key={i} style={s.vocabPill}>{v}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Sentence frames */}
+      <div className="scaffold-print-section" style={{ ...s.box, marginBottom: "12px", background: "#f8fafc" }}>
+        <div style={s.sectionLabel}>Sentence Frames</div>
+        {lesson.sentenceFrames.map((frame: string, i: number) => (
+          <div key={i} style={s.frameItem}>
+            <div style={s.frameNum}>{i + 1}</div>
+            <span style={s.sectionBody}>{frame}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Lesson flow */}
+      <div style={{ ...s.sectionLabel, marginBottom: "8px" }}>Lesson Flow</div>
+      {[
+        { step: "1", label: "Warm-Up", content: lesson.warmUp },
+        { step: "2", label: "Main Activity", content: lesson.mainActivity },
+        { step: "3", label: "Speaking Activity", content: lesson.speakingActivity },
+        { step: "4", label: "Exit Ticket", content: lesson.exitTicket },
+      ].map(({ step, label, content }) => (
+        <div key={step} className="scaffold-print-section" style={{ ...s.box, marginBottom: "8px" }}>
+          <div style={s.stepTitle}>
+            <span style={s.stepBadge}>{step}</span>
+            {label}
+          </div>
+          <p style={s.sectionBody}>{content}</p>
+        </div>
+      ))}
+
+      {/* Teacher notes */}
+      <div className="scaffold-print-section" style={{ ...s.box, marginTop: "4px", background: "#f8fafc" }}>
+        <div style={s.sectionLabel}>Teacher Notes</div>
+        <p style={s.sectionBody}>{lesson.teacherNotes}</p>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 export default function Home() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -67,15 +306,20 @@ export default function Home() {
 
   useEffect(() => {
     if (!result) return;
-    const { gradeLevel, widaBand, topic } = form.getValues();
-    const id = save(result, { gradeLevel, widaBand, topic });
+    const vals = form.getValues() as { gradeLevel: string; widaBand: string; topic: string; notes: string };
+    const id = save(result, { gradeLevel: vals.gradeLevel, widaBand: vals.widaBand, topic: vals.topic });
     setSavedId(id);
-    setDisplayed({ lesson: result, gradeLevel, widaBand });
+    setDisplayed({ lesson: result, gradeLevel: vals.gradeLevel, widaBand: vals.widaBand, topic: vals.topic });
   }, [result]);
 
   function viewSavedLesson(entry: SavedLesson) {
     setSavedId(entry.id);
-    setDisplayed({ lesson: entry.lesson, gradeLevel: entry.gradeLevel, widaBand: entry.widaBand });
+    setDisplayed({
+      lesson: entry.lesson,
+      gradeLevel: entry.gradeLevel,
+      widaBand: entry.widaBand,
+      topic: entry.topic,
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -90,7 +334,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      {/* Print view — invisible on screen, shown only when printing */}
+      {displayed && <PrintableLesson displayed={displayed} />}
+
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8 print:hidden">
 
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -145,7 +392,7 @@ export default function Home() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.values(GenerateLessonPlanBodyGradeLevel).map((grade) => (
+                            {(Object.values(GenerateLessonPlanBodyGradeLevel) as string[]).map((grade) => (
                               <SelectItem key={grade} value={grade} className="text-sm">{grade}</SelectItem>
                             ))}
                           </SelectContent>
@@ -168,7 +415,7 @@ export default function Home() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.entries(GenerateLessonPlanBodyWidaBand).map(([, value]) => (
+                            {(Object.entries(GenerateLessonPlanBodyWidaBand) as [string, string][]).map(([, value]) => (
                               <SelectItem key={value} value={value} className="text-sm">{value}</SelectItem>
                             ))}
                           </SelectContent>
@@ -241,7 +488,7 @@ export default function Home() {
             <div className="pb-4 border-b border-border flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">{displayed.lesson.title}</h2>
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-2 items-center">
                   <Badge variant="secondary" className="text-xs font-medium">{displayed.gradeLevel}</Badge>
                   <Badge variant="outline" className="text-xs font-medium">{displayed.widaBand}</Badge>
                   {savedId && (
@@ -252,6 +499,15 @@ export default function Home() {
                   )}
                 </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 text-xs font-medium h-8 px-3"
+                onClick={() => window.print()}
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download PDF
+              </Button>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -286,7 +542,7 @@ export default function Home() {
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <div className="flex flex-wrap gap-1.5">
-                  {displayed.lesson.keyVocabulary.map((vocab, i) => (
+                  {displayed.lesson.keyVocabulary.map((vocab: string, i: number) => (
                     <span
                       key={i}
                       className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
@@ -306,7 +562,7 @@ export default function Home() {
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <ul className="space-y-2.5">
-                  {displayed.lesson.sentenceFrames.map((frame, i) => (
+                  {displayed.lesson.sentenceFrames.map((frame: string, i: number) => (
                     <li key={i} className="flex gap-3 items-start text-sm">
                       <span className="shrink-0 w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold mt-0.5">
                         {i + 1}
