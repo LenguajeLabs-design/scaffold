@@ -87,7 +87,7 @@ function Footer() {
           </div>
 
           <div className="flex-1 space-y-2">
-            <p className="text-sm font-semibold text-foreground">Created by Freddie Orozco</p>
+            <p className="text-sm font-semibold text-foreground">Created by Federico Orozco</p>
             <p className="text-xs text-muted-foreground">EAL Educator | AI &amp; Multilingual Learning Innovation</p>
             <p className="text-xs text-muted-foreground">
               Contact:{" "}
