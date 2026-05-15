@@ -1,0 +1,82 @@
+Please audit and update this app for API key security and cost control.
+
+GOAL A: Hide and secure the OpenAI API key
+
+1. Search the entire project for any exposed API keys or references to OpenAI keys in frontend/client-side files.
+2. Remove any hardcoded API keys from the codebase.
+3. The OpenAI API key must only be stored as a Replit Secret / environment variable named OPENAI_API_KEY.
+4. The frontend must never call OpenAI directly.
+5. All OpenAI calls must go through backend API routes only.
+6. Create or update backend endpoints such as:
+   - POST /api/generate-lesson
+   - POST /api/copilot
+   - POST /api/transcribe
+7. The backend should read the API key using process.env.OPENAI_API_KEY.
+8. Do not log the API key, request headers, full user inputs, or full OpenAI responses.
+9. Add a visible privacy reminder near all input boxes:
+   “Please do not enter student names or private student information.”
+
+GOAL B: Add API usage limits and cost controls
+
+Add app-level rate limits before any OpenAI request is made.
+
+Required limits:
+1. Limit each user/IP/access code to 3 lesson generations per day.
+2. Limit each user/IP/access code to 3 Copilot requests per day.
+3. Limit transcription/audio requests to 3 per day.
+4. Limit uploaded audio length to 60 seconds maximum.
+5. Limit text input length to 2,000 characters maximum.
+6. Add a cooldown of 30 seconds between requests.
+7. Set max output tokens for lesson generation so responses cannot become extremely long.
+8. Add server-side validation. Do not rely only on frontend validation.
+9. If a user exceeds the limit, return a friendly message:
+   “You have reached today’s demo limit. Please try again later or contact Freddie for access.”
+
+Access control:
+1. Add a simple access-code gate before users can use the API-powered features.
+2. Store valid access codes on the backend only, ideally as a Replit Secret such as VALID_ACCESS_CODES.
+3. Example access codes:
+   - SUZHOU
+   - BEIJING
+   - KOREA
+   - JAPAN
+4. Track usage by access code so I can see which group is using the app.
+
+Logging:
+Create simple usage logging that records:
+- timestamp
+- feature used
+- access code
+- user/IP hash or anonymous identifier
+- input length
+- audio length if applicable
+- success or error
+- estimated token usage if available
+
+Do not store:
+- student names
+- private student information
+- full prompts
+- full audio files
+- full OpenAI responses
+
+Demo mode:
+1. Add a demo/sample mode that does not call OpenAI.
+2. Include 2–3 sample lesson plans and 2–3 sample Copilot responses.
+3. Make the sample mode available without using API credits.
+4. Make custom generation available only after entering an access code.
+
+Safety checks:
+1. Add error handling so failed OpenAI requests do not retry repeatedly.
+2. Disable rapid repeated clicking on the generate/transcribe buttons.
+3. Show loading states while requests are running.
+4. Add clear messages when limits are reached or when the API is unavailable.
+
+Final check:
+After making changes, explain:
+1. Where the OpenAI key is stored.
+2. Which files call OpenAI.
+3. Which files are frontend-only.
+4. What limits were added.
+5. How I can change the daily limits later.
+6. How I can turn the API-powered features on/off.
