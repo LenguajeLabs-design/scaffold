@@ -333,7 +333,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="bg-background text-foreground">
       {/* Print view — invisible on screen, shown only when printing */}
       {displayed && <PrintableLesson displayed={displayed} />}
 

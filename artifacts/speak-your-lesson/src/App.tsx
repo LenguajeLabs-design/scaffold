@@ -75,16 +75,59 @@ function NavBar() {
   );
 }
 
+function Footer() {
+  return (
+    <footer className="mt-16 border-t border-border bg-card print:hidden">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+
+          <div className="flex items-center gap-2 shrink-0">
+            <ScaffoldMark className="w-5 h-5 text-primary" />
+            <span className="text-sm font-semibold tracking-tight text-primary">Scaffold</span>
+          </div>
+
+          <div className="flex-1 space-y-2">
+            <p className="text-sm font-semibold text-foreground">Created by Freddie Orozco</p>
+            <p className="text-xs text-muted-foreground">EAL Educator | AI &amp; Multilingual Learning Innovation</p>
+            <p className="text-xs text-muted-foreground">
+              Contact:{" "}
+              <a
+                href="mailto:LenguajeLabs@proton.me"
+                className="text-primary hover:underline"
+              >
+                LenguajeLabs@proton.me
+              </a>
+            </p>
+            <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
+              Built using the WIDA framework to support multilingual learners, families, and educators.
+            </p>
+          </div>
+
+          <p className="text-xs text-muted-foreground shrink-0 sm:text-right">
+            Version 1.0
+            <br />
+            Updated May 2026
+          </p>
+
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 function Router() {
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-background">
       <NavBar />
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/classroom-copilot" component={ClassroomCopilot} />
-        <Route component={NotFound} />
-      </Switch>
-    </>
+      <div className="flex-1">
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/classroom-copilot" component={ClassroomCopilot} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
+      <Footer />
+    </div>
   );
 }
 

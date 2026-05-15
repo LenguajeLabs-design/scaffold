@@ -131,7 +131,7 @@ export default function ClassroomCopilot() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="bg-background text-foreground">
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
 
         <div className="flex items-start justify-between gap-4">
