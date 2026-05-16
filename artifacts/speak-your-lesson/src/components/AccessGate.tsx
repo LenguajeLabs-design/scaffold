@@ -150,18 +150,24 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
           </Button>
         </form>
 
-        {/* Demo option */}
-        <div className="text-center space-y-1">
+        {/* Demo option + contact */}
+        <div className="text-center space-y-2">
           <p className="text-xs text-muted-foreground">
-            Don't have a code?
+            Need a code?{" "}
+            <a
+              href="mailto:LenguajeLabs@proton.me"
+              className="text-primary hover:underline font-medium"
+            >
+              Email LenguajeLabs@proton.me
+            </a>
           </p>
           <button
             type="button"
             onClick={onDemo}
-            className="text-xs text-primary hover:underline font-medium"
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
             data-testid="button-demo"
           >
-            Explore sample lesson plans (no code needed)
+            Or explore sample lesson plans (no code needed)
           </button>
         </div>
 
