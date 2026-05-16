@@ -8,6 +8,10 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// Trust the first proxy hop (Replit's reverse proxy sets X-Forwarded-For).
+// Required for express-rate-limit to identify clients correctly.
+app.set("trust proxy", 1);
+
 // Security headers: X-Content-Type-Options, X-Frame-Options, HSTS, etc.
 // contentSecurityPolicy is disabled here because the frontend is served from a
 // separate Vite origin during development; the Vite build handles its own CSP.

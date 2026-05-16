@@ -13,4 +13,6 @@ export interface GenerateClassroomSupportBody {
   need: string;
   gradeLevel: GenerateClassroomSupportBodyGradeLevel;
   widaLevel: GenerateClassroomSupportBodyWidaLevel;
+  /** School access code for authorization */
+  accessCode: string;
 }

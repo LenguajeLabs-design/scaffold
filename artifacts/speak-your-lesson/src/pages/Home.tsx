@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import {
   GenerateLessonPlanBodyWidaBand,
   type LessonPlan,
 } from "@workspace/api-client-react";
-import { Loader2, Trash2, BookMarked, Download } from "lucide-react";
+import { Loader2, Trash2, BookMarked, Download, FlaskConical } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -30,12 +30,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
+import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
+
+const MAX_NOTES_CHARS = 2000;
 
 const formSchema = z.object({
   topic: z.string().min(1, "Topic is required"),
   gradeLevel: z.nativeEnum(GenerateLessonPlanBodyGradeLevel),
   widaBand: z.nativeEnum(GenerateLessonPlanBodyWidaBand),
-  notes: z.string().min(5, "Planning notes are required"),
+  notes: z
+    .string()
+    .min(5, "Planning notes are required")
+    .max(MAX_NOTES_CHARS, `Planning notes must be ${MAX_NOTES_CHARS} characters or fewer`),
 });
 
 interface DisplayedLesson {
@@ -45,10 +51,13 @@ interface DisplayedLesson {
   topic: string;
 }
 
+interface HomeProps {
+  accessCode: string;
+  isDemo: boolean;
+}
+
 // ---------------------------------------------------------------------------
-// Print-only view — hidden on screen, shown when window.print() is called.
-// Uses inline styles so it renders correctly regardless of Tailwind's
-// screen-mode styles being stripped or overridden by the browser's print CSS.
+// Print-only view
 // ---------------------------------------------------------------------------
 function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
   const { lesson, gradeLevel, widaBand, topic } = displayed;
@@ -59,148 +68,29 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
   });
 
   const s: Record<string, React.CSSProperties> = {
-    root: {
-      fontFamily: "'Inter', system-ui, sans-serif",
-      fontSize: "11pt",
-      color: "#111",
-      lineHeight: "1.55",
-      maxWidth: "100%",
-    },
-    header: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: "10px",
-      paddingBottom: "10px",
-      borderBottom: "1.5px solid #e2e8f0",
-    },
-    brand: {
-      display: "flex",
-      alignItems: "center",
-      gap: "7px",
-    },
-    brandName: {
-      fontWeight: 600,
-      fontSize: "12pt",
-      color: "#142550",
-      letterSpacing: "-0.01em",
-    },
-    date: {
-      fontSize: "9pt",
-      color: "#64748b",
-    },
-    title: {
-      fontSize: "17pt",
-      fontWeight: 700,
-      color: "#111",
-      margin: "14px 0 6px",
-      lineHeight: "1.25",
-    },
-    meta: {
-      display: "flex",
-      gap: "10px",
-      fontSize: "9pt",
-      color: "#475569",
-      marginBottom: "14px",
-      flexWrap: "wrap" as const,
-    },
-    metaPill: {
-      background: "#f1f5f9",
-      border: "1px solid #e2e8f0",
-      borderRadius: "4px",
-      padding: "2px 8px",
-      fontWeight: 500,
-    },
-    divider: {
-      border: "none",
-      borderTop: "1px solid #e2e8f0",
-      margin: "0 0 14px",
-    },
-    sectionLabel: {
-      fontSize: "7.5pt",
-      fontWeight: 700,
-      textTransform: "uppercase" as const,
-      letterSpacing: "0.08em",
-      color: "#64748b",
-      marginBottom: "4px",
-    },
-    sectionBody: {
-      fontSize: "10.5pt",
-      color: "#1e293b",
-      margin: 0,
-      whiteSpace: "pre-wrap" as const,
-    },
-    grid2: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "12px",
-    },
-    box: {
-      border: "1px solid #e2e8f0",
-      borderRadius: "6px",
-      padding: "10px 12px",
-    },
-    vocabRow: {
-      display: "flex",
-      flexWrap: "wrap" as const,
-      gap: "6px",
-    },
-    vocabPill: {
-      background: "#eff6ff",
-      border: "1px solid #bfdbfe",
-      borderRadius: "4px",
-      padding: "2px 8px",
-      fontSize: "10pt",
-      fontWeight: 500,
-      color: "#1e40af",
-    },
-    frameItem: {
-      display: "flex",
-      gap: "8px",
-      alignItems: "flex-start",
-      marginBottom: "5px",
-    },
-    frameNum: {
-      minWidth: "18px",
-      height: "18px",
-      borderRadius: "50%",
-      background: "#142550",
-      color: "#fff",
-      fontSize: "8pt",
-      fontWeight: 700,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-      marginTop: "1px",
-    },
-    stepBadge: {
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      width: "18px",
-      height: "18px",
-      borderRadius: "3px",
-      background: "#142550",
-      color: "#fff",
-      fontSize: "8pt",
-      fontWeight: 700,
-      marginRight: "6px",
-      flexShrink: 0,
-    },
-    stepTitle: {
-      fontWeight: 600,
-      fontSize: "10.5pt",
-      color: "#111",
-      display: "flex",
-      alignItems: "center",
-      marginBottom: "4px",
-    },
+    root: { fontFamily: "'Inter', system-ui, sans-serif", fontSize: "11pt", color: "#111", lineHeight: "1.55", maxWidth: "100%" },
+    header: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", paddingBottom: "10px", borderBottom: "1.5px solid #e2e8f0" },
+    brand: { display: "flex", alignItems: "center", gap: "7px" },
+    brandName: { fontWeight: 600, fontSize: "12pt", color: "#142550", letterSpacing: "-0.01em" },
+    date: { fontSize: "9pt", color: "#64748b" },
+    title: { fontSize: "17pt", fontWeight: 700, color: "#111", margin: "14px 0 6px", lineHeight: "1.25" },
+    meta: { display: "flex", gap: "10px", fontSize: "9pt", color: "#475569", marginBottom: "14px", flexWrap: "wrap" as const },
+    metaPill: { background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "4px", padding: "2px 8px", fontWeight: 500 },
+    divider: { border: "none", borderTop: "1px solid #e2e8f0", margin: "0 0 14px" },
+    sectionLabel: { fontSize: "7.5pt", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "#64748b", marginBottom: "4px" },
+    sectionBody: { fontSize: "10.5pt", color: "#1e293b", margin: 0, whiteSpace: "pre-wrap" as const },
+    grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" },
+    box: { border: "1px solid #e2e8f0", borderRadius: "6px", padding: "10px 12px" },
+    vocabRow: { display: "flex", flexWrap: "wrap" as const, gap: "6px" },
+    vocabPill: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "4px", padding: "2px 8px", fontSize: "10pt", fontWeight: 500, color: "#1e40af" },
+    frameItem: { display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "5px" },
+    frameNum: { minWidth: "18px", height: "18px", borderRadius: "50%", background: "#142550", color: "#fff", fontSize: "8pt", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" },
+    stepBadge: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: "18px", height: "18px", borderRadius: "3px", background: "#142550", color: "#fff", fontSize: "8pt", fontWeight: 700, marginRight: "6px", flexShrink: 0 },
+    stepTitle: { fontWeight: 600, fontSize: "10.5pt", color: "#111", display: "flex", alignItems: "center", marginBottom: "4px" },
   };
 
   return (
     <div className="hidden print:block" style={s.root}>
-      {/* Branding header */}
       <div style={s.header}>
         <div style={s.brand}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -211,8 +101,6 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
         </div>
         <span style={s.date}>Generated {printDate}</span>
       </div>
-
-      {/* Lesson title + metadata */}
       <h1 style={s.title}>{lesson.title}</h1>
       <div style={s.meta}>
         <span style={s.metaPill}>{gradeLevel}</span>
@@ -220,41 +108,20 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
         {topic && <span style={s.metaPill}>{topic}</span>}
       </div>
       <hr style={s.divider} />
-
-      {/* Objectives */}
       <div style={{ ...s.grid2, marginBottom: "12px" }}>
-        <div className="scaffold-print-section" style={s.box}>
-          <div style={s.sectionLabel}>Content Objective</div>
-          <p style={s.sectionBody}>{lesson.contentObjective}</p>
-        </div>
-        <div className="scaffold-print-section" style={s.box}>
-          <div style={s.sectionLabel}>Language Objective</div>
-          <p style={s.sectionBody}>{lesson.languageObjective}</p>
-        </div>
+        <div style={s.box}><div style={s.sectionLabel}>Content Objective</div><p style={s.sectionBody}>{lesson.contentObjective}</p></div>
+        <div style={s.box}><div style={s.sectionLabel}>Language Objective</div><p style={s.sectionBody}>{lesson.languageObjective}</p></div>
       </div>
-
-      {/* Vocabulary */}
-      <div className="scaffold-print-section" style={{ ...s.box, marginBottom: "12px" }}>
+      <div style={{ ...s.box, marginBottom: "12px" }}>
         <div style={s.sectionLabel}>Key Vocabulary</div>
-        <div style={s.vocabRow}>
-          {lesson.keyVocabulary.map((v: string, i: number) => (
-            <span key={i} style={s.vocabPill}>{v}</span>
-          ))}
-        </div>
+        <div style={s.vocabRow}>{lesson.keyVocabulary.map((v: string, i: number) => <span key={i} style={s.vocabPill}>{v}</span>)}</div>
       </div>
-
-      {/* Sentence frames */}
-      <div className="scaffold-print-section" style={{ ...s.box, marginBottom: "12px", background: "#f8fafc" }}>
+      <div style={{ ...s.box, marginBottom: "12px", background: "#f8fafc" }}>
         <div style={s.sectionLabel}>Sentence Frames</div>
         {lesson.sentenceFrames.map((frame: string, i: number) => (
-          <div key={i} style={s.frameItem}>
-            <div style={s.frameNum}>{i + 1}</div>
-            <span style={s.sectionBody}>{frame}</span>
-          </div>
+          <div key={i} style={s.frameItem}><div style={s.frameNum}>{i + 1}</div><span style={s.sectionBody}>{frame}</span></div>
         ))}
       </div>
-
-      {/* Lesson flow */}
       <div style={{ ...s.sectionLabel, marginBottom: "8px" }}>Lesson Flow</div>
       {[
         { step: "1", label: "Warm-Up", content: lesson.warmUp },
@@ -262,17 +129,12 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
         { step: "3", label: "Speaking Activity", content: lesson.speakingActivity },
         { step: "4", label: "Exit Ticket", content: lesson.exitTicket },
       ].map(({ step, label, content }) => (
-        <div key={step} className="scaffold-print-section" style={{ ...s.box, marginBottom: "8px" }}>
-          <div style={s.stepTitle}>
-            <span style={s.stepBadge}>{step}</span>
-            {label}
-          </div>
+        <div key={step} style={{ ...s.box, marginBottom: "8px" }}>
+          <div style={s.stepTitle}><span style={s.stepBadge}>{step}</span>{label}</div>
           <p style={s.sectionBody}>{content}</p>
         </div>
       ))}
-
-      {/* Teacher notes */}
-      <div className="scaffold-print-section" style={{ ...s.box, marginTop: "4px", background: "#f8fafc" }}>
+      <div style={{ ...s.box, marginTop: "4px", background: "#f8fafc" }}>
         <div style={s.sectionLabel}>Teacher Notes</div>
         <p style={s.sectionBody}>{lesson.teacherNotes}</p>
       </div>
@@ -283,7 +145,7 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
 // ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
-export default function Home() {
+export default function Home({ accessCode, isDemo }: HomeProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -294,14 +156,46 @@ export default function Home() {
     },
   });
 
-  const { mutate: generateLessonPlan, data: result, isPending, isError } = useGenerateLessonPlan();
+  const notesValue = form.watch("notes");
+  const notesLength = notesValue.length;
+
+  const { mutate: generateLessonPlan, data: result, isPending, isError, error } = useGenerateLessonPlan();
   const { lessons, save, remove } = useSavedLessons();
   const [displayed, setDisplayed] = useState<DisplayedLesson | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [demoIndex, setDemoIndex] = useState(0);
+
+  // Cooldown state
+  const [cooldownSecs, setCooldownSecs] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function startCooldown(secs: number) {
+    setCooldownSecs(secs);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setCooldownSecs((s) => {
+        if (s <= 1) {
+          clearInterval(cooldownRef.current!);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (isDemo) {
+      // Show next sample plan, cycling through available demos
+      const plan = DEMO_LESSON_PLANS[demoIndex % DEMO_LESSON_PLANS.length];
+      setDemoIndex((i) => i + 1);
+      setSavedId(null);
+      const id = save(plan, { gradeLevel: values.gradeLevel, widaBand: values.widaBand, topic: values.topic || plan.title });
+      setSavedId(id);
+      setDisplayed({ lesson: plan, gradeLevel: values.gradeLevel, widaBand: values.widaBand, topic: values.topic || plan.title });
+      return;
+    }
     setSavedId(null);
-    generateLessonPlan({ data: values });
+    generateLessonPlan({ data: { ...values, accessCode } });
   }
 
   useEffect(() => {
@@ -312,29 +206,33 @@ export default function Home() {
     setDisplayed({ lesson: result, gradeLevel: vals.gradeLevel, widaBand: vals.widaBand, topic: vals.topic });
   }, [result]);
 
+  // Parse cooldown from API error
+  useEffect(() => {
+    if (!error) return;
+    const msg: string = (error as { data?: { error?: string } })?.data?.error ?? (error as Error)?.message ?? "";
+    const match = msg.match(/wait (\d+) second/);
+    if (match) startCooldown(parseInt(match[1], 10));
+  }, [error]);
+
   function viewSavedLesson(entry: SavedLesson) {
     setSavedId(entry.id);
-    setDisplayed({
-      lesson: entry.lesson,
-      gradeLevel: entry.gradeLevel,
-      widaBand: entry.widaBand,
-      topic: entry.topic,
-    });
+    setDisplayed({ lesson: entry.lesson, gradeLevel: entry.gradeLevel, widaBand: entry.widaBand, topic: entry.topic });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
+
+  const isGenerating = isPending && !isDemo;
+  const canSubmit = !isGenerating && cooldownSecs === 0;
+
+  const errorMsg: string | null = isError
+    ? ((error as { data?: { error?: string } })?.data?.error ?? (error as Error)?.message ?? "Failed to generate lesson plan. Please try again.")
+    : null;
 
   return (
     <div className="bg-background text-foreground">
-      {/* Print view — invisible on screen, shown only when printing */}
       {displayed && <PrintableLesson displayed={displayed} />}
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8 print:hidden">
@@ -346,13 +244,27 @@ export default function Home() {
               Turn rough notes into a ready-to-teach lesson plan for multilingual learners.
             </p>
           </div>
-          {lessons.length > 0 && (
-            <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1.5 bg-card mt-0.5">
-              <BookMarked className="w-3.5 h-3.5" />
-              {lessons.length} saved
-            </span>
-          )}
+          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            {isDemo && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
+                <FlaskConical className="w-3.5 h-3.5" />
+                Demo mode
+              </span>
+            )}
+            {lessons.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1.5 bg-card">
+                <BookMarked className="w-3.5 h-3.5" />
+                {lessons.length} saved
+              </span>
+            )}
+          </div>
         </div>
+
+        {isDemo && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 leading-relaxed">
+            <strong>Demo mode:</strong> You're viewing pre-written sample lesson plans. Enter an access code to generate real AI-powered plans tailored to your notes.
+          </div>
+        )}
 
         <Card className="border border-border shadow-none">
           <CardContent className="pt-5">
@@ -431,43 +343,61 @@ export default function Home() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Planning Notes</FormLabel>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <FormLabel className="text-sm font-medium">Planning Notes</FormLabel>
+                        <span className={`text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                          {notesLength}/{MAX_NOTES_CHARS}
+                        </span>
+                      </div>
                       <FormControl>
                         <Textarea
                           placeholder="Paste your rough notes or voice transcript here..."
                           className="min-h-[180px] resize-y text-sm leading-relaxed"
                           data-testid="input-notes"
+                          maxLength={MAX_NOTES_CHARS}
                           {...field}
                         />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Please do not include student names or private student information.
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <div className="flex items-center justify-between pt-1">
-                  {isError && (
-                    <p className="text-sm text-destructive font-medium">
-                      Failed to generate lesson plan. Please try again.
-                    </p>
-                  )}
-                  <div className="ml-auto">
-                    <Button
-                      type="submit"
-                      disabled={isPending}
-                      data-testid="button-generate"
-                      className="text-sm font-semibold"
-                    >
-                      {isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        "Generate Lesson Plan"
-                      )}
-                    </Button>
+                  <div className="flex-1 mr-4">
+                    {errorMsg && (
+                      <p className="text-sm text-destructive font-medium" role="alert">
+                        {errorMsg}
+                      </p>
+                    )}
+                    {cooldownSecs > 0 && !errorMsg && (
+                      <p className="text-sm text-muted-foreground">
+                        Next generation available in {cooldownSecs}s...
+                      </p>
+                    )}
                   </div>
+                  <Button
+                    type="submit"
+                    disabled={!canSubmit}
+                    data-testid="button-generate"
+                    className="text-sm font-semibold shrink-0"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : cooldownSecs > 0 ? (
+                      `Wait ${cooldownSecs}s`
+                    ) : isDemo ? (
+                      "Show Sample Plan"
+                    ) : (
+                      "Generate Lesson Plan"
+                    )}
+                  </Button>
                 </div>
 
               </form>
@@ -475,7 +405,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {isPending && !displayed && (
+        {isGenerating && !displayed && (
           <div className="py-16 flex flex-col items-center justify-center gap-3 text-center animate-in fade-in duration-500">
             <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
             <p className="text-sm font-medium text-muted-foreground">Crafting your lesson plan...</p>
@@ -491,6 +421,9 @@ export default function Home() {
                 <div className="flex flex-wrap gap-2 mt-2 items-center">
                   <Badge variant="secondary" className="text-xs font-medium">{displayed.gradeLevel}</Badge>
                   <Badge variant="outline" className="text-xs font-medium">{displayed.widaBand}</Badge>
+                  {isDemo && (
+                    <Badge variant="outline" className="text-xs font-medium text-amber-700 border-amber-200 bg-amber-50">Sample</Badge>
+                  )}
                   {savedId && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -513,42 +446,26 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-4">
               <Card className="border border-border shadow-none">
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Content Objective
-                  </CardTitle>
+                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Content Objective</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-4 text-sm leading-relaxed">
-                  {displayed.lesson.contentObjective}
-                </CardContent>
+                <CardContent className="px-4 pb-4 text-sm leading-relaxed">{displayed.lesson.contentObjective}</CardContent>
               </Card>
-
               <Card className="border border-border shadow-none">
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Language Objective
-                  </CardTitle>
+                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Language Objective</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-4 text-sm leading-relaxed">
-                  {displayed.lesson.languageObjective}
-                </CardContent>
+                <CardContent className="px-4 pb-4 text-sm leading-relaxed">{displayed.lesson.languageObjective}</CardContent>
               </Card>
             </div>
 
             <Card className="border border-border shadow-none">
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Key Vocabulary
-                </CardTitle>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key Vocabulary</CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <div className="flex flex-wrap gap-1.5">
                   {displayed.lesson.keyVocabulary.map((vocab: string, i: number) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
-                    >
-                      {vocab}
-                    </span>
+                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15">{vocab}</span>
                   ))}
                 </div>
               </CardContent>
@@ -556,17 +473,13 @@ export default function Home() {
 
             <Card className="border border-border shadow-none bg-primary text-primary-foreground">
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
-                  Sentence Frames
-                </CardTitle>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Sentence Frames</CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <ul className="space-y-2.5">
                   {displayed.lesson.sentenceFrames.map((frame: string, i: number) => (
                     <li key={i} className="flex gap-3 items-start text-sm">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold mt-0.5">
-                        {i + 1}
-                      </span>
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold mt-0.5">{i + 1}</span>
                       <span className="leading-relaxed">{frame}</span>
                     </li>
                   ))}
@@ -585,28 +498,20 @@ export default function Home() {
                 <Card key={step} className="border border-border shadow-none">
                   <CardHeader className="pb-2 pt-4 px-4">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <span className="w-5 h-5 rounded bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
-                        {step}
-                      </span>
+                      <span className="w-5 h-5 rounded bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">{step}</span>
                       {label}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-                    {content}
-                  </CardContent>
+                  <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{content}</CardContent>
                 </Card>
               ))}
             </div>
 
             <Card className="border border-border shadow-none bg-muted/40">
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Teacher Notes
-                </CardTitle>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Teacher Notes</CardTitle>
               </CardHeader>
-              <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-                {displayed.lesson.teacherNotes}
-              </CardContent>
+              <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{displayed.lesson.teacherNotes}</CardContent>
             </Card>
 
           </section>
@@ -621,7 +526,6 @@ export default function Home() {
                 <span className="text-xs font-medium text-muted-foreground">({lessons.length})</span>
               </h2>
             </div>
-
             <div className="grid gap-2">
               {lessons.map((entry) => {
                 const isActive = savedId === entry.id;
@@ -629,17 +533,13 @@ export default function Home() {
                   <div
                     key={entry.id}
                     className={`group flex items-start gap-3 px-4 py-3 rounded-lg border transition-colors cursor-pointer ${
-                      isActive
-                        ? "border-primary/30 bg-primary/5"
-                        : "border-border bg-card hover:bg-muted/40"
+                      isActive ? "border-primary/30 bg-primary/5" : "border-border bg-card hover:bg-muted/40"
                     }`}
                     onClick={() => viewSavedLesson(entry)}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">{entry.title}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{entry.topic || entry.lesson.title}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-xs text-muted-foreground">{entry.topic}</span>
-                        <span className="text-xs text-muted-foreground">·</span>
                         <span className="text-xs text-muted-foreground">{entry.gradeLevel}</span>
                         <span className="text-xs text-muted-foreground">·</span>
                         <span className="text-xs text-muted-foreground">{entry.widaBand}</span>
@@ -650,10 +550,7 @@ export default function Home() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (isActive) {
-                          setDisplayed(null);
-                          setSavedId(null);
-                        }
+                        if (isActive) { setDisplayed(null); setSavedId(null); }
                         remove(entry.id);
                       }}
                       className="shrink-0 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"

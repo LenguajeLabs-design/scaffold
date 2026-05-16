@@ -5,6 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ClassroomCopilot from "@/pages/ClassroomCopilot";
+import { AccessGate } from "@/components/AccessGate";
+import { useAccessCode } from "@/hooks/use-access-code";
+import { KeyRound } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +37,7 @@ function ScaffoldMark({ className }: { className?: string }) {
   );
 }
 
-function NavBar() {
+function NavBar({ isDemo, onLogout }: { isDemo: boolean; onLogout: () => void }) {
   const [location] = useLocation();
 
   const tabs = [
@@ -52,7 +55,7 @@ function NavBar() {
 
         <div className="w-px h-4 bg-border" aria-hidden="true" />
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-1">
           {tabs.map((tab) => {
             const isActive = tab.href === "/" ? location === "/" : location.startsWith(tab.href);
             return (
@@ -70,6 +73,15 @@ function NavBar() {
             );
           })}
         </div>
+
+        <button
+          onClick={onLogout}
+          className="shrink-0 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/60"
+          title={isDemo ? "Exit demo" : "Change access code"}
+        >
+          <KeyRound className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">{isDemo ? "Demo mode" : "Change code"}</span>
+        </button>
       </div>
     </nav>
   );
@@ -116,13 +128,19 @@ function Footer() {
 }
 
 function Router() {
+  const { accessCode, isDemo, isUnlocked, unlock, enterDemo, logout } = useAccessCode();
+
+  if (!isUnlocked) {
+    return <AccessGate onUnlock={unlock} onDemo={enterDemo} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <NavBar />
+      <NavBar isDemo={isDemo} onLogout={logout} />
       <div className="flex-1">
         <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/classroom-copilot" component={ClassroomCopilot} />
+          <Route path="/" component={() => <Home accessCode={accessCode!} isDemo={isDemo} />} />
+          <Route path="/classroom-copilot" component={() => <ClassroomCopilot accessCode={accessCode!} isDemo={isDemo} />} />
           <Route component={NotFound} />
         </Switch>
       </div>

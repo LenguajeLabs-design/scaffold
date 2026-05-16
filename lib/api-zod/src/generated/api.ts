@@ -23,6 +23,7 @@ export const GenerateLessonPlanBody = zod.object({
   gradeLevel: zod.enum(["Grade 3", "Grade 4", "Grade 5"]),
   widaBand: zod.enum(["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]),
   topic: zod.string().describe("Topic or subject for the lesson"),
+  accessCode: zod.string().describe("School access code for authorization"),
 });
 
 export const GenerateLessonPlanResponse = zod.object({
@@ -45,6 +46,7 @@ export const GenerateClassroomSupportBody = zod.object({
   need: zod.string().describe("What the students need help with right now"),
   gradeLevel: zod.enum(["Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
   widaLevel: zod.enum(["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]),
+  accessCode: zod.string().describe("School access code for authorization"),
 });
 
 export const GenerateClassroomSupportResponse = zod.object({

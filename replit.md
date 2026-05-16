@@ -40,20 +40,32 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 - **Nav**: White top bar with Scaffold logo + name on the left, tab links on the right (GitHub-style)
 - **Typography scale**: App title/section titles font-weight 600, labels 500, body 400
 
+#### Access Gate
+- Full-screen code entry shown to first-time visitors each browser session
+- Validates against `VALID_ACCESS_CODES` secret (comma-separated, e.g. `SUZHOU,BEIJING`)
+- "Explore sample lesson plans" link enters Demo Mode without a code
+- Session stored in `sessionStorage` — requires re-entry on new tab/session
+- "Change code" / "Demo mode" button in nav top-right lets users switch
+
 #### Lesson Planner (`/`)
 - **Features**:
   - Topic/Subject input, Grade Level dropdown (Grade 3–5), WIDA Band dropdown (WIDA 1-2, 2-3, 3-4)
-  - Planning notes textarea
+  - Planning notes textarea with 2000-char limit + live counter
+  - Privacy reminder: "Please do not include student names or private student information"
   - AI-generated lesson plan with 10 structured sections in card layout
-  - Loading state, error handling
+  - Loading state, error handling with cooldown countdown
+  - Demo mode shows 2 pre-written sample plans (no API cost)
+  - Download PDF via `window.print()`; save to lesson library (localStorage)
 
 #### Classroom Copilot (`/classroom-copilot`)
 - **Purpose**: Instant EAL classroom support for live teaching moments
 - **Features**:
   - Grade Level dropdown (Grade 2–5), WIDA Level dropdown
-  - Text area: "What do your students need help with right now?"
+  - Text area: "What do your students need help with right now?" — 2000-char limit + live counter
+  - Privacy reminder near input
   - 6 output cards: Simple Explanation, Key Vocabulary, Sentence Frames, Quick Activity, Extension Question, Teacher Move
-  - "Copy All" button
+  - "Copy All" button; session history (localStorage)
+  - Demo mode shows 2 pre-written sample responses (no API cost)
 - **Model**: gpt-5-mini (fast, cost-effective)
 
 ## API Server (`artifacts/api-server`)
@@ -75,6 +87,8 @@ artifacts/api-server/src/
     models.ts                  AI model names + token limits (single source of truth)
   lib/
     logger.ts                  Pino logger instance (used via req.log in routes)
+    access-codes.ts            Code validation + per-code rate limiting (3/day, 30s cooldown)
+    usage-logger.ts            Privacy-safe structured usage logging (no student data)
   routes/
     index.ts                   Mounts all routers under /api
     health.ts                  GET /api/healthz
@@ -98,8 +112,22 @@ artifacts/api-server/src/
 - **To change models**: edit `src/config/models.ts` only
 - **To add a new AI feature**: add a prompt builder, optionally a model constant, a new route file, register in `routes/index.ts`, then wire the frontend via the generated React hook
 
+### Security & Rate Limiting
+
+- Access code gate: all AI endpoints require a valid `accessCode` in the request body
+  - Codes stored in `VALID_ACCESS_CODES` secret (comma-separated), validated server-side
+  - Invalid code → HTTP 401
+- Per-code limits (in-memory, resets at midnight UTC):
+  - 3 AI generations per feature per day
+  - 30-second cooldown between requests
+  - Rate limit exceeded → HTTP 429 with a human-readable message
+- IP-based flood limit: 20 req/hr (lesson plan), 40 req/hr (copilot) as a backstop
+- Input length capped at 2000 characters (frontend + backend validation)
+- Request body capped at 16 kb
+- Raw AI output is never exposed to clients — errors are logged server-side and a safe message is returned
+- Usage logging: timestamp, feature, access code (uppercased), input length, success/errorKind — no student data ever logged
+
 ### Notes
 
-- CORS is open (no origin restrictions) — fine for MVP, no auth or sensitive data
-- Request body capped at 16 kb to prevent payload abuse
-- Raw AI output is never exposed to clients — errors are logged server-side and a safe message is returned
+- CORS is open (no origin restrictions) — fine for MVP
+- `accessCode` is part of the OpenAPI spec and generated client types — add to request body alongside other fields

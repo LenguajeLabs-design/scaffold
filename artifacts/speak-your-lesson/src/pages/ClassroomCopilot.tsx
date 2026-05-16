@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import {
   GenerateClassroomSupportBodyWidaLevel,
   type ClassroomSupport,
 } from "@workspace/api-client-react";
-import { Loader2, Copy, Check, BookMarked, Trash2 } from "lucide-react";
+import { Loader2, Copy, Check, BookMarked, Trash2, FlaskConical } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -27,13 +27,20 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   useSavedCopilotSessions,
   type SavedCopilotSession,
 } from "@/hooks/use-saved-copilot-sessions";
+import { DEMO_COPILOT_SESSIONS } from "@/data/demo-copilot";
+
+const MAX_NEED_CHARS = 2000;
 
 const formSchema = z.object({
-  need: z.string().min(5, "Please describe what your students need help with"),
+  need: z
+    .string()
+    .min(5, "Please describe what your students need help with")
+    .max(MAX_NEED_CHARS, `Description must be ${MAX_NEED_CHARS} characters or fewer`),
   gradeLevel: z.nativeEnum(GenerateClassroomSupportBodyGradeLevel),
   widaLevel: z.nativeEnum(GenerateClassroomSupportBodyWidaLevel),
 });
@@ -45,23 +52,42 @@ interface DisplayedSession {
   need: string;
 }
 
+interface ClassroomCopilotProps {
+  accessCode: string;
+  isDemo: boolean;
+}
+
 function SupportCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Card className="border border-border shadow-none">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {title}
-        </CardTitle>
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4">{children}</CardContent>
     </Card>
   );
 }
 
-export default function ClassroomCopilot() {
+export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilotProps) {
   const [copied, setCopied] = useState(false);
   const [displayed, setDisplayed] = useState<DisplayedSession | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [demoIndex, setDemoIndex] = useState(0);
+
+  // Cooldown state
+  const [cooldownSecs, setCooldownSecs] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function startCooldown(secs: number) {
+    setCooldownSecs(secs);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setCooldownSecs((s) => {
+        if (s <= 1) { clearInterval(cooldownRef.current!); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,44 +98,50 @@ export default function ClassroomCopilot() {
     },
   });
 
+  const needValue = form.watch("need");
+  const needLength = needValue.length;
+
   const { mutate: generateSupport, data: result, isPending, isError, error } = useGenerateClassroomSupport();
   const { sessions, save, remove } = useSavedCopilotSessions();
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (isDemo) {
+      const support = DEMO_COPILOT_SESSIONS[demoIndex % DEMO_COPILOT_SESSIONS.length];
+      setDemoIndex((i) => i + 1);
+      setSavedId(null);
+      const id = save(support, { gradeLevel: values.gradeLevel, widaLevel: values.widaLevel, need: values.need });
+      setSavedId(id);
+      setDisplayed({ support, gradeLevel: values.gradeLevel, widaLevel: values.widaLevel, need: values.need });
+      return;
+    }
     setSavedId(null);
-    generateSupport({ data: values });
+    generateSupport({ data: { ...values, accessCode } });
   }
 
   useEffect(() => {
     if (!result) return;
     const vals = form.getValues() as { gradeLevel: string; widaLevel: string; need: string };
-    const id = save(result, {
-      gradeLevel: vals.gradeLevel,
-      widaLevel: vals.widaLevel,
-      need: vals.need,
-    });
+    const id = save(result, { gradeLevel: vals.gradeLevel, widaLevel: vals.widaLevel, need: vals.need });
     setSavedId(id);
     setDisplayed({ support: result, gradeLevel: vals.gradeLevel, widaLevel: vals.widaLevel, need: vals.need });
   }, [result]);
 
+  // Parse cooldown from API error
+  useEffect(() => {
+    if (!error) return;
+    const msg: string = (error as { data?: { error?: string } })?.data?.error ?? (error as Error)?.message ?? "";
+    const match = msg.match(/wait (\d+) second/);
+    if (match) startCooldown(parseInt(match[1], 10));
+  }, [error]);
+
   function viewSession(entry: SavedCopilotSession) {
     setSavedId(entry.id);
-    setDisplayed({
-      support: entry.support,
-      gradeLevel: entry.gradeLevel,
-      widaLevel: entry.widaLevel,
-      need: entry.need,
-    });
+    setDisplayed({ support: entry.support, gradeLevel: entry.gradeLevel, widaLevel: entry.widaLevel, need: entry.need });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
   function formatAllForCopy(support: ClassroomSupport): string {
@@ -130,6 +162,13 @@ export default function ClassroomCopilot() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const isGenerating = isPending && !isDemo;
+  const canSubmit = !isGenerating && cooldownSecs === 0;
+
+  const errorMsg: string | null = isError
+    ? ((error as { data?: { error?: string } })?.data?.error ?? (error as Error)?.message ?? "Something went wrong. Please try again.")
+    : null;
+
   return (
     <div className="bg-background text-foreground">
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
@@ -141,13 +180,27 @@ export default function ClassroomCopilot() {
               Fast EAL support for live teaching moments.
             </p>
           </div>
-          {sessions.length > 0 && (
-            <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1.5 bg-card mt-0.5">
-              <BookMarked className="w-3.5 h-3.5" />
-              {sessions.length} saved
-            </span>
-          )}
+          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            {isDemo && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
+                <FlaskConical className="w-3.5 h-3.5" />
+                Demo mode
+              </span>
+            )}
+            {sessions.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1.5 bg-card">
+                <BookMarked className="w-3.5 h-3.5" />
+                {sessions.length} saved
+              </span>
+            )}
+          </div>
         </div>
+
+        {isDemo && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 leading-relaxed">
+            <strong>Demo mode:</strong> You're viewing pre-written sample responses. Enter an access code to get real AI-powered support for your classroom.
+          </div>
+        )}
 
         <Card className="border border-border shadow-none">
           <CardContent className="pt-5">
@@ -208,45 +261,63 @@ export default function ClassroomCopilot() {
                   name="need"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        What do your students need help with right now?
-                      </FormLabel>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <FormLabel className="text-sm font-medium">
+                          What do your students need help with right now?
+                        </FormLabel>
+                        <span className={`text-xs tabular-nums shrink-0 ${needLength > MAX_NEED_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                          {needLength}/{MAX_NEED_CHARS}
+                        </span>
+                      </div>
                       <FormControl>
                         <Textarea
                           data-testid="input-need"
                           placeholder="Describe what your students need help with..."
                           className="min-h-[120px] resize-none text-sm leading-relaxed"
+                          maxLength={MAX_NEED_CHARS}
                           {...field}
                         />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Please do not include student names or private student information.
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <div className="flex items-center justify-between pt-1">
-                  {isError && (
-                    <p className="text-sm text-destructive font-medium">
-                      {(error as Error)?.message || "Something went wrong. Please try again."}
-                    </p>
-                  )}
-                  <div className="ml-auto">
-                    <Button
-                      data-testid="button-generate"
-                      type="submit"
-                      disabled={isPending}
-                      className="text-sm font-semibold"
-                    >
-                      {isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        "Generate Support"
-                      )}
-                    </Button>
+                  <div className="flex-1 mr-4">
+                    {errorMsg && (
+                      <p className="text-sm text-destructive font-medium" role="alert">
+                        {errorMsg}
+                      </p>
+                    )}
+                    {cooldownSecs > 0 && !errorMsg && (
+                      <p className="text-sm text-muted-foreground">
+                        Next generation available in {cooldownSecs}s...
+                      </p>
+                    )}
                   </div>
+                  <Button
+                    data-testid="button-generate"
+                    type="submit"
+                    disabled={!canSubmit}
+                    className="text-sm font-semibold shrink-0"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : cooldownSecs > 0 ? (
+                      `Wait ${cooldownSecs}s`
+                    ) : isDemo ? (
+                      "Show Sample Support"
+                    ) : (
+                      "Generate Support"
+                    )}
+                  </Button>
                 </div>
 
               </form>
@@ -254,21 +325,24 @@ export default function ClassroomCopilot() {
           </CardContent>
         </Card>
 
-        {isPending && !displayed && (
+        {isGenerating && !displayed && (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
-            <p className="text-sm font-medium text-muted-foreground">
-              Preparing your classroom support...
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Preparing your classroom support...</p>
           </div>
         )}
 
-        {displayed && !isPending && (
+        {displayed && !isGenerating && (
           <div data-testid="section-results" className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-foreground">Classroom Support</h2>
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Classroom Support
+                  {isDemo && (
+                    <Badge variant="outline" className="text-xs font-medium text-amber-700 border-amber-200 bg-amber-50">Sample</Badge>
+                  )}
+                </h2>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {displayed.gradeLevel} · {displayed.widaLevel} · {displayed.need.slice(0, 60)}{displayed.need.length > 60 ? "…" : ""}
                 </p>
@@ -288,15 +362,9 @@ export default function ClassroomCopilot() {
                   className="gap-1.5 text-xs font-medium h-8 px-3"
                 >
                   {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      Copied
-                    </>
+                    <><Check className="w-3.5 h-3.5" />Copied</>
                   ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      Copy All
-                    </>
+                    <><Copy className="w-3.5 h-3.5" />Copy All</>
                   )}
                 </Button>
               </div>
@@ -309,12 +377,7 @@ export default function ClassroomCopilot() {
             <SupportCard title="Key Vocabulary">
               <div className="flex flex-wrap gap-1.5">
                 {displayed.support.keyVocabulary.map((word: string, i: number) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
-                  >
-                    {word}
-                  </span>
+                  <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15">{word}</span>
                 ))}
               </div>
             </SupportCard>
@@ -334,7 +397,6 @@ export default function ClassroomCopilot() {
               <SupportCard title="Quick Activity">
                 <p className="text-sm leading-relaxed">{displayed.support.quickActivity}</p>
               </SupportCard>
-
               <SupportCard title="Extension Question">
                 <p className="text-sm leading-relaxed">{displayed.support.extensionQuestion}</p>
               </SupportCard>
@@ -356,7 +418,6 @@ export default function ClassroomCopilot() {
                 <span className="text-xs font-medium text-muted-foreground">({sessions.length})</span>
               </h2>
             </div>
-
             <div className="grid gap-2">
               {sessions.map((entry) => {
                 const isActive = savedId === entry.id;
@@ -364,9 +425,7 @@ export default function ClassroomCopilot() {
                   <div
                     key={entry.id}
                     className={`group flex items-start gap-3 px-4 py-3 rounded-lg border transition-colors cursor-pointer ${
-                      isActive
-                        ? "border-primary/30 bg-primary/5"
-                        : "border-border bg-card hover:bg-muted/40"
+                      isActive ? "border-primary/30 bg-primary/5" : "border-border bg-card hover:bg-muted/40"
                     }`}
                     onClick={() => viewSession(entry)}
                   >
@@ -383,10 +442,7 @@ export default function ClassroomCopilot() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (isActive) {
-                          setDisplayed(null);
-                          setSavedId(null);
-                        }
+                        if (isActive) { setDisplayed(null); setSavedId(null); }
                         remove(entry.id);
                       }}
                       className="shrink-0 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"

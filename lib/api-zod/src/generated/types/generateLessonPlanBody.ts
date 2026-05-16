@@ -15,4 +15,6 @@ export interface GenerateLessonPlanBody {
   widaBand: GenerateLessonPlanBodyWidaBand;
   /** Topic or subject for the lesson */
   topic: string;
+  /** School access code for authorization */
+  accessCode: string;
 }

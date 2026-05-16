@@ -112,11 +112,15 @@ components:
         topic:
           type: string
           description: Topic or subject for the lesson
+        accessCode:
+          type: string
+          description: School access code for authorization
       required:
         - notes
         - gradeLevel
         - widaBand
         - topic
+        - accessCode
     LessonPlan:
       type: object
       properties:
@@ -167,10 +171,14 @@ components:
         widaLevel:
           type: string
           enum: ["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]
+        accessCode:
+          type: string
+          description: School access code for authorization
       required:
         - need
         - gradeLevel
         - widaLevel
+        - accessCode
     ClassroomSupport:
       type: object
       properties:
