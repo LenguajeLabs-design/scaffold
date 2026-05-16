@@ -23,7 +23,7 @@ export type FeatureKey = "lesson-plan" | "classroom-copilot";
 // Fine for a single-process server; survives restarts by just resetting counts.
 const store = new Map<string, Map<FeatureKey, CodeState>>();
 
-const DAILY_LIMIT = 3;
+const DAILY_LIMIT = 5;
 const COOLDOWN_MS = 30 * 1000; // 30 seconds
 
 function todayUTC(): string {
