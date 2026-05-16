@@ -30,33 +30,43 @@ export interface PromptPair {
 
 // Inline schema strings anchor the AI to a predictable JSON shape.
 // Changing field names here must be mirrored in the OpenAPI spec.
+//
+// TEXT FORMATTING RULES for multi-sentence fields:
+//   • Use "\n\n" between distinct paragraphs or phases.
+//   • Use "• " (bullet + space) at the start of each bullet-point line.
+//   • Use "1. " / "2. " for numbered steps.
+//   • Use "Label: " pattern (word + colon + space) to introduce sub-sections.
+//   • Never use Markdown (no **, no ##, no backticks).
 const LESSON_PLAN_JSON_SCHEMA = `{
   "title": "lesson title",
   "contentObjective": "students will be able to...",
   "languageObjective": "students will be able to use language to...",
   "keyVocabulary": ["word1", "word2", "word3", "word4", "word5"],
-  "sentenceFrames": ["frame1", "frame2", "frame3"],
-  "warmUp": "description of warm-up activity",
-  "mainActivity": "description of main activity",
-  "speakingActivity": "description of speaking/language activity",
-  "exitTicket": "description of exit ticket",
-  "teacherNotes": "practical teacher tips and notes"
+  "sentenceFrames": ["frame1 ____.", "frame2 ____.", "frame3 ____."],
+  "warmUp": "Setup sentence.\n\n1. First step for the teacher.\n2. Second step.\n3. Third step.\n\nDebrief: One closing note.",
+  "mainActivity": "Overview sentence.\n\nDirections:\n1. Step one.\n2. Step two.\n3. Step three.\n\nDifferentiation: Note for WIDA levels.",
+  "speakingActivity": "Overview sentence.\n\nSetup:\n• What students do.\n• Partner structure.\n\nSample prompts:\n• Example one.\n• Example two.\n\nDebrief: Closing move.",
+  "exitTicket": "One sentence framing the exit ticket.\n\n• Option A: Quick written prompt.\n• Option B: Draw and label.\n\nTeacher tip: How to collect and sort responses.",
+  "teacherNotes": "• Tip for WIDA 1-2 students.\n• Tip for WIDA 3+ students.\n• Scaffolding note.\n• What to watch for."
 }`;
 
 const CLASSROOM_SUPPORT_JSON_SCHEMA = `{
-  "simpleExplanation": "one or two plain sentences explaining the concept simply",
+  "simpleExplanation": "Two or three plain sentences explaining the concept simply. Use everyday words.",
   "keyVocabulary": ["word1", "word2", "word3", "word4", "word5"],
   "sentenceFrames": ["frame one ____.", "frame two ____.", "frame three ____."],
-  "quickActivity": "a short 2-3 minute activity teachers can do right now",
-  "extensionQuestion": "one deeper thinking question for students who are ready",
-  "teacherMove": "one specific concrete thing the teacher should do or say right now"
+  "quickActivity": "One sentence framing the activity.\n\n1. Step one.\n2. Step two.\n3. Step three.",
+  "extensionQuestion": "One deeper thinking question for students who are ready.",
+  "teacherMove": "One specific concrete thing the teacher should do or say right now."
 }`;
 
 export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
   const systemPrompt =
     "You are an expert ESL/ELD curriculum designer specializing in elementary multilingual learner " +
     "classrooms. You create practical, structured, WIDA-aligned lesson plans. " +
-    "Always return valid JSON only — no markdown, no code blocks, just the raw JSON object.";
+    "Always return valid JSON only — no Markdown, no code blocks, just the raw JSON object. " +
+    "For multi-sentence fields use plain-text formatting: separate paragraphs with \\n\\n, " +
+    "bullet points with '• ' prefix, numbered steps with '1. ' prefix, and sub-section labels " +
+    "as 'Label: text'. Never use Markdown syntax (**bold**, ## headings, backticks, etc.).";
 
   const userPrompt =
     "Turn these rough teacher planning notes into a clear, low-prep, high-impact lesson plan " +
@@ -67,6 +77,13 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
     `WIDA Band: ${args.widaBand}\n` +
     `Topic/Subject: ${args.topic}\n\n` +
     `Teacher's Planning Notes:\n${args.notes}\n\n` +
+    "IMPORTANT: For all multi-sentence fields (warmUp, mainActivity, speakingActivity, exitTicket, teacherNotes) " +
+    "use structured plain-text formatting:\n" +
+    "  - Separate distinct phases/paragraphs with \\n\\n\n" +
+    "  - Use '• ' (bullet + space) at the start of bullet-point lines\n" +
+    "  - Use '1. ' / '2. ' for numbered steps\n" +
+    "  - Use 'Label: ' to introduce sub-sections (e.g. 'Debrief: ...', 'Differentiation: ...')\n" +
+    "  - Do NOT use Markdown (no **, no ##, no backticks)\n\n" +
     "Return your response as valid JSON only (no markdown, no code blocks) with exactly this structure:\n" +
     LESSON_PLAN_JSON_SCHEMA;
 
@@ -76,7 +93,9 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
 export function buildClassroomSupportPrompt(args: ClassroomSupportPromptArgs): PromptPair {
   const systemPrompt =
     "You are an expert elementary EAL teacher. Give practical, short, immediately usable classroom support. " +
-    "Always return valid JSON only — no markdown, no code blocks.";
+    "Always return valid JSON only — no Markdown, no code blocks. " +
+    "For multi-sentence fields use plain-text structure: separate paragraphs with \\n\\n, " +
+    "numbered steps with '1. ' prefix, bullet points with '• ' prefix. No Markdown syntax.";
 
   const userPrompt =
     "A teacher needs immediate EAL classroom support.\n\n" +
@@ -85,6 +104,7 @@ export function buildClassroomSupportPrompt(args: ClassroomSupportPromptArgs): P
     `Student Need: ${args.need}\n\n` +
     "Provide practical, short, immediately usable support. Use clear student-friendly language. " +
     "Match the WIDA level. Avoid long explanations. Avoid generic advice.\n\n" +
+    "For the quickActivity field, use numbered steps (1. / 2. / 3.) separated by \\n\\n if helpful.\n\n" +
     "Return valid JSON only (no markdown, no code blocks) with exactly these keys:\n" +
     CLASSROOM_SUPPORT_JSON_SCHEMA;
 

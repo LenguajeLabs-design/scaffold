@@ -31,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
 import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
+import { RichText } from "@/components/RichText";
 
 const MAX_NOTES_CHARS = 2000;
 
@@ -502,7 +503,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       {label}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{content}</CardContent>
+                  <CardContent className="px-4 pb-4 text-muted-foreground">
+                    <RichText text={content} />
+                  </CardContent>
                 </Card>
               ))}
             </div>
@@ -511,7 +514,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               <CardHeader className="pb-2 pt-4 px-4">
                 <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Teacher Notes</CardTitle>
               </CardHeader>
-              <CardContent className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{displayed.lesson.teacherNotes}</CardContent>
+              <CardContent className="px-4 pb-4 text-muted-foreground">
+                <RichText text={displayed.lesson.teacherNotes} />
+              </CardContent>
             </Card>
 
           </section>

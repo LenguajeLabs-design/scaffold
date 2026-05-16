@@ -33,6 +33,7 @@ import {
   type SavedCopilotSession,
 } from "@/hooks/use-saved-copilot-sessions";
 import { DEMO_COPILOT_SESSIONS } from "@/data/demo-copilot";
+import { RichText } from "@/components/RichText";
 
 const MAX_NEED_CHARS = 2000;
 
@@ -371,7 +372,7 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
             </div>
 
             <SupportCard title="Simple Explanation">
-              <p className="text-sm leading-relaxed">{displayed.support.simpleExplanation}</p>
+              <RichText text={displayed.support.simpleExplanation} />
             </SupportCard>
 
             <SupportCard title="Key Vocabulary">
@@ -395,7 +396,7 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SupportCard title="Quick Activity">
-                <p className="text-sm leading-relaxed">{displayed.support.quickActivity}</p>
+                <RichText text={displayed.support.quickActivity} />
               </SupportCard>
               <SupportCard title="Extension Question">
                 <p className="text-sm leading-relaxed">{displayed.support.extensionQuestion}</p>
@@ -405,6 +406,7 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
             <SupportCard title="Teacher Move">
               <p className="text-sm leading-relaxed font-medium">{displayed.support.teacherMove}</p>
             </SupportCard>
+
 
           </div>
         )}
