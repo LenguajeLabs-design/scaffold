@@ -10,6 +10,12 @@
  * structured output.
  */
 
+import {
+  getCanonicalCopilotContext,
+  getCanonicalLessonContext,
+  getCanonicalPlannerRulesText,
+} from "../content/canonical-guides";
+
 export interface LessonPlanPromptArgs {
   gradeLevel: string;
   widaBand: string;
@@ -27,6 +33,25 @@ export interface PromptPair {
   systemPrompt: string;
   userPrompt: string;
 }
+
+const LESSON_PLANNING_REQUIREMENTS = [
+  "Create a practical lesson a teacher could teach tomorrow.",
+  "Keep the content objective and language objective clearly distinct.",
+  "Choose key vocabulary that is essential to the lesson, not a long list.",
+  "Make sentence frames useful and teachable, not generic filler.",
+  "Use scaffolds that clearly fit the WIDA band and the actual task demand.",
+  "Keep activities coherent from warm-up through exit ticket.",
+  "Use teacherNotes for actionable guidance, not vague reminders.",
+].join(" ");
+
+const CLASSROOM_COPILOT_REQUIREMENTS = [
+  "Act like a skilled EAL specialist helping during a live lesson.",
+  "Give the smallest useful move that will help right now.",
+  "Keep explanations short, concrete, and student-friendly.",
+  "Match the scaffold to the immediate task demand.",
+  "Avoid generic advice and long theory.",
+  "Make the teacherMove specific enough to say or do immediately.",
+].join(" ");
 
 // Inline schema strings anchor the AI to a predictable JSON shape.
 // Changing field names here must be mirrored in the OpenAPI spec.
@@ -60,9 +85,12 @@ const CLASSROOM_SUPPORT_JSON_SCHEMA = `{
 }`;
 
 export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
+  const canonicalContext = getCanonicalLessonContext(args.gradeLevel, args.widaBand);
   const systemPrompt =
-    "You are an expert ESL/ELD curriculum designer specializing in elementary multilingual learner " +
-    "classrooms. You create practical, structured, WIDA-aligned lesson plans. " +
+    "You are an expert elementary EAL curriculum designer and instructional coach. " +
+    "You create practical, structured, WIDA-aligned lesson plans for multilingual learners. " +
+    getCanonicalPlannerRulesText() + " " +
+    LESSON_PLANNING_REQUIREMENTS + " " +
     "Always return valid JSON only — no Markdown, no code blocks, just the raw JSON object. " +
     "For multi-sentence fields use plain-text formatting: separate paragraphs with \\n\\n, " +
     "bullet points with '• ' prefix, numbered steps with '1. ' prefix, and sub-section labels " +
@@ -70,13 +98,20 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
 
   const userPrompt =
     "Turn these rough teacher planning notes into a clear, low-prep, high-impact lesson plan " +
-    "for an elementary multilingual learner classroom. Include a content objective, language objective, " +
-    "key vocabulary, sentence frames, warm-up, main activity, speaking task, exit ticket, and teacher notes. " +
-    "Make it practical and ready to teach tomorrow.\n\n" +
+    "for an elementary multilingual learner classroom.\n\n" +
     `Grade Level: ${args.gradeLevel}\n` +
     `WIDA Band: ${args.widaBand}\n` +
     `Topic/Subject: ${args.topic}\n\n` +
+    `Canonical guide context:\n${canonicalContext}\n\n` +
     `Teacher's Planning Notes:\n${args.notes}\n\n` +
+    "Planning instructions:\n" +
+    "- Infer the likely lesson demand from the topic and notes.\n" +
+    "- Build a coherent sequence from warm-up to exit ticket.\n" +
+    "- Keep the lesson realistic for one class period unless the notes clearly suggest otherwise.\n" +
+    "- Use no more than 5 high-value vocabulary words unless fewer are more appropriate.\n" +
+    "- Make sentence frames closely match what students need to say or write in this lesson.\n" +
+    "- In teacherNotes, include actionable bullets that help the teacher differentiate and watch for likely student needs.\n" +
+    "- Do not mention missing information or ask follow-up questions. Make the most reasonable teacher-friendly assumptions.\n\n" +
     "IMPORTANT: For all multi-sentence fields (warmUp, mainActivity, speakingActivity, exitTicket, teacherNotes) " +
     "use structured plain-text formatting:\n" +
     "  - Separate distinct phases/paragraphs with \\n\\n\n" +
@@ -91,8 +126,11 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
 }
 
 export function buildClassroomSupportPrompt(args: ClassroomSupportPromptArgs): PromptPair {
+  const canonicalContext = getCanonicalCopilotContext(args.gradeLevel, args.widaLevel);
   const systemPrompt =
-    "You are an expert elementary EAL teacher. Give practical, short, immediately usable classroom support. " +
+    "You are an expert elementary EAL teacher and live classroom coach. " +
+    getCanonicalPlannerRulesText() + " " +
+    CLASSROOM_COPILOT_REQUIREMENTS + " " +
     "Always return valid JSON only — no Markdown, no code blocks. " +
     "For multi-sentence fields use plain-text structure: separate paragraphs with \\n\\n, " +
     "numbered steps with '1. ' prefix, bullet points with '• ' prefix. No Markdown syntax.";
@@ -102,8 +140,15 @@ export function buildClassroomSupportPrompt(args: ClassroomSupportPromptArgs): P
     `Grade Level: ${args.gradeLevel}\n` +
     `WIDA Level: ${args.widaLevel}\n` +
     `Student Need: ${args.need}\n\n` +
-    "Provide practical, short, immediately usable support. Use clear student-friendly language. " +
-    "Match the WIDA level. Avoid long explanations. Avoid generic advice.\n\n" +
+    `Canonical guide context:\n${canonicalContext}\n\n` +
+    "Support instructions:\n" +
+    "- Assume this is a real classroom moment and the teacher needs help right now.\n" +
+    "- Identify the most likely language demand behind the student need.\n" +
+    "- Choose one strong scaffolding move rather than many scattered supports.\n" +
+    "- Keep keyVocabulary tight and relevant.\n" +
+    "- Make sentenceFrames sound usable by real students in the described moment.\n" +
+    "- Make teacherMove a specific action or line the teacher can use immediately.\n" +
+    "- Avoid long explanations and avoid generic advice.\n\n" +
     "For the quickActivity field, use numbered steps (1. / 2. / 3.) separated by \\n\\n if helpful.\n\n" +
     "Return valid JSON only (no markdown, no code blocks) with exactly these keys:\n" +
     CLASSROOM_SUPPORT_JSON_SCHEMA;

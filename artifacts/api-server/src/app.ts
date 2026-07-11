@@ -7,6 +7,10 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+const allowedOrigins = (process.env["CORS_ALLOWED_ORIGINS"] ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // Trust the first proxy hop (Replit's reverse proxy sets X-Forwarded-For).
 // Required for express-rate-limit to identify clients correctly.
@@ -37,9 +41,21 @@ app.use(
   }),
 );
 
-// CORS: wide-open for the MVP — frontend and API share the same Replit proxy
-// and there are no user accounts or sensitive data exposed to the frontend.
-app.use(cors());
+// Keep local development easy while allowing production to restrict requests
+// to approved frontend origins such as GitHub Pages.
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      logger.warn({ origin }, "Blocked request from disallowed CORS origin");
+      callback(new Error("Origin not allowed by CORS"));
+    },
+  }),
+);
 
 // Limit request body size to prevent large payload abuse.
 app.use(express.json({ limit: "16kb" }));

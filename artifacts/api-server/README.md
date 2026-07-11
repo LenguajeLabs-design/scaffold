@@ -69,11 +69,15 @@ Route handlers never call `openai` or `JSON.parse` directly.
 
 | Variable | Description |
 |---|---|
-| `PORT` | Port the server binds to (set automatically by Replit) |
-| `AI_INTEGRATIONS_OPENAI_BASE_URL` | OpenAI-compatible base URL (set by Replit AI Integrations) |
-| `AI_INTEGRATIONS_OPENAI_API_KEY` | API key for the integrations proxy (set by Replit AI Integrations) |
+| `PORT` | Port the server binds to |
+| `OPENAI_API_KEY` | Standard OpenAI API key for Render, local dev, or other non-Replit hosts |
+| `OPENAI_BASE_URL` | Optional OpenAI-compatible base URL override |
+| `AI_INTEGRATIONS_OPENAI_API_KEY` | Optional fallback for Replit AI Integrations |
+| `AI_INTEGRATIONS_OPENAI_BASE_URL` | Optional fallback for Replit AI Integrations |
+| `CORS_ALLOWED_ORIGINS` | Optional comma-separated allowlist of frontend origins |
 
-The `AI_INTEGRATIONS_*` variables are provisioned automatically via the Replit AI Integrations system. No API key needs to be managed manually.
+For Render or local deployment, set `OPENAI_API_KEY`.
+For Replit, the existing `AI_INTEGRATIONS_*` variables still work.
 
 ---
 

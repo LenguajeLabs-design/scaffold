@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { resolveApiUrl } from "@/lib/api-base-url";
 
 function ScaffoldMark({ className }: { className?: string }) {
   return (
@@ -62,7 +63,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
       // lesson-plan endpoint's 401 response to confirm the code is known.
       // We send a deliberately invalid body so it always returns early after
       // the auth check, costing no AI credits.
-      const res = await fetch("/api/lesson-plan/generate", {
+      const res = await fetch(resolveApiUrl("/api/lesson-plan/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessCode: trimmed }),
