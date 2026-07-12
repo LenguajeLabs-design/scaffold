@@ -67,6 +67,7 @@ app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 60,
+    skip: (req) => req.path === "/api/healthz",
     standardHeaders: "draft-8",
     legacyHeaders: false,
     message: { error: "Too many requests. Please try again in a few minutes." },
