@@ -12,5 +12,7 @@ services:
         value: 20
       - key: OPENAI_API_KEY
         sync: false
+      - key: VALID_ACCESS_CODES
+        sync: false
       - key: CORS_ALLOWED_ORIGINS
         sync: false
