@@ -112,6 +112,10 @@ components:
         topic:
           type: string
           description: Topic or subject for the lesson
+        unitProfile:
+          type: string
+          enum: ["Grade 4 Discipline-Based Writing"]
+          description: Optional canonical curriculum unit used to ground the lesson
         accessCode:
           type: string
           description: School access code for authorization
@@ -126,9 +130,15 @@ components:
       properties:
         title:
           type: string
+        integratedUnitGoal:
+          type: string
         contentObjective:
           type: string
         languageObjective:
+          type: string
+        languageFunctionObjective:
+          type: string
+        languageFeatureObjective:
           type: string
         keyVocabulary:
           type: array
@@ -148,10 +158,23 @@ components:
           type: string
         teacherNotes:
           type: string
+        scaffoldPlan:
+          type: string
+        scaffoldFadingPlan:
+          type: string
+        formativeAssessment:
+          type: string
+        sourcesUsed:
+          type: array
+          items:
+            type: string
       required:
         - title
+        - integratedUnitGoal
         - contentObjective
         - languageObjective
+        - languageFunctionObjective
+        - languageFeatureObjective
         - keyVocabulary
         - sentenceFrames
         - warmUp
@@ -159,6 +182,10 @@ components:
         - speakingActivity
         - exitTicket
         - teacherNotes
+        - scaffoldPlan
+        - scaffoldFadingPlan
+        - formativeAssessment
+        - sourcesUsed
     GenerateClassroomSupportBody:
       type: object
       properties:

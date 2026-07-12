@@ -21,6 +21,7 @@ export interface LessonPlanPromptArgs {
   widaBand: string;
   topic: string;
   notes: string;
+  unitProfile?: string;
 }
 
 export interface ClassroomSupportPromptArgs {
@@ -64,15 +65,22 @@ const CLASSROOM_COPILOT_REQUIREMENTS = [
 //   • Never use Markdown (no **, no ##, no backticks).
 const LESSON_PLAN_JSON_SCHEMA = `{
   "title": "lesson title",
+  "integratedUnitGoal": "students will build content understanding while using language to...",
   "contentObjective": "students will be able to...",
   "languageObjective": "students will be able to use language to...",
+  "languageFunctionObjective": "students will use the language function of explaining, comparing, arguing, or reporting to...",
+  "languageFeatureObjective": "students will use a specific language feature such as cause-and-effect connectors, expanded noun groups, or evidence phrases to...",
   "keyVocabulary": ["word1", "word2", "word3", "word4", "word5"],
   "sentenceFrames": ["frame1 ____.", "frame2 ____.", "frame3 ____."],
   "warmUp": "Setup sentence.\n\n1. First step for the teacher.\n2. Second step.\n3. Third step.\n\nDebrief: One closing note.",
   "mainActivity": "Overview sentence.\n\nDirections:\n1. Step one.\n2. Step two.\n3. Step three.\n\nDifferentiation: Note for WIDA levels.",
   "speakingActivity": "Overview sentence.\n\nSetup:\n• What students do.\n• Partner structure.\n\nSample prompts:\n• Example one.\n• Example two.\n\nDebrief: Closing move.",
   "exitTicket": "One sentence framing the exit ticket.\n\n• Option A: Quick written prompt.\n• Option B: Draw and label.\n\nTeacher tip: How to collect and sort responses.",
-  "teacherNotes": "• Tip for WIDA 1-2 students.\n• Tip for WIDA 3+ students.\n• Scaffolding note.\n• What to watch for."
+  "teacherNotes": "• Practical implementation note.\n• Content accuracy note.\n• What to watch for.",
+  "scaffoldPlan": "• WIDA-band support tied to the task.\n• Oral rehearsal or visual support.\n• One high-value teacher move.",
+  "scaffoldFadingPlan": "1. Support to use first.\n2. Evidence students are ready for less support.\n3. Support to remove or reduce next.",
+  "formativeAssessment": "What students will produce, what content and language evidence the teacher will examine, and how scaffold dependence will be recorded.",
+  "sourcesUsed": ["specific canonical source 1", "specific canonical source 2"]
 }`;
 
 const CLASSROOM_SUPPORT_JSON_SCHEMA = `{
@@ -85,12 +93,20 @@ const CLASSROOM_SUPPORT_JSON_SCHEMA = `{
 }`;
 
 export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
-  const canonicalContext = getCanonicalLessonContext(args.gradeLevel, args.widaBand);
+  const canonicalContext = getCanonicalLessonContext(
+    args.gradeLevel,
+    args.widaBand,
+    args.topic,
+    args.notes,
+    args.unitProfile,
+  );
   const systemPrompt =
     "You are an expert elementary EAL curriculum designer and instructional coach. " +
     "You create practical, structured, WIDA-aligned lesson plans for multilingual learners. " +
-    getCanonicalPlannerRulesText() + " " +
-    LESSON_PLANNING_REQUIREMENTS + " " +
+    getCanonicalPlannerRulesText() +
+    " " +
+    LESSON_PLANNING_REQUIREMENTS +
+    " " +
     "Always return valid JSON only — no Markdown, no code blocks, just the raw JSON object. " +
     "For multi-sentence fields use plain-text formatting: separate paragraphs with \\n\\n, " +
     "bullet points with '• ' prefix, numbered steps with '1. ' prefix, and sub-section labels " +
@@ -102,11 +118,17 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
     `Grade Level: ${args.gradeLevel}\n` +
     `WIDA Band: ${args.widaBand}\n` +
     `Topic/Subject: ${args.topic}\n\n` +
+    `Selected Unit: ${args.unitProfile ?? "General lesson planning"}\n\n` +
     `Canonical guide context:\n${canonicalContext}\n\n` +
     `Teacher's Planning Notes:\n${args.notes}\n\n` +
     "Planning instructions:\n" +
     "- Infer the likely lesson demand from the topic and notes.\n" +
     "- Build a coherent sequence from warm-up to exit ticket.\n" +
+    "- Write an integrated unit goal that joins meaningful content learning with the language students need to participate.\n" +
+    "- Keep the language function objective and language feature objective distinct and observable.\n" +
+    "- Include a scaffold-fading plan with evidence the teacher can use to decide when to reduce support.\n" +
+    "- In formativeAssessment, assess content, language, and scaffold dependence.\n" +
+    "- In sourcesUsed, list only canonical sources explicitly named in the supplied context; never invent a citation.\n" +
     "- Keep the lesson realistic for one class period unless the notes clearly suggest otherwise.\n" +
     "- Use no more than 5 high-value vocabulary words unless fewer are more appropriate.\n" +
     "- Make sentence frames closely match what students need to say or write in this lesson.\n" +
@@ -125,12 +147,19 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
   return { systemPrompt, userPrompt };
 }
 
-export function buildClassroomSupportPrompt(args: ClassroomSupportPromptArgs): PromptPair {
-  const canonicalContext = getCanonicalCopilotContext(args.gradeLevel, args.widaLevel);
+export function buildClassroomSupportPrompt(
+  args: ClassroomSupportPromptArgs,
+): PromptPair {
+  const canonicalContext = getCanonicalCopilotContext(
+    args.gradeLevel,
+    args.widaLevel,
+  );
   const systemPrompt =
     "You are an expert elementary EAL teacher and live classroom coach. " +
-    getCanonicalPlannerRulesText() + " " +
-    CLASSROOM_COPILOT_REQUIREMENTS + " " +
+    getCanonicalPlannerRulesText() +
+    " " +
+    CLASSROOM_COPILOT_REQUIREMENTS +
+    " " +
     "Always return valid JSON only — no Markdown, no code blocks. " +
     "For multi-sentence fields use plain-text structure: separate paragraphs with \\n\\n, " +
     "numbered steps with '1. ' prefix, bullet points with '• ' prefix. No Markdown syntax.";

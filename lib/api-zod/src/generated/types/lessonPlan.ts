@@ -8,8 +8,11 @@
 
 export interface LessonPlan {
   title: string;
+  integratedUnitGoal: string;
   contentObjective: string;
   languageObjective: string;
+  languageFunctionObjective: string;
+  languageFeatureObjective: string;
   keyVocabulary: string[];
   sentenceFrames: string[];
   warmUp: string;
@@ -17,4 +20,8 @@ export interface LessonPlan {
   speakingActivity: string;
   exitTicket: string;
   teacherNotes: string;
+  scaffoldPlan: string;
+  scaffoldFadingPlan: string;
+  formativeAssessment: string;
+  sourcesUsed: string[];
 }

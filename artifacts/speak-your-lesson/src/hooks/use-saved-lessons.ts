@@ -16,6 +16,7 @@ export interface SavedLesson {
   gradeLevel: string;
   widaBand: string;
   topic: string;
+  unitProfile?: string;
   lesson: LessonPlan;
 }
 
@@ -42,7 +43,12 @@ export function useSavedLessons() {
   const save = useCallback(
     (
       lesson: LessonPlan,
-      meta: { gradeLevel: string; widaBand: string; topic: string }
+      meta: {
+        gradeLevel: string;
+        widaBand: string;
+        topic: string;
+        unitProfile?: string;
+      },
     ): string => {
       const entry: SavedLesson = {
         id: crypto.randomUUID(),
@@ -51,6 +57,7 @@ export function useSavedLessons() {
         gradeLevel: meta.gradeLevel,
         widaBand: meta.widaBand,
         topic: meta.topic,
+        unitProfile: meta.unitProfile,
         lesson,
       };
       setLessons((prev) => {
@@ -60,7 +67,7 @@ export function useSavedLessons() {
       });
       return entry.id;
     },
-    []
+    [],
   );
 
   const remove = useCallback((id: string): void => {

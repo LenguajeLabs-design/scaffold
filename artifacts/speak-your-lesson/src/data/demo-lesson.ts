@@ -3,11 +3,25 @@ import type { LessonPlan } from "@workspace/api-client-react";
 export const DEMO_LESSON_PLANS: LessonPlan[] = [
   {
     title: "Fractions as Fair Shares — Grade 3 WIDA 1–2",
+    integratedUnitGoal:
+      "Students will build conceptual understanding of equal parts while using precise language to identify and compare fractions.",
     contentObjective:
       "Students will identify halves, thirds, and fourths by partitioning shapes into equal parts.",
     languageObjective:
       "Students will use sentence frames to name and compare fractions using the words 'half,' 'third,' and 'fourth.'",
-    keyVocabulary: ["fraction", "half", "third", "fourth", "equal parts", "numerator", "denominator"],
+    languageFunctionObjective:
+      "Students will describe and compare fractional parts with a partner.",
+    languageFeatureObjective:
+      "Students will use comparative language and the pattern 'divided into ___ equal parts' to explain their models.",
+    keyVocabulary: [
+      "fraction",
+      "half",
+      "third",
+      "fourth",
+      "equal parts",
+      "numerator",
+      "denominator",
+    ],
     sentenceFrames: [
       "This shape is divided into ___ equal parts.",
       "Each part is called a ___.",
@@ -23,14 +37,38 @@ export const DEMO_LESSON_PLANS: LessonPlan[] = [
       "Show a rectangle divided into 3 unequal parts on the board.\n\n• Students draw the shape on a mini whiteboard.\n• Write: 'This is / is not a fraction because ___.' using at least one vocabulary word.\n\nTeacher tip: Collect and sort into three piles — got it / almost / needs support — to plan the next day's grouping.",
     teacherNotes:
       "• WIDA 1 students: allow pointing, drawing, or gestures alongside speech.\n• Provide labeled fraction manipulatives and bilingual vocabulary cards where available.\n• For early finishers: ask 'Which is larger — 1/2 or 1/4? How do you know?'\n• During the gallery walk, give WIDA 1 students a visual anchor card with the sentence frames printed on it.",
+    scaffoldPlan:
+      "• Pair fraction strips with labeled visuals.\n• Rehearse each comparison orally before writing.\n• Keep one comparison frame visible during partner work.",
+    scaffoldFadingPlan:
+      "1. Begin with labeled models and a complete frame.\n2. Look for accurate oral comparisons without teacher prompting.\n3. Remove the complete frame while keeping the fraction models available.",
+    formativeAssessment:
+      "Review the exit ticket for accurate equal-part reasoning, correct fraction language, and whether the student completed the explanation independently or relied on the frame.",
+    sourcesUsed: [
+      "Scaffold canonical WIDA core guide",
+      "Scaffold canonical planner rules",
+    ],
   },
   {
-    title: "Animal Adaptations — Grade 4 WIDA 2–3",
+    title: "Explaining Animal Adaptations — Grade 4",
+    integratedUnitGoal:
+      "Students will explain how animal structures support survival while using cause-and-effect language to communicate scientific understanding.",
     contentObjective:
       "Students will explain how specific physical adaptations help animals survive in their habitat.",
     languageObjective:
       "Students will write and orally present one cause-and-effect sentence explaining an adaptation using 'because,' 'so that,' or 'as a result.'",
-    keyVocabulary: ["adaptation", "habitat", "survive", "camouflage", "predator", "prey", "trait"],
+    languageFunctionObjective:
+      "Students will explain how a physical adaptation supports survival in a specific habitat.",
+    languageFeatureObjective:
+      "Students will connect an adaptation and its survival benefit using because, so that, or as a result.",
+    keyVocabulary: [
+      "adaptation",
+      "habitat",
+      "survive",
+      "camouflage",
+      "predator",
+      "prey",
+      "trait",
+    ],
     sentenceFrames: [
       "The ___ has ___ so that it can ___.",
       "This adaptation helps the ___ survive because ___.",
@@ -46,5 +84,18 @@ export const DEMO_LESSON_PLANS: LessonPlan[] = [
       "Students write 2 sentences independently:\n\n• Sentence 1: Name one adaptation.\n• Sentence 2: Explain how it helps the animal survive (use a cause-and-effect connector).\n\nQuick score: 2 pts for correct cause/effect language, 1 pt for content accuracy.",
     teacherNotes:
       "• Pre-teach 'adaptation' vs. 'behavior' — students often confuse structural and behavioral adaptations.\n• Bilingual glossary cards in Spanish, Mandarin, and Korean are in the resource cabinet.\n• For WIDA 2 students: provide the graphic organizer with one example row pre-filled.\n• For WIDA 3 students: challenge them to compare two animals' adaptations for the same survival challenge.",
+    scaffoldPlan:
+      "• Use animal photographs and a three-column adaptation organizer.\n• Rehearse the explanation with a partner before writing.\n• Offer one cause-and-effect frame matched to the task.",
+    scaffoldFadingPlan:
+      "1. Model one adaptation explanation with the organizer and frame.\n2. Look for accurate independent use of a connector during partner rehearsal.\n3. Remove the sentence frame while retaining the organizer and vocabulary.",
+    formativeAssessment:
+      "Score the exit response for scientific accuracy, a clear cause-and-effect connection, and the level of prompting or language support needed.",
+    sourcesUsed: [
+      "EALDesk Elementary: Grade 4 Discipline-Based Writing unit",
+      "WIDA ELD Standards Framework 2020 Edition, Grades 4–5",
+      "WIDA Can Do Key Uses, Grades 4–5",
+      "WIDA Language Charts",
+      "WIDA Teaching-Learning Cycle scaffolding guide",
+    ],
   },
 ];

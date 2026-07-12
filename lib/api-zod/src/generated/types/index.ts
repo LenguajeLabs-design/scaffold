@@ -13,6 +13,7 @@ export * from "./generateClassroomSupportBodyGradeLevel";
 export * from "./generateClassroomSupportBodyWidaLevel";
 export * from "./generateLessonPlanBody";
 export * from "./generateLessonPlanBodyGradeLevel";
+export * from "./generateLessonPlanBodyUnitProfile";
 export * from "./generateLessonPlanBodyWidaBand";
 export * from "./healthStatus";
 export * from "./lessonPlan";

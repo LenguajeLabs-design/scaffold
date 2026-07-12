@@ -7,6 +7,8 @@
  * external Desktop file paths.
  */
 
+import { getCanonicalUnitProfile } from "./canonical-unit-profiles";
+
 export const CANONICAL_GUIDE_SOURCES = {
   plannerRules: "90_Canonical_Planning_Guides/Planner_Rules.md",
   widaCore: "90_Canonical_Planning_Guides/WIDA_Core_Guide.md",
@@ -223,8 +225,20 @@ export function getCanonicalPlannerRulesText(): string {
   return PLANNER_RULES;
 }
 
-export function getCanonicalLessonContext(gradeLevel: string, widaBand: string): string {
+export function getCanonicalLessonContext(
+  gradeLevel: string,
+  widaBand: string,
+  topic: string,
+  notes: string,
+  unitProfile?: string,
+): string {
   const gradeGuide = getGradeGuide(gradeLevel);
+  const canonicalUnitProfile = getCanonicalUnitProfile(
+    gradeLevel,
+    topic,
+    notes,
+    unitProfile,
+  );
 
   return [
     "Canonical source material:",
@@ -244,12 +258,16 @@ export function getCanonicalLessonContext(gradeLevel: string, widaBand: string):
     "Scaffold guidance:",
     SCAFFOLDS_BY_WIDA,
     gradeGuide ? `\n\n${gradeLevel} guide:\n${gradeGuide}` : "",
+    canonicalUnitProfile ? `\n\n${canonicalUnitProfile}` : "",
     "",
     `Current WIDA band to honor: ${widaBand}`,
   ].join("\n");
 }
 
-export function getCanonicalCopilotContext(gradeLevel: string, widaLevel: string): string {
+export function getCanonicalCopilotContext(
+  gradeLevel: string,
+  widaLevel: string,
+): string {
   const gradeGuide = getGradeGuide(gradeLevel);
 
   return [

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GenerateLessonPlanBodyGradeLevel } from "./generateLessonPlanBodyGradeLevel";
+import type { GenerateLessonPlanBodyUnitProfile } from "./generateLessonPlanBodyUnitProfile";
 import type { GenerateLessonPlanBodyWidaBand } from "./generateLessonPlanBodyWidaBand";
 
 export interface GenerateLessonPlanBody {
@@ -15,6 +16,8 @@ export interface GenerateLessonPlanBody {
   widaBand: GenerateLessonPlanBodyWidaBand;
   /** Topic or subject for the lesson */
   topic: string;
+  /** Optional canonical curriculum unit used to ground the lesson */
+  unitProfile?: GenerateLessonPlanBodyUnitProfile;
   /** School access code for authorization */
   accessCode: string;
 }

@@ -23,13 +23,20 @@ export const GenerateLessonPlanBody = zod.object({
   gradeLevel: zod.enum(["Grade 3", "Grade 4", "Grade 5"]),
   widaBand: zod.enum(["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]),
   topic: zod.string().describe("Topic or subject for the lesson"),
+  unitProfile: zod
+    .enum(["Grade 4 Discipline-Based Writing"])
+    .optional()
+    .describe("Optional canonical curriculum unit used to ground the lesson"),
   accessCode: zod.string().describe("School access code for authorization"),
 });
 
 export const GenerateLessonPlanResponse = zod.object({
   title: zod.string(),
+  integratedUnitGoal: zod.string(),
   contentObjective: zod.string(),
   languageObjective: zod.string(),
+  languageFunctionObjective: zod.string(),
+  languageFeatureObjective: zod.string(),
   keyVocabulary: zod.array(zod.string()),
   sentenceFrames: zod.array(zod.string()),
   warmUp: zod.string(),
@@ -37,6 +44,10 @@ export const GenerateLessonPlanResponse = zod.object({
   speakingActivity: zod.string(),
   exitTicket: zod.string(),
   teacherNotes: zod.string(),
+  scaffoldPlan: zod.string(),
+  scaffoldFadingPlan: zod.string(),
+  formativeAssessment: zod.string(),
+  sourcesUsed: zod.array(zod.string()),
 });
 
 /**

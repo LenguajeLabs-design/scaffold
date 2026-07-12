@@ -27,6 +27,16 @@ export const GenerateLessonPlanBodyWidaBand = {
   "WIDA_3-4": "WIDA 3-4",
 } as const;
 
+/**
+ * Optional canonical curriculum unit used to ground the lesson
+ */
+export type GenerateLessonPlanBodyUnitProfile =
+  (typeof GenerateLessonPlanBodyUnitProfile)[keyof typeof GenerateLessonPlanBodyUnitProfile];
+
+export const GenerateLessonPlanBodyUnitProfile = {
+  "Grade_4_Discipline-Based_Writing": "Grade 4 Discipline-Based Writing",
+} as const;
+
 export interface GenerateLessonPlanBody {
   /** Rough planning notes from the teacher */
   notes: string;
@@ -34,14 +44,19 @@ export interface GenerateLessonPlanBody {
   widaBand: GenerateLessonPlanBodyWidaBand;
   /** Topic or subject for the lesson */
   topic: string;
+  /** Optional canonical curriculum unit used to ground the lesson */
+  unitProfile?: GenerateLessonPlanBodyUnitProfile;
   /** School access code for authorization */
   accessCode: string;
 }
 
 export interface LessonPlan {
   title: string;
+  integratedUnitGoal: string;
   contentObjective: string;
   languageObjective: string;
+  languageFunctionObjective: string;
+  languageFeatureObjective: string;
   keyVocabulary: string[];
   sentenceFrames: string[];
   warmUp: string;
@@ -49,6 +64,10 @@ export interface LessonPlan {
   speakingActivity: string;
   exitTicket: string;
   teacherNotes: string;
+  scaffoldPlan: string;
+  scaffoldFadingPlan: string;
+  formativeAssessment: string;
+  sourcesUsed: string[];
 }
 
 export type GenerateClassroomSupportBodyGradeLevel =
