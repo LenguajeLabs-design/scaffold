@@ -178,14 +178,15 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
           <div>
             <h1 className="text-lg font-semibold text-foreground">Classroom Copilot</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Fast EAL support for live teaching moments.
+              Get practical language supports for the teaching moment in front
+              of you.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-0.5">
             {isDemo && (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
                 <FlaskConical className="w-3.5 h-3.5" />
-                Demo mode
+                Sample mode
               </span>
             )}
             {sessions.length > 0 && (
@@ -199,7 +200,8 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
 
         {isDemo && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 leading-relaxed">
-            <strong>Demo mode:</strong> You're viewing pre-written sample responses. Enter an access code to get real AI-powered support for your classroom.
+            <strong>Sample mode:</strong> Try the workflow with pre-written
+            classroom supports. Your entries stay in this browser.
           </div>
         )}
 

@@ -490,15 +490,15 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               Lesson Planner
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Turn rough notes into a ready-to-teach lesson plan for
-              multilingual learners.
+              Build a ready-to-teach lesson for multilingual learners from
+              your topic and planning notes.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-0.5">
             {isDemo && (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
                 <FlaskConical className="w-3.5 h-3.5" />
-                Demo mode
+                Sample mode
               </span>
             )}
             {lessons.length > 0 && (
@@ -512,9 +512,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
         {isDemo && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 leading-relaxed">
-            <strong>Demo mode:</strong> You're viewing pre-written sample lesson
-            plans. Enter an access code to generate real AI-powered plans
-            tailored to your notes.
+            <strong>Sample mode:</strong> Try the planner with pre-written
+            lesson plans. Your selections and notes stay in this browser.
           </div>
         )}
 

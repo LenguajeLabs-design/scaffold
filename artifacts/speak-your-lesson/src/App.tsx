@@ -6,10 +6,12 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ClassroomCopilot from "@/pages/ClassroomCopilot";
 import { AccessGate } from "@/components/AccessGate";
-import { useAccessCode } from "@/hooks/use-access-code";
+import { DEMO_CODE, useAccessCode } from "@/hooks/use-access-code";
 import { KeyRound } from "lucide-react";
 
 const queryClient = new QueryClient();
+const ACCESS_GATE_ENABLED =
+  import.meta.env.VITE_ACCESS_GATE_ENABLED === "true";
 
 function ScaffoldMark({ className }: { className?: string }) {
   return (
@@ -37,7 +39,15 @@ function ScaffoldMark({ className }: { className?: string }) {
   );
 }
 
-function NavBar({ isDemo, onLogout }: { isDemo: boolean; onLogout: () => void }) {
+function NavBar({
+  isDemo,
+  onLogout,
+  showAccessControl,
+}: {
+  isDemo: boolean;
+  onLogout: () => void;
+  showAccessControl: boolean;
+}) {
   const [location] = useLocation();
 
   const tabs = [
@@ -74,14 +84,18 @@ function NavBar({ isDemo, onLogout }: { isDemo: boolean; onLogout: () => void })
           })}
         </div>
 
-        <button
-          onClick={onLogout}
-          className="shrink-0 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/60"
-          title={isDemo ? "Exit demo" : "Change access code"}
-        >
-          <KeyRound className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{isDemo ? "Demo mode" : "Change code"}</span>
-        </button>
+        {showAccessControl && (
+          <button
+            onClick={onLogout}
+            className="shrink-0 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/60"
+            title={isDemo ? "Exit sample mode" : "Change access code"}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">
+              {isDemo ? "Sample mode" : "Change code"}
+            </span>
+          </button>
+        )}
       </div>
     </nav>
   );
@@ -130,17 +144,24 @@ function Footer() {
 function Router() {
   const { accessCode, isDemo, isUnlocked, unlock, enterDemo, logout } = useAccessCode();
 
-  if (!isUnlocked) {
+  if (ACCESS_GATE_ENABLED && !isUnlocked) {
     return <AccessGate onUnlock={unlock} onDemo={enterDemo} />;
   }
 
+  const activeAccessCode = accessCode ?? DEMO_CODE;
+  const isSampleMode = !ACCESS_GATE_ENABLED || isDemo;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <NavBar isDemo={isDemo} onLogout={logout} />
+      <NavBar
+        isDemo={isSampleMode}
+        onLogout={logout}
+        showAccessControl={ACCESS_GATE_ENABLED}
+      />
       <div className="flex-1">
         <Switch>
-          <Route path="/" component={() => <Home accessCode={accessCode!} isDemo={isDemo} />} />
-          <Route path="/classroom-copilot" component={() => <ClassroomCopilot accessCode={accessCode!} isDemo={isDemo} />} />
+          <Route path="/" component={() => <Home accessCode={activeAccessCode} isDemo={isSampleMode} />} />
+          <Route path="/classroom-copilot" component={() => <ClassroomCopilot accessCode={activeAccessCode} isDemo={isSampleMode} />} />
           <Route component={NotFound} />
         </Switch>
       </div>

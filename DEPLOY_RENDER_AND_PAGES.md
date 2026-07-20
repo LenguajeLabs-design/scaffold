@@ -45,6 +45,17 @@ After Render gives you the backend URL:
 
 This URL is public configuration, not a secret. The OpenAI API key stays only on Render.
 
+### Optional: restore the access gate
+
+The frontend currently opens directly in sample mode. To restore the existing
+school access-code gate, add this GitHub Actions repository variable:
+
+```bash
+VITE_ACCESS_GATE_ENABLED=true
+```
+
+Leave the variable unset, or set it to `false`, to keep direct access enabled.
+
 ## 4. Enable GitHub Pages
 
 1. Go to `Settings` > `Pages`.
