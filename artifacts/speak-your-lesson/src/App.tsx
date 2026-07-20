@@ -56,9 +56,9 @@ function NavBar({
   ];
 
   return (
-    <nav className="border-b border-border bg-card print:hidden">
-      <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-6">
-        <Link href="/" className="flex items-center gap-2 shrink-0 text-primary hover:opacity-80 transition-opacity">
+    <nav className="border-b border-border/80 bg-card/95 backdrop-blur-xl print:hidden">
+      <div className="max-w-4xl mx-auto px-4 min-h-16 flex items-center gap-4 sm:gap-6">
+        <Link href="/" className="flex min-h-11 items-center gap-2 shrink-0 text-primary hover:opacity-80 transition-opacity">
           <ScaffoldMark className="w-5 h-5 text-primary" />
           <span className="text-sm font-semibold tracking-tight">Scaffold</span>
         </Link>
@@ -71,7 +71,7 @@ function NavBar({
             return (
               <Link key={tab.href} href={tab.href}>
                 <span
-                  className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  className={`inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition-colors cursor-pointer ${
                     isActive
                       ? "bg-primary/8 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -87,7 +87,7 @@ function NavBar({
         {showAccessControl && (
           <button
             onClick={onLogout}
-            className="shrink-0 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/60"
+            className="shrink-0 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title={isDemo ? "Exit sample mode" : "Change access code"}
           >
             <KeyRound className="w-3.5 h-3.5" />

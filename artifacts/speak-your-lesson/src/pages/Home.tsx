@@ -483,10 +483,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     <div className="bg-background text-foreground">
       {displayed && <PrintableLesson displayed={displayed} />}
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8 print:hidden">
+      <main className="max-w-4xl mx-auto px-4 py-10 sm:py-12 space-y-8 print:hidden">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-foreground">
+            <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">
               Lesson Planner
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -511,14 +511,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         </div>
 
         {isDemo && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 leading-relaxed">
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm text-amber-900 leading-relaxed">
             <strong>Sample mode:</strong> Try the planner with pre-written
             lesson plans. Your selections and notes stay in this browser.
           </div>
         )}
 
-        <Card className="border border-border shadow-none">
-          <CardContent className="pt-5">
+        <Card>
+          <CardContent className="pt-6 sm:p-7">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}

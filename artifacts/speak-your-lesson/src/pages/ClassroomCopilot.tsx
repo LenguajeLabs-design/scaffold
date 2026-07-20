@@ -172,11 +172,11 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
 
   return (
     <div className="bg-background text-foreground">
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-3xl mx-auto px-4 py-10 sm:py-12 space-y-8">
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Classroom Copilot</h1>
+            <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">Classroom Copilot</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Get practical language supports for the teaching moment in front
               of you.
@@ -199,14 +199,14 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
         </div>
 
         {isDemo && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 leading-relaxed">
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm text-amber-900 leading-relaxed">
             <strong>Sample mode:</strong> Try the workflow with pre-written
             classroom supports. Your entries stay in this browser.
           </div>
         )}
 
-        <Card className="border border-border shadow-none">
-          <CardContent className="pt-5">
+        <Card>
+          <CardContent className="pt-6 sm:p-7">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
