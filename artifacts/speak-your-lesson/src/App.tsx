@@ -6,8 +6,12 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ClassroomCopilot from "@/pages/ClassroomCopilot";
 import { AccessGate } from "@/components/AccessGate";
+import {
+  OnboardingDialog,
+  useFirstVisitOnboarding,
+} from "@/components/OnboardingDialog";
 import { DEMO_CODE, useAccessCode } from "@/hooks/use-access-code";
-import { KeyRound } from "lucide-react";
+import { HelpCircle, KeyRound } from "lucide-react";
 
 const queryClient = new QueryClient();
 const ACCESS_GATE_ENABLED =
@@ -43,10 +47,12 @@ function NavBar({
   isDemo,
   onLogout,
   showAccessControl,
+  onOpenOnboarding,
 }: {
   isDemo: boolean;
   onLogout: () => void;
   showAccessControl: boolean;
+  onOpenOnboarding: () => void;
 }) {
   const [location] = useLocation();
 
@@ -57,10 +63,10 @@ function NavBar({
 
   return (
     <nav className="border-b border-border/80 bg-card/95 backdrop-blur-xl print:hidden">
-      <div className="max-w-4xl mx-auto px-4 min-h-16 flex items-center gap-4 sm:gap-6">
+      <div className="max-w-4xl mx-auto px-4 min-h-16 flex items-center gap-2 sm:gap-5">
         <Link href="/" className="flex min-h-11 items-center gap-2 shrink-0 text-primary hover:opacity-80 transition-opacity">
           <ScaffoldMark className="w-5 h-5 text-primary" />
-          <span className="text-sm font-semibold tracking-tight">Scaffold</span>
+          <span className="hidden text-sm font-semibold tracking-tight sm:inline">Scaffold</span>
         </Link>
 
         <div className="w-px h-4 bg-border" aria-hidden="true" />
@@ -71,7 +77,7 @@ function NavBar({
             return (
               <Link key={tab.href} href={tab.href}>
                 <span
-                  className={`inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition-colors cursor-pointer ${
+                  className={`inline-flex min-h-11 items-center rounded-xl px-2 text-xs font-medium transition-colors cursor-pointer sm:px-3 sm:text-sm ${
                     isActive
                       ? "bg-primary/8 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -83,6 +89,17 @@ function NavBar({
             );
           })}
         </div>
+
+        <button
+          type="button"
+          onClick={onOpenOnboarding}
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3"
+          aria-label="First time here? Open the walkthrough"
+          data-testid="button-onboarding"
+        >
+          <HelpCircle className="h-4 w-4" aria-hidden="true" />
+          <span className="hidden lg:inline">First time here?</span>
+        </button>
 
         {showAccessControl && (
           <button
@@ -143,6 +160,9 @@ function Footer() {
 
 function Router() {
   const { accessCode, isDemo, isUnlocked, unlock, enterDemo, logout } = useAccessCode();
+  const [, navigate] = useLocation();
+  const { open: onboardingOpen, setOnboardingOpen } =
+    useFirstVisitOnboarding();
 
   if (ACCESS_GATE_ENABLED && !isUnlocked) {
     return <AccessGate onUnlock={unlock} onDemo={enterDemo} />;
@@ -157,6 +177,7 @@ function Router() {
         isDemo={isSampleMode}
         onLogout={logout}
         showAccessControl={ACCESS_GATE_ENABLED}
+        onOpenOnboarding={() => setOnboardingOpen(true)}
       />
       <div className="flex-1">
         <Switch>
@@ -166,6 +187,20 @@ function Router() {
         </Switch>
       </div>
       <Footer />
+      <OnboardingDialog
+        isSampleMode={isSampleMode}
+        open={onboardingOpen}
+        onOpenChange={setOnboardingOpen}
+        onStart={() => {
+          setOnboardingOpen(false);
+          navigate("/");
+          window.setTimeout(() => {
+            document
+              .querySelector<HTMLInputElement>('[data-testid="input-topic"]')
+              ?.focus();
+          }, 100);
+        }}
+      />
     </div>
   );
 }
