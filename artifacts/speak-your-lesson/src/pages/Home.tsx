@@ -13,8 +13,11 @@ import {
   Loader2,
   Trash2,
   BookMarked,
+  CheckCircle2,
+  ChevronDown,
   Download,
   FlaskConical,
+  Sparkles,
 } from "lucide-react";
 import {
   Form,
@@ -36,6 +39,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
 import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
 import { RichText } from "@/components/RichText";
@@ -364,6 +372,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [displayed, setDisplayed] = useState<DisplayedLesson | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
+  const [curriculumOpen, setCurriculumOpen] = useState(false);
 
   // Cooldown state
   const [cooldownSecs, setCooldownSecs] = useState(0);
@@ -522,20 +531,226 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-5"
+                className="space-y-8"
               >
-                <div className="grid md:grid-cols-3 gap-4">
+                <section className="space-y-5" aria-labelledby="learner-context-heading">
+                  <div className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      1
+                    </span>
+                    <div>
+                      <h2
+                        id="learner-context-heading"
+                        className="font-semibold text-foreground"
+                      >
+                        Set the learner context
+                      </h2>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        Choose the grade and approximate English-language
+                        proficiency.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="gradeLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">
+                            Grade Level
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger
+                                data-testid="select-grade-level"
+                                className="text-sm"
+                              >
+                                <SelectValue placeholder="Select a grade" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {(
+                                Object.values(
+                                  GenerateLessonPlanBodyGradeLevel,
+                                ) as string[]
+                              ).map((grade) => (
+                                <SelectItem
+                                  key={grade}
+                                  value={grade}
+                                  className="text-sm"
+                                >
+                                  {grade}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="widaBand"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">
+                            WIDA Band
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger
+                                data-testid="select-wida-band"
+                                className="text-sm"
+                              >
+                                <SelectValue placeholder="Select WIDA band" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {(
+                                Object.entries(
+                                  GenerateLessonPlanBodyWidaBand,
+                                ) as [string, string][]
+                              ).map(([, value]) => (
+                                <SelectItem
+                                  key={value}
+                                  value={value}
+                                  className="text-sm"
+                                >
+                                  {value}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Collapsible
+                    open={curriculumOpen}
+                    onOpenChange={setCurriculumOpen}
+                    className="rounded-2xl border border-border/70 bg-muted/20"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex min-h-12 w-full items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        data-testid="button-curriculum-settings"
+                      >
+                        <span>
+                          <span className="block text-sm font-semibold text-foreground">
+                            Optional curriculum settings
+                          </span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            Connect the plan to an available EALDesk unit.
+                          </span>
+                        </span>
+                        <ChevronDown
+                          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${curriculumOpen ? "rotate-180" : ""}`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="border-t border-border/70 px-4 pb-4 pt-3">
+                      <FormField
+                        control={form.control}
+                        name="unitProfile"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">
+                              Curriculum Unit
+                            </FormLabel>
+                            <Select
+                              value={field.value ?? "general"}
+                              onValueChange={(value) => {
+                                if (value === "general") {
+                                  field.onChange(undefined);
+                                  return;
+                                }
+                                field.onChange(value);
+                                form.setValue(
+                                  "gradeLevel",
+                                  GenerateLessonPlanBodyGradeLevel.Grade_4,
+                                );
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger
+                                  data-testid="select-unit-profile"
+                                  className="text-sm"
+                                >
+                                  <SelectValue placeholder="Select a curriculum unit" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="general" className="text-sm">
+                                  General lesson planning
+                                </SelectItem>
+                                <SelectItem
+                                  value={
+                                    GenerateLessonPlanBodyUnitProfile[
+                                      "Grade_4_Discipline-Based_Writing"
+                                    ]
+                                  }
+                                  className="text-sm"
+                                >
+                                  Grade 4 Discipline-Based Writing
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs leading-relaxed text-muted-foreground">
+                              More EALDesk Elementary units can be added here
+                              after the core planning flow is validated.
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
+                </section>
+
+                <div className="h-px bg-border/80" aria-hidden="true" />
+
+                <section className="space-y-5" aria-labelledby="lesson-details-heading">
+                  <div className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      2
+                    </span>
+                    <div>
+                      <h2
+                        id="lesson-details-heading"
+                        className="font-semibold text-foreground"
+                      >
+                        Add the lesson details
+                      </h2>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        Rough notes are enough—Scaffold will organize them.
+                      </p>
+                    </div>
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="topic"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium">
-                          Topic / Subject
+                          Topic or Subject
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. Fractions, Photosynthesis"
+                            placeholder="For example: Fractions or Photosynthesis"
                             data-testid="input-topic"
                             className="text-sm"
                             {...field}
@@ -548,182 +763,70 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
                   <FormField
                     control={form.control}
-                    name="gradeLevel"
+                    name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          Grade Level
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger
-                              data-testid="select-grade-level"
-                              className="text-sm"
-                            >
-                              <SelectValue placeholder="Select a grade" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(
-                              Object.values(
-                                GenerateLessonPlanBodyGradeLevel,
-                              ) as string[]
-                            ).map((grade) => (
-                              <SelectItem
-                                key={grade}
-                                value={grade}
-                                className="text-sm"
-                              >
-                                {grade}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="widaBand"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          WIDA Band
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger
-                              data-testid="select-wida-band"
-                              className="text-sm"
-                            >
-                              <SelectValue placeholder="Select WIDA band" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(
-                              Object.entries(
-                                GenerateLessonPlanBodyWidaBand,
-                              ) as [string, string][]
-                            ).map(([, value]) => (
-                              <SelectItem
-                                key={value}
-                                value={value}
-                                className="text-sm"
-                              >
-                                {value}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="unitProfile"
-                  render={({ field }) => (
-                    <FormItem className="rounded-lg border border-primary/15 bg-primary/[0.035] p-4">
-                      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.9fr)] md:items-center">
-                        <div>
-                          <FormLabel className="text-sm font-semibold">
-                            Curriculum Unit
+                        <div className="flex items-baseline justify-between gap-2">
+                          <FormLabel className="text-sm font-medium">
+                            Planning Notes
                           </FormLabel>
-                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                            Choose the pilot unit to ground the plan in EALDesk
-                            curriculum, WIDA guidance, and the approved source
-                            pack.
-                          </p>
+                          <span
+                            className={`text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}
+                          >
+                            {notesLength}/{MAX_NOTES_CHARS}
+                          </span>
                         </div>
-                        <Select
-                          value={field.value ?? "general"}
-                          onValueChange={(value) => {
-                            if (value === "general") {
-                              field.onChange(undefined);
-                              return;
-                            }
-                            field.onChange(value);
-                            form.setValue(
-                              "gradeLevel",
-                              GenerateLessonPlanBodyGradeLevel.Grade_4,
-                            );
-                          }}
-                        >
-                          <FormControl>
-                            <SelectTrigger
-                              data-testid="select-unit-profile"
-                              className="bg-background text-sm"
-                            >
-                              <SelectValue placeholder="Select a curriculum unit" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="general" className="text-sm">
-                              General lesson planning
-                            </SelectItem>
-                            <SelectItem
-                              value={
-                                GenerateLessonPlanBodyUnitProfile[
-                                  "Grade_4_Discipline-Based_Writing"
-                                ]
-                              }
-                              className="text-sm"
-                            >
-                              Grade 4 Discipline-Based Writing
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormControl>
+                          <Textarea
+                            placeholder="For example: Students are comparing fractions with visual models. Include partner talk, key vocabulary, and a quick exit ticket."
+                            className="min-h-[180px] resize-y text-sm leading-relaxed"
+                            data-testid="input-notes"
+                            maxLength={MAX_NOTES_CHARS}
+                            {...field}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Don’t include student names or private student
+                          information.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </section>
 
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-baseline justify-between gap-2">
-                        <FormLabel className="text-sm font-medium">
-                          Planning Notes
-                        </FormLabel>
-                        <span
-                          className={`text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}
-                        >
-                          {notesLength}/{MAX_NOTES_CHARS}
-                        </span>
-                      </div>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Paste your rough notes or voice transcript here..."
-                          className="min-h-[180px] resize-y text-sm leading-relaxed"
-                          data-testid="input-notes"
-                          maxLength={MAX_NOTES_CHARS}
-                          {...field}
-                        />
-                      </FormControl>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Please do not include student names or private student
-                        information.
+                <aside className="rounded-2xl border border-primary/10 bg-primary/[0.035] p-4 sm:p-5">
+                  <div className="flex items-start gap-3">
+                    <Sparkles
+                      className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Your plan will include
                       </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <ul className="mt-2 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                        {[
+                          "Content and language objectives",
+                          "Key vocabulary and sentence frames",
+                          "A four-part lesson sequence",
+                          "Teacher notes and assessment ideas",
+                        ].map((item) => (
+                          <li key={item} className="flex items-start gap-2">
+                            <CheckCircle2
+                              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                              aria-hidden="true"
+                            />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </aside>
 
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex-1 mr-4">
+                <div className="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex-1">
                     {errorMsg && (
                       <p
                         className="text-sm text-destructive font-medium"
@@ -742,7 +845,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     type="submit"
                     disabled={!canSubmit}
                     data-testid="button-generate"
-                    className="text-sm font-semibold shrink-0"
+                    className="w-full shrink-0 text-sm font-semibold sm:w-auto"
                   >
                     {isGenerating ? (
                       <>
@@ -762,6 +865,27 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             </Form>
           </CardContent>
         </Card>
+
+        {!displayed && !isGenerating && (
+          <section
+            className="rounded-2xl border border-dashed border-border bg-card/40 px-6 py-10 text-center"
+            aria-labelledby="lesson-preview-heading"
+          >
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/[0.07] text-primary">
+              <BookMarked className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <h2
+              id="lesson-preview-heading"
+              className="mt-4 font-semibold text-foreground"
+            >
+              Your lesson plan will appear here
+            </h2>
+            <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Complete the two steps above to see a structured plan you can
+              adapt, save, and print.
+            </p>
+          </section>
+        )}
 
         {isGenerating && !displayed && (
           <div className="py-16 flex flex-col items-center justify-center gap-3 text-center animate-in fade-in duration-500">
