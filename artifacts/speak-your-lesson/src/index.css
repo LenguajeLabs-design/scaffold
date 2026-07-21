@@ -68,6 +68,16 @@
 
 /* LIGHT MODE */
 :root {
+  --brand-teal: #2dd4bf;
+  --brand-teal-strong: #0f766e;
+  --brand-blue: #60a5fa;
+  --brand-blue-strong: #1d4ed8;
+  --brand-purple: #a78bfa;
+  --brand-purple-strong: #6d28d9;
+  --brand-indigo: #1e1b4b;
+  --brand-night: #0b0f17;
+  --brand-cream: #f7f5ee;
+
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
 
@@ -76,14 +86,14 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 220 20% 97%;
-  --foreground: 223 38% 17%;
+  --background: 47 36% 95%;
+  --foreground: 220 35% 7%;
   
-  --border: 220 18% 88%;
+  --border: 244 18% 87%;
   
   --card: 0 0% 100%;
-  --card-foreground: 223 38% 17%;
-  --card-border: 220 18% 88%;
+  --card-foreground: 220 35% 7%;
+  --card-border: 244 18% 87%;
   
   --sidebar: 0 0% 100%;
   --sidebar-foreground: 223 60% 20%;
@@ -95,31 +105,31 @@
   --sidebar-ring: 223 60% 20%;
   
   --popover: 0 0% 100%;
-  --popover-foreground: 223 60% 20%;
-  --popover-border: 220 33% 90%;
+  --popover-foreground: 220 35% 7%;
+  --popover-border: 244 18% 87%;
   
-  --primary: 223 50% 22%;
+  --primary: 244 47% 20%;
   --primary-foreground: 0 0% 100%;
   
   --secondary: 0 0% 100%;
-  --secondary-foreground: 223 60% 20%;
+  --secondary-foreground: 244 47% 20%;
   
-  --muted: 220 20% 93%;
-  --muted-foreground: 223 14% 40%;
+  --muted: 47 20% 92%;
+  --muted-foreground: 220 12% 38%;
   
-  --accent: 355 64% 48%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 173 66% 50%;
+  --accent-foreground: 220 35% 7%;
   
   --destructive: 355 64% 48%;
   --destructive-foreground: 0 0% 100%;
   
-  --input: 220 18% 84%;
-  --ring: 223 50% 22%;
-  --chart-1: 223 60% 20%;
-  --chart-2: 355 64% 48%;
-  --chart-3: 220 33% 80%;
-  --chart-4: 220 33% 70%;
-  --chart-5: 220 33% 60%;
+  --input: 244 16% 82%;
+  --ring: 175 77% 26%;
+  --chart-1: 244 47% 20%;
+  --chart-2: 173 66% 50%;
+  --chart-3: 213 94% 68%;
+  --chart-4: 258 90% 76%;
+  --chart-5: 175 77% 26%;
 
   --app-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", sans-serif;
   --app-font-serif: Georgia, serif;

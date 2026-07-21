@@ -10,6 +10,7 @@ import {
   type LessonPlan,
 } from "@workspace/api-client-react";
 import {
+  AlertTriangle,
   Loader2,
   Trash2,
   BookMarked,
@@ -47,6 +48,17 @@ import {
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
 import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
 import { RichText } from "@/components/RichText";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const MAX_NOTES_CHARS = 2000;
 
@@ -482,10 +494,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const isGenerating = isPending && !isDemo;
   const canSubmit = !isGenerating && cooldownSecs === 0;
 
-  const errorMsg: string | null = isError
+  const rawErrorMsg: string | null = isError
     ? ((error as { data?: { error?: string } })?.data?.error ??
       (error as Error)?.message ??
       "Failed to generate lesson plan. Please try again.")
+    : null;
+
+  const errorMsg = rawErrorMsg
+    ? /network|fetch|reach|connection/i.test(rawErrorMsg)
+      ? "We couldn’t reach the lesson service. Check your connection and try again."
+      : "We couldn’t create the lesson plan. Your notes are still here—please try again."
     : null;
 
   return (
@@ -828,17 +846,25 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 <div className="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex-1">
                     {errorMsg && (
-                      <p
-                        className="text-sm text-destructive font-medium"
+                      <div
+                        className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive"
                         role="alert"
                       >
-                        {errorMsg}
-                      </p>
+                        <AlertTriangle
+                          className="mt-0.5 h-4 w-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span>{errorMsg}</span>
+                      </div>
                     )}
                     {cooldownSecs > 0 && !errorMsg && (
-                      <p className="text-sm text-muted-foreground">
-                        Next generation available in {cooldownSecs}s...
-                      </p>
+                      <div
+                        className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]"
+                        role="status"
+                      >
+                        You can create another plan in {cooldownSecs} seconds.
+                        Your current notes will stay in place.
+                      </div>
                     )}
                   </div>
                   <Button
@@ -888,12 +914,28 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         )}
 
         {isGenerating && !displayed && (
-          <div className="py-16 flex flex-col items-center justify-center gap-3 text-center animate-in fade-in duration-500">
-            <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
-            <p className="text-sm font-medium text-muted-foreground">
-              Crafting your lesson plan...
-            </p>
-          </div>
+          <section
+            className="overflow-hidden rounded-2xl border border-[var(--brand-blue)]/25 bg-card text-center shadow-[0_16px_40px_rgba(30,27,75,0.06)] animate-in fade-in duration-300"
+            aria-labelledby="generating-lesson-heading"
+            aria-live="polite"
+          >
+            <div className="h-1 w-full animate-pulse bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]" />
+            <div className="px-6 py-12">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)]/20 via-[var(--brand-blue)]/20 to-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]">
+                <Sparkles className="h-5 w-5 animate-pulse" aria-hidden="true" />
+              </div>
+              <h2
+                id="generating-lesson-heading"
+                className="mt-4 font-semibold text-foreground"
+              >
+                Building your lesson plan
+              </h2>
+              <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Organizing objectives, language supports, activities, and
+                assessment ideas. This may take a moment.
+              </p>
+            </div>
+          </section>
         )}
 
         {displayed && (
@@ -901,6 +943,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             data-testid="section-results"
             className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
+            <div
+              className="flex items-start gap-3 rounded-2xl border border-[var(--brand-teal)]/35 bg-[var(--brand-teal)]/10 px-4 py-3.5 text-[var(--brand-teal-strong)]"
+              role="status"
+              aria-live="polite"
+            >
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-semibold">Your lesson plan is ready</p>
+                <p className="mt-0.5 text-sm leading-relaxed">
+                  Review the supports below, adapt them for your learners, and
+                  print when you’re ready.
+                </p>
+              </div>
+            </div>
             <div className="pb-4 border-b border-border flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">
@@ -930,8 +986,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     </Badge>
                   )}
                   {savedId && (
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <span className="inline-flex items-center gap-1 text-xs text-[var(--brand-teal-strong)] font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-teal-strong)]" />
                       Saved to library
                     </span>
                   )}
@@ -940,11 +996,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 gap-1.5 text-xs font-medium h-8 px-3"
+                className="shrink-0 gap-1.5 font-medium"
                 onClick={() => window.print()}
               >
                 <Download className="w-3.5 h-3.5" />
-                Download PDF
+                Print / Save PDF
               </Button>
             </div>
 
@@ -1207,20 +1263,41 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isActive) {
-                          setDisplayed(null);
-                          setSavedId(null);
-                        }
-                        remove(entry.id);
-                      }}
-                      className="shrink-0 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
-                      aria-label="Delete lesson"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          onClick={(event) => event.stopPropagation()}
+                          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground opacity-100 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                          aria-label={`Delete ${entry.topic || entry.lesson.title}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="w-[calc(100%-2rem)] rounded-2xl border-border/80 bg-card sm:max-w-md">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this lesson?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            “{entry.topic || entry.lesson.title}” will be removed
+                            from this browser. This can’t be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep lesson</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                              if (isActive) {
+                                setDisplayed(null);
+                                setSavedId(null);
+                              }
+                              remove(entry.id);
+                            }}
+                          >
+                            Delete lesson
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 );
               })}

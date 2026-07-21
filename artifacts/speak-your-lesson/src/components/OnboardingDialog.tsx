@@ -76,7 +76,7 @@ export function OnboardingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bottom-3 left-3 right-3 top-auto w-auto max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-3xl border-border/80 bg-card p-0 shadow-[0_28px_90px_rgba(20,38,82,0.22)] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2">
         <div className="border-b border-border/70 bg-primary/[0.035] px-6 pb-5 pt-7 sm:px-8 sm:pb-6 sm:pt-8">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)] text-[var(--brand-night)] shadow-sm">
             <HelpCircle className="h-5 w-5" aria-hidden="true" />
           </div>
           <DialogHeader className="pr-7 text-left">
