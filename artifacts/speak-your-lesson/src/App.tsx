@@ -135,10 +135,10 @@ function Footer() {
             <p className="text-xs text-muted-foreground">
               Contact:{" "}
               <a
-                href="mailto:LenguajeLabs@proton.me"
+                href="mailto:forozc1@gmail.com"
                 className="text-primary hover:underline"
               >
-                LenguajeLabs@proton.me
+                forozc1@gmail.com
               </a>
             </p>
             <p className="text-xs text-muted-foreground max-w-md leading-relaxed">

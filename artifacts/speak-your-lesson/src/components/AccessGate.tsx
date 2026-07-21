@@ -156,10 +156,10 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
           <p className="text-xs text-muted-foreground">
             Need a code?{" "}
             <a
-              href="mailto:LenguajeLabs@proton.me"
+              href="mailto:forozc1@gmail.com"
               className="text-primary hover:underline font-medium"
             >
-              Email LenguajeLabs@proton.me
+              Email forozc1@gmail.com
             </a>
           </p>
           <button
