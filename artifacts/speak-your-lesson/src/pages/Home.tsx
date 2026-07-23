@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Download,
   FlaskConical,
+  Layers3,
   Sparkles,
 } from "lucide-react";
 import {
@@ -87,6 +88,37 @@ interface DisplayedLesson {
 interface HomeProps {
   accessCode: string;
   isDemo: boolean;
+}
+
+function ScaffoldBlueprint() {
+  const layers = [
+    ["04", "Check understanding"],
+    ["03", "Practice with language"],
+    ["02", "Model the thinking"],
+    ["01", "Name the objective"],
+  ];
+
+  return (
+    <div
+      className="scaffold-blueprint"
+      aria-label="A lesson taking shape in four support layers"
+    >
+      <div className="scaffold-blueprint__beam" aria-hidden="true" />
+      <div className="scaffold-blueprint__header">
+        <span>Lesson structure</span>
+        <span>4 support layers</span>
+      </div>
+      <ol>
+        {layers.map(([number, label], index) => (
+          <li key={number} style={{ "--layer": index } as React.CSSProperties}>
+            <span>{number}</span>
+            <strong>{label}</strong>
+          </li>
+        ))}
+      </ol>
+      <p>Language support is part of the lesson—not an add-on.</p>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -434,6 +466,19 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     generateLessonPlan({ data: { ...values, accessCode } });
   }
 
+  function showSamplePlan() {
+    const sampleValues = {
+      topic: "Comparing fractions with visual models",
+      gradeLevel: form.getValues("gradeLevel"),
+      widaBand: form.getValues("widaBand"),
+      unitProfile: form.getValues("unitProfile"),
+      notes:
+        "Students will compare fractions using visual models, explain which fraction is greater with a partner, and complete a quick exit ticket.",
+    };
+    form.reset(sampleValues);
+    onSubmit(sampleValues);
+  }
+
   useEffect(() => {
     if (!result) return;
     const vals = form.getValues() as {
@@ -510,18 +555,35 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     <div className="bg-background text-foreground">
       {displayed && <PrintableLesson displayed={displayed} />}
 
-      <main className="max-w-4xl mx-auto px-4 py-10 sm:py-12 space-y-8 print:hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">
+      <main className="max-w-6xl mx-auto px-4 py-8 sm:px-6 sm:py-12 space-y-8 print:hidden">
+        <section className="planner-hero" aria-labelledby="planner-title">
+          <div className="planner-hero__copy">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-teal-strong)]">
+              <Layers3 className="h-4 w-4" aria-hidden="true" />
               Lesson Planner
+            </div>
+            <h1 id="planner-title">
+              Turn rough notes into
+              <em> language-rich lessons.</em>
             </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Build a ready-to-teach lesson for multilingual learners from
-              your topic and planning notes.
+            <p>
+              Build a ready-to-teach plan where objectives, vocabulary, sentence
+              frames, and assessment support multilingual learners from the
+              start.
             </p>
+            <a href="#lesson-workspace" className="planner-hero__action">
+              Start with your learners
+              <span aria-hidden="true">↓</span>
+            </a>
           </div>
-          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+          <ScaffoldBlueprint />
+        </section>
+
+        <div className="flex items-center justify-between gap-4 border-b border-border/80 pb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Planning workspace
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
             {isDemo && (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
                 <FlaskConical className="w-3.5 h-3.5" />
@@ -544,14 +606,17 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
         )}
 
-        <Card>
+        <Card id="lesson-workspace" className="planner-workspace scroll-mt-6">
           <CardContent className="pt-6 sm:p-7">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-8"
               >
-                <section className="space-y-5" aria-labelledby="learner-context-heading">
+                <section
+                  className="space-y-5"
+                  aria-labelledby="learner-context-heading"
+                >
                   <div className="flex gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                       1
@@ -740,7 +805,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
                 <div className="h-px bg-border/80" aria-hidden="true" />
 
-                <section className="space-y-5" aria-labelledby="lesson-details-heading">
+                <section
+                  className="space-y-5"
+                  aria-labelledby="lesson-details-heading"
+                >
                   <div className="flex gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                       2
@@ -868,7 +936,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     )}
                   </div>
                   <Button
-                    type="submit"
+                    type={isDemo ? "button" : "submit"}
+                    onClick={isDemo ? showSamplePlan : undefined}
                     disabled={!canSubmit}
                     data-testid="button-generate"
                     className="w-full shrink-0 text-sm font-semibold sm:w-auto"
@@ -922,7 +991,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             <div className="h-1 w-full animate-pulse bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]" />
             <div className="px-6 py-12">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)]/20 via-[var(--brand-blue)]/20 to-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]">
-                <Sparkles className="h-5 w-5 animate-pulse" aria-hidden="true" />
+                <Sparkles
+                  className="h-5 w-5 animate-pulse"
+                  aria-hidden="true"
+                />
               </div>
               <h2
                 id="generating-lesson-heading"
@@ -948,9 +1020,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               role="status"
               aria-live="polite"
             >
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <CheckCircle2
+                className="mt-0.5 h-5 w-5 shrink-0"
+                aria-hidden="true"
+              />
               <div>
-                <p className="text-sm font-semibold">Your lesson plan is ready</p>
+                <p className="text-sm font-semibold">
+                  Your lesson plan is ready
+                </p>
                 <p className="mt-0.5 text-sm leading-relaxed">
                   Review the supports below, adapt them for your learners, and
                   print when you’re ready.
@@ -1275,10 +1352,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       </AlertDialogTrigger>
                       <AlertDialogContent className="w-[calc(100%-2rem)] rounded-2xl border-border/80 bg-card sm:max-w-md">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this lesson?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Delete this lesson?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            “{entry.topic || entry.lesson.title}” will be removed
-                            from this browser. This can’t be undone.
+                            “{entry.topic || entry.lesson.title}” will be
+                            removed from this browser. This can’t be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
