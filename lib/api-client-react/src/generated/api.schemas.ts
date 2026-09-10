@@ -110,3 +110,11 @@ export interface ClassroomSupport {
 export interface ErrorResponse {
   error: string;
 }
+
+export type ValidateAccessCodeBody = {
+  accessCode: string;
+};
+
+export type ValidateAccessCode200 = {
+  valid: boolean;
+};

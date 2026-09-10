@@ -23,6 +23,8 @@ import type {
   GenerateLessonPlanBody,
   HealthStatus,
   LessonPlan,
+  ValidateAccessCode200,
+  ValidateAccessCodeBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -33,6 +35,92 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary Validate a school access code without generating content
+ */
+export const getValidateAccessCodeUrl = () => {
+  return `/api/access/validate`;
+};
+
+export const validateAccessCode = async (
+  validateAccessCodeBody: ValidateAccessCodeBody,
+  options?: RequestInit,
+): Promise<ValidateAccessCode200> => {
+  return customFetch<ValidateAccessCode200>(getValidateAccessCodeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(validateAccessCodeBody),
+  });
+};
+
+export const getValidateAccessCodeMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof validateAccessCode>>,
+    TError,
+    { data: BodyType<ValidateAccessCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof validateAccessCode>>,
+  TError,
+  { data: BodyType<ValidateAccessCodeBody> },
+  TContext
+> => {
+  const mutationKey = ["validateAccessCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof validateAccessCode>>,
+    { data: BodyType<ValidateAccessCodeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return validateAccessCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ValidateAccessCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof validateAccessCode>>
+>;
+export type ValidateAccessCodeMutationBody = BodyType<ValidateAccessCodeBody>;
+export type ValidateAccessCodeMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Validate a school access code without generating content
+ */
+export const useValidateAccessCode = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof validateAccessCode>>,
+    TError,
+    { data: BodyType<ValidateAccessCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof validateAccessCode>>,
+  TError,
+  { data: BodyType<ValidateAccessCodeBody> },
+  TContext
+> => {
+  return useMutation(getValidateAccessCodeMutationOptions(options));
+};
 
 /**
  * Returns server health status

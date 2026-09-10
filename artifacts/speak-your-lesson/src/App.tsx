@@ -15,7 +15,7 @@ import { HelpCircle, KeyRound } from "lucide-react";
 
 const queryClient = new QueryClient();
 const ACCESS_GATE_ENABLED =
-  import.meta.env.VITE_ACCESS_GATE_ENABLED === "true";
+  import.meta.env.VITE_ACCESS_GATE_ENABLED !== "false";
 
 function ScaffoldMark({ className }: { className?: string }) {
   return (

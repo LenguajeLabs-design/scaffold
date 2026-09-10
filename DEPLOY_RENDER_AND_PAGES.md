@@ -16,6 +16,7 @@ This is the lowest-friction path for the current codebase:
 | Variable | Value |
 |---|---|
 | `OPENAI_API_KEY` | Your OpenAI API key |
+| `VALID_ACCESS_CODES` | School access codes, separated by commas |
 | `CORS_ALLOWED_ORIGINS` | Your GitHub Pages origin, for example `https://lenguajelabs-design.github.io` |
 
 ### Notes
@@ -45,16 +46,21 @@ After Render gives you the backend URL:
 
 This URL is public configuration, not a secret. The OpenAI API key stays only on Render.
 
-### Optional: restore the access gate
+### Access-code sign-in
 
-The frontend currently opens directly in sample mode. To restore the existing
-school access-code gate, add this GitHub Actions repository variable:
+Production opens with school access-code sign-in by default. The Pages workflow
+passes `VITE_ACCESS_GATE_ENABLED` into the frontend build, defaulting to `true`.
+Teachers can still choose sample lessons without signing in.
 
-```bash
-VITE_ACCESS_GATE_ENABLED=true
-```
+Only set `VITE_ACCESS_GATE_ENABLED=false` for an intentionally sample-only site.
+Set `VALID_ACCESS_CODES` on the Render API (comma-separated codes); codes and the
+OpenAI key must never be placed in frontend build variables. Replit secrets do
+not automatically transfer to Render.
 
-Leave the variable unset, or set it to `false`, to keep direct access enabled.
+Deploy the API before the frontend when introducing `/api/access/validate`.
+Confirm the API health endpoint, invalid-code rejection, and valid-code sign-in;
+then generate a fictional lesson from the production frontend to verify AI and
+CORS configuration. Code validation does not consume generation allowance.
 
 ## 4. Enable GitHub Pages
 

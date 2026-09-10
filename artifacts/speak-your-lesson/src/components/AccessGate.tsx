@@ -59,14 +59,11 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
     setError(null);
 
     try {
-      // Validate by pinging the API with a tiny probe — we piggyback on the
-      // lesson-plan endpoint's 401 response to confirm the code is known.
-      // We send a deliberately invalid body so it always returns early after
-      // the auth check, costing no AI credits.
-      const res = await fetch(resolveApiUrl("/api/lesson-plan/generate"), {
+      const res = await fetch(resolveApiUrl("/api/access/validate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessCode: trimmed }),
+        signal: AbortSignal.timeout(90_000),
       });
 
       if (res.status === 401) {
@@ -74,8 +71,19 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         return;
       }
 
-      // Any other response (400 = bad body but valid code, 429, 200) means
-      // the code passed the auth check.
+      if (res.status === 429) {
+        setError("Too many sign-in attempts. Please wait a few minutes and try again.");
+        return;
+      }
+      if (!res.ok) {
+        setError("The planning service is unavailable. Please try again shortly.");
+        return;
+      }
+      const result: unknown = await res.json();
+      if (!result || typeof result !== "object" || !("valid" in result) || result.valid !== true) {
+        setError("The planning service returned an unexpected response. Please try again.");
+        return;
+      }
       onUnlock(trimmed);
     } catch {
       setError("Couldn't reach the server. Please check your connection.");
@@ -143,7 +151,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
             {checking ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Checking...
+                Connecting to planning service...
               </>
             ) : (
               "Unlock"

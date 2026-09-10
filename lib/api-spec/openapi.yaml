@@ -15,6 +15,43 @@ tags:
   - name: classroomCopilot
     description: Classroom Copilot quick EAL support operations
 paths:
+  /access/validate:
+    post:
+      operationId: validateAccessCode
+      summary: Validate a school access code without generating content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accessCode]
+              properties:
+                accessCode:
+                  type: string
+      responses:
+        "200":
+          description: Valid code; no generation quota consumed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [valid]
+                properties:
+                  valid:
+                    type: boolean
+        "401":
+          description: Invalid or missing access code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /healthz:
     get:
       operationId: healthCheck

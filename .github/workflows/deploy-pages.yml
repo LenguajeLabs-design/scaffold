@@ -35,18 +35,37 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build frontend
-        env:
-          BASE_PATH: /scaffold/
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-        run: pnpm --filter @workspace/speak-your-lesson run build
-
       - name: Verify backend URL is configured
         if: ${{ vars.VITE_API_BASE_URL == '' }}
         run: |
           echo "Repository variable VITE_API_BASE_URL is missing."
           echo "Add the Render service URL under Settings > Secrets and variables > Actions > Variables."
           exit 1
+
+      - name: Wait for access-code API
+        env:
+          API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          for attempt in $(seq 1 30); do
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              --connect-timeout 10 --max-time 20 \
+              -H 'Content-Type: application/json' -d '{}' \
+              "${API_BASE_URL%/}/api/access/validate") || status=000
+            if [ "$status" = "401" ]; then
+              exit 0
+            fi
+            echo "Waiting for access-code API (HTTP $status, attempt $attempt/30)."
+            sleep 10
+          done
+          echo "Deploy the Render API with /api/access/validate before publishing the frontend."
+          exit 1
+
+      - name: Build frontend
+        env:
+          BASE_PATH: /scaffold/
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_ACCESS_GATE_ENABLED: ${{ vars.VITE_ACCESS_GATE_ENABLED || 'true' }}
+        run: pnpm --filter @workspace/speak-your-lesson run build
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -8,6 +8,17 @@
 import * as zod from "zod";
 
 /**
+ * @summary Validate a school access code without generating content
+ */
+export const ValidateAccessCodeBody = zod.object({
+  accessCode: zod.string(),
+});
+
+export const ValidateAccessCodeResponse = zod.object({
+  valid: zod.boolean(),
+});
+
+/**
  * Returns server health status
  * @summary Health check
  */

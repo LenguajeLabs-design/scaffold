@@ -17,3 +17,5 @@ export * from "./generateLessonPlanBodyUnitProfile";
 export * from "./generateLessonPlanBodyWidaBand";
 export * from "./healthStatus";
 export * from "./lessonPlan";
+export * from "./validateAccessCode200";
+export * from "./validateAccessCodeBody";
