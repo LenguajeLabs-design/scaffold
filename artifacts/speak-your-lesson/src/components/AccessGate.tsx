@@ -104,22 +104,36 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10">
+      <div
+        className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-[var(--brand-teal)]/15 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-20 bottom-12 h-72 w-72 rounded-full bg-[var(--brand-purple)]/15 blur-3xl"
+        aria-hidden="true"
+      />
+
+      <div className="relative w-full max-w-md space-y-8 rounded-[2rem] border border-white/80 bg-card/85 p-6 shadow-[0_28px_80px_rgba(30,27,75,0.12)] backdrop-blur-xl sm:p-9">
         {/* Brand */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex items-center gap-2 text-primary">
-            <ScaffoldMark className="w-7 h-7" />
-            <span className="text-xl font-semibold tracking-tight">
+          <div className="flex items-center gap-2.5 text-primary">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(30,27,75,0.18)]">
+              <ScaffoldMark className="h-6 w-6" />
+            </span>
+            <span className="text-2xl font-semibold tracking-tight">
               Scaffold
             </span>
           </div>
           <div>
-            <h1 className="text-base font-semibold text-foreground mt-1">
-              EAL Lesson Planning Assistant
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-teal-strong)]">
+              Made for multilingual classrooms
+            </p>
+            <h1 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+              Plan stronger EAL lessons
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Enter your school access code to continue.
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              Enter your school access code, or explore a prepared sample.
             </p>
           </div>
         </div>
@@ -180,7 +194,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
             type="button"
             variant="outline"
             onClick={onDemo}
-            className="w-full"
+            className="w-full border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/[0.07] text-[var(--brand-teal-strong)] hover:border-[var(--brand-teal)]/45 hover:bg-[var(--brand-teal)]/[0.12]"
             data-testid="button-demo"
           >
             <FlaskConical className="h-4 w-4" aria-hidden="true" />

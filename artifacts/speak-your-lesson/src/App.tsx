@@ -68,19 +68,19 @@ function NavBar({
   ];
 
   return (
-    <nav className="border-b border-border/80 bg-card/95 backdrop-blur-xl print:hidden">
+    <nav className="sticky top-0 z-40 border-b border-white/70 bg-background/80 shadow-[0_1px_0_rgba(30,27,75,0.04)] backdrop-blur-xl print:hidden">
       <div className="max-w-4xl mx-auto px-4 min-h-16 flex items-center gap-2 sm:gap-5">
         <Link
           href="/"
           className="flex min-h-11 items-center gap-2 shrink-0 text-primary hover:opacity-80 transition-opacity"
         >
-          <ScaffoldMark className="w-5 h-5 text-primary" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_20px_rgba(30,27,75,0.16)]">
+            <ScaffoldMark className="h-5 w-5" />
+          </span>
           <span className="hidden text-sm font-semibold tracking-tight sm:inline">
             Scaffold
           </span>
         </Link>
-
-        <div className="w-px h-4 bg-border" aria-hidden="true" />
 
         <div className="flex items-center gap-1 flex-1">
           {tabs.map((tab) => {
@@ -97,7 +97,7 @@ function NavBar({
                 <span
                   className={`inline-flex min-h-11 items-center rounded-xl px-2 text-xs font-medium transition-colors cursor-pointer sm:px-3 sm:text-sm ${
                     isActive
-                      ? "bg-primary/8 text-primary"
+                      ? "bg-card text-primary shadow-sm ring-1 ring-border/70"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   }`}
                 >
@@ -139,11 +139,13 @@ function NavBar({
 
 function Footer() {
   return (
-    <footer className="mt-16 border-t border-border bg-card print:hidden">
+    <footer className="mt-16 border-t border-white/70 bg-card/70 backdrop-blur-xl print:hidden">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row sm:items-start gap-6">
           <div className="flex items-center gap-2 shrink-0">
-            <ScaffoldMark className="w-5 h-5 text-primary" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--brand-teal)]/15 text-[var(--brand-teal-strong)]">
+              <ScaffoldMark className="h-4 w-4" />
+            </span>
             <span className="text-sm font-semibold tracking-tight text-primary">
               Scaffold
             </span>
@@ -196,7 +198,7 @@ function Router() {
   const isSampleMode = !ACCESS_GATE_ENABLED || isDemo;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background/40">
       <NavBar
         isDemo={isSampleMode}
         onLogout={logout}

@@ -19,6 +19,7 @@ import {
   Download,
   FlaskConical,
   Sparkles,
+  BookOpenText,
 } from "lucide-react";
 import {
   Form,
@@ -510,15 +511,23 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     <div className="bg-background text-foreground">
       {displayed && <PrintableLesson displayed={displayed} />}
 
-      <main className="max-w-4xl mx-auto px-4 py-10 sm:py-12 space-y-8 print:hidden">
-        <div>
-          <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">
-            Lesson Planner
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Build a ready-to-teach lesson for multilingual learners from your
-            topic and planning notes.
-          </p>
+      <main className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-8 print:hidden">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)]/25 to-[var(--brand-blue)]/20 text-[var(--brand-teal-strong)] ring-1 ring-[var(--brand-teal)]/20">
+            <BookOpenText className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-teal-strong)]">
+              Plan and scaffold
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem]">
+              Lesson Planner
+            </h1>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Build a ready-to-teach lesson for multilingual learners from your
+              topic and planning notes.
+            </p>
+          </div>
         </div>
 
         {isDemo && (
@@ -535,7 +544,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
         )}
 
-        <Card>
+        <Card className="overflow-hidden border-white/80 bg-card/90 shadow-[0_24px_64px_rgba(30,27,75,0.09)] backdrop-blur-sm">
+          <div
+            className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]"
+            aria-hidden="true"
+          />
           <CardContent className="pt-6 sm:p-7">
             <Form {...form}>
               <form
@@ -547,7 +560,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   aria-labelledby="learner-context-heading"
                 >
                   <div className="flex gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-teal-strong)] text-sm font-semibold text-white shadow-sm">
                       1
                     </span>
                     <div>
@@ -656,7 +669,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   <Collapsible
                     open={curriculumOpen}
                     onOpenChange={setCurriculumOpen}
-                    className="rounded-2xl border border-border/70 bg-muted/20"
+                    className="rounded-2xl border border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.045]"
                   >
                     <CollapsibleTrigger asChild>
                       <button
@@ -744,7 +757,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   aria-labelledby="lesson-details-heading"
                 >
                   <div className="flex gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-purple-strong)] text-sm font-semibold text-white shadow-sm">
                       2
                     </span>
                     <div>
@@ -849,7 +862,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         type="submit"
                         disabled={!canSubmit}
                         data-testid="button-generate"
-                        className="w-full text-sm font-semibold"
+                        className="w-full text-sm font-semibold shadow-[0_10px_24px_rgba(30,27,75,0.18)]"
                       >
                         {isGenerating ? (
                           <>

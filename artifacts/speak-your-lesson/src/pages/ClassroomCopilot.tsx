@@ -15,6 +15,7 @@ import {
   BookMarked,
   Trash2,
   FlaskConical,
+  MessageSquareText,
 } from "lucide-react";
 import {
   Form,
@@ -71,12 +72,22 @@ interface ClassroomCopilotProps {
 function SupportCard({
   title,
   children,
+  tone = "blue",
 }: {
   title: string;
   children: React.ReactNode;
+  tone?: "teal" | "blue" | "purple" | "sun";
 }) {
+  const toneStyles = {
+    teal: "bg-[var(--brand-teal)]",
+    blue: "bg-[var(--brand-blue)]",
+    purple: "bg-[var(--brand-purple)]",
+    sun: "bg-[var(--brand-sun)]",
+  };
+
   return (
-    <Card className="border border-border shadow-none">
+    <Card className="overflow-hidden border border-border/80 bg-card/90 shadow-[0_10px_30px_rgba(30,27,75,0.045)]">
+      <div className={`h-1 ${toneStyles[tone]}`} aria-hidden="true" />
       <CardHeader className="pb-2 pt-4 px-4">
         <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
@@ -244,15 +255,23 @@ export default function ClassroomCopilot({
 
   return (
     <div className="bg-background text-foreground">
-      <main className="max-w-3xl mx-auto px-4 py-10 sm:py-12 space-y-8">
-        <div>
-          <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">
-            Classroom Copilot
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Get practical language supports for the teaching moment in front of
-            you.
-          </p>
+      <main className="max-w-3xl mx-auto px-4 py-8 sm:py-12 space-y-8">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-purple)]/25 to-[var(--brand-blue)]/20 text-[var(--brand-purple-strong)] ring-1 ring-[var(--brand-purple)]/20">
+            <MessageSquareText className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-purple-strong)]">
+              In-the-moment support
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem]">
+              Classroom Copilot
+            </h1>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Get practical language supports for the teaching moment in front
+              of you.
+            </p>
+          </div>
         </div>
 
         {isDemo && (
@@ -269,7 +288,11 @@ export default function ClassroomCopilot({
           </div>
         )}
 
-        <Card>
+        <Card className="overflow-hidden border-white/80 bg-card/90 shadow-[0_24px_64px_rgba(30,27,75,0.09)] backdrop-blur-sm">
+          <div
+            className="h-1 bg-gradient-to-r from-[var(--brand-purple)] via-[var(--brand-blue)] to-[var(--brand-teal)]"
+            aria-hidden="true"
+          />
           <CardContent className="pt-6 sm:p-7">
             <Form {...form}>
               <form
@@ -461,7 +484,7 @@ export default function ClassroomCopilot({
                       data-testid="button-generate"
                       type="submit"
                       disabled={!canSubmit}
-                      className="w-full text-sm font-semibold"
+                      className="w-full text-sm font-semibold shadow-[0_10px_24px_rgba(30,27,75,0.18)]"
                     >
                       {isGenerating ? (
                         <>
@@ -548,11 +571,11 @@ export default function ClassroomCopilot({
               </div>
             </div>
 
-            <SupportCard title="Simple Explanation">
+            <SupportCard title="Simple Explanation" tone="teal">
               <RichText text={displayed.support.simpleExplanation} />
             </SupportCard>
 
-            <SupportCard title="Key Vocabulary">
+            <SupportCard title="Key Vocabulary" tone="blue">
               <div className="flex flex-wrap gap-1.5">
                 {displayed.support.keyVocabulary.map(
                   (word: string, i: number) => (
@@ -567,7 +590,7 @@ export default function ClassroomCopilot({
               </div>
             </SupportCard>
 
-            <SupportCard title="Sentence Frames">
+            <SupportCard title="Sentence Frames" tone="purple">
               <ul className="space-y-2">
                 {displayed.support.sentenceFrames.map(
                   (frame: string, i: number) => (
@@ -581,17 +604,17 @@ export default function ClassroomCopilot({
             </SupportCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SupportCard title="Quick Activity">
+              <SupportCard title="Quick Activity" tone="sun">
                 <RichText text={displayed.support.quickActivity} />
               </SupportCard>
-              <SupportCard title="Extension Question">
+              <SupportCard title="Extension Question" tone="blue">
                 <p className="text-sm leading-relaxed">
                   {displayed.support.extensionQuestion}
                 </p>
               </SupportCard>
             </div>
 
-            <SupportCard title="Teacher Move">
+            <SupportCard title="Teacher Move" tone="teal">
               <p className="text-sm leading-relaxed font-medium">
                 {displayed.support.teacherMove}
               </p>
