@@ -8,7 +8,14 @@ import {
   GenerateClassroomSupportBodyWidaLevel,
   type ClassroomSupport,
 } from "@workspace/api-client-react";
-import { Loader2, Copy, Check, BookMarked, Trash2, FlaskConical } from "lucide-react";
+import {
+  Loader2,
+  Copy,
+  Check,
+  BookMarked,
+  Trash2,
+  FlaskConical,
+} from "lucide-react";
 import {
   Form,
   FormControl,
@@ -41,7 +48,10 @@ const formSchema = z.object({
   need: z
     .string()
     .min(5, "Please describe what your students need help with")
-    .max(MAX_NEED_CHARS, `Description must be ${MAX_NEED_CHARS} characters or fewer`),
+    .max(
+      MAX_NEED_CHARS,
+      `Description must be ${MAX_NEED_CHARS} characters or fewer`,
+    ),
   gradeLevel: z.nativeEnum(GenerateClassroomSupportBodyGradeLevel),
   widaLevel: z.nativeEnum(GenerateClassroomSupportBodyWidaLevel),
 });
@@ -58,18 +68,29 @@ interface ClassroomCopilotProps {
   isDemo: boolean;
 }
 
-function SupportCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SupportCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <Card className="border border-border shadow-none">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4">{children}</CardContent>
     </Card>
   );
 }
 
-export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilotProps) {
+export default function ClassroomCopilot({
+  accessCode,
+  isDemo,
+}: ClassroomCopilotProps) {
   const [copied, setCopied] = useState(false);
   const [displayed, setDisplayed] = useState<DisplayedSession | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -84,7 +105,10 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
     if (cooldownRef.current) clearInterval(cooldownRef.current);
     cooldownRef.current = setInterval(() => {
       setCooldownSecs((s) => {
-        if (s <= 1) { clearInterval(cooldownRef.current!); return 0; }
+        if (s <= 1) {
+          clearInterval(cooldownRef.current!);
+          return 0;
+        }
         return s - 1;
       });
     }, 1000);
@@ -102,17 +126,37 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
   const needValue = form.watch("need");
   const needLength = needValue.length;
 
-  const { mutate: generateSupport, data: result, isPending, isError, error } = useGenerateClassroomSupport();
+  const {
+    mutate: generateSupport,
+    data: result,
+    isPending,
+    isError,
+    error,
+  } = useGenerateClassroomSupport();
   const { sessions, save, remove } = useSavedCopilotSessions();
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (isDemo) {
-      const support = DEMO_COPILOT_SESSIONS[demoIndex % DEMO_COPILOT_SESSIONS.length];
+      const sampleIndex = demoIndex % DEMO_COPILOT_SESSIONS.length;
+      const support = DEMO_COPILOT_SESSIONS[sampleIndex];
+      const sampleNeed =
+        sampleIndex === 0
+          ? "Explaining fractions with equal parts"
+          : "Explaining the stages of the water cycle";
       setDemoIndex((i) => i + 1);
       setSavedId(null);
-      const id = save(support, { gradeLevel: values.gradeLevel, widaLevel: values.widaLevel, need: values.need });
+      const id = save(support, {
+        gradeLevel: values.gradeLevel,
+        widaLevel: values.widaLevel,
+        need: sampleNeed,
+      });
       setSavedId(id);
-      setDisplayed({ support, gradeLevel: values.gradeLevel, widaLevel: values.widaLevel, need: values.need });
+      setDisplayed({
+        support,
+        gradeLevel: values.gradeLevel,
+        widaLevel: values.widaLevel,
+        need: sampleNeed,
+      });
       return;
     }
     setSavedId(null);
@@ -121,28 +165,54 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
 
   useEffect(() => {
     if (!result) return;
-    const vals = form.getValues() as { gradeLevel: string; widaLevel: string; need: string };
-    const id = save(result, { gradeLevel: vals.gradeLevel, widaLevel: vals.widaLevel, need: vals.need });
+    const vals = form.getValues() as {
+      gradeLevel: string;
+      widaLevel: string;
+      need: string;
+    };
+    const id = save(result, {
+      gradeLevel: vals.gradeLevel,
+      widaLevel: vals.widaLevel,
+      need: vals.need,
+    });
     setSavedId(id);
-    setDisplayed({ support: result, gradeLevel: vals.gradeLevel, widaLevel: vals.widaLevel, need: vals.need });
+    setDisplayed({
+      support: result,
+      gradeLevel: vals.gradeLevel,
+      widaLevel: vals.widaLevel,
+      need: vals.need,
+    });
   }, [result]);
 
   // Parse cooldown from API error
   useEffect(() => {
     if (!error) return;
-    const msg: string = (error as { data?: { error?: string } })?.data?.error ?? (error as Error)?.message ?? "";
+    const msg: string =
+      (error as { data?: { error?: string } })?.data?.error ??
+      (error as Error)?.message ??
+      "";
     const match = msg.match(/wait (\d+) second/);
     if (match) startCooldown(parseInt(match[1], 10));
   }, [error]);
 
   function viewSession(entry: SavedCopilotSession) {
     setSavedId(entry.id);
-    setDisplayed({ support: entry.support, gradeLevel: entry.gradeLevel, widaLevel: entry.widaLevel, need: entry.need });
+    setDisplayed({
+      support: entry.support,
+      gradeLevel: entry.gradeLevel,
+      widaLevel: entry.widaLevel,
+      need: entry.need,
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   }
 
   function formatAllForCopy(support: ClassroomSupport): string {
@@ -167,67 +237,99 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
   const canSubmit = !isGenerating && cooldownSecs === 0;
 
   const errorMsg: string | null = isError
-    ? ((error as { data?: { error?: string } })?.data?.error ?? (error as Error)?.message ?? "Something went wrong. Please try again.")
+    ? ((error as { data?: { error?: string } })?.data?.error ??
+      (error as Error)?.message ??
+      "Something went wrong. Please try again.")
     : null;
 
   return (
     <div className="bg-background text-foreground">
       <main className="max-w-3xl mx-auto px-4 py-10 sm:py-12 space-y-8">
-
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">Classroom Copilot</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Get practical language supports for the teaching moment in front
-              of you.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0 mt-0.5">
-            {isDemo && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
-                <FlaskConical className="w-3.5 h-3.5" />
-                Sample mode
-              </span>
-            )}
-            {sessions.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1.5 bg-card">
-                <BookMarked className="w-3.5 h-3.5" />
-                {sessions.length} saved
-              </span>
-            )}
-          </div>
+        <div>
+          <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">
+            Classroom Copilot
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Get practical language supports for the teaching moment in front of
+            you.
+          </p>
         </div>
 
         {isDemo && (
-          <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm text-amber-900 leading-relaxed">
-            <strong>Sample mode:</strong> Try the workflow with pre-written
-            classroom supports. Your entries stay in this browser.
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm leading-relaxed text-amber-900">
+            <FlaskConical
+              className="mt-0.5 h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
+            <p>
+              <strong>Sample preview.</strong> Create support to see a prepared
+              example. Your entry stays in this browser and won’t change the
+              example response.
+            </p>
           </div>
         )}
 
         <Card>
           <CardContent className="pt-6 sm:p-7">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-5"
+              >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="gradeLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Grade Level</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel className="text-sm font-medium">
+                          Grade Level
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
-                            <SelectTrigger data-testid="select-grade-level" className="text-sm">
+                            <SelectTrigger
+                              data-testid="select-grade-level"
+                              className="text-sm"
+                            >
                               <SelectValue placeholder="Select grade" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={GenerateClassroomSupportBodyGradeLevel.Grade_2} className="text-sm">Grade 2</SelectItem>
-                            <SelectItem value={GenerateClassroomSupportBodyGradeLevel.Grade_3} className="text-sm">Grade 3</SelectItem>
-                            <SelectItem value={GenerateClassroomSupportBodyGradeLevel.Grade_4} className="text-sm">Grade 4</SelectItem>
-                            <SelectItem value={GenerateClassroomSupportBodyGradeLevel.Grade_5} className="text-sm">Grade 5</SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyGradeLevel.Grade_2
+                              }
+                              className="text-sm"
+                            >
+                              Grade 2
+                            </SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyGradeLevel.Grade_3
+                              }
+                              className="text-sm"
+                            >
+                              Grade 3
+                            </SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyGradeLevel.Grade_4
+                              }
+                              className="text-sm"
+                            >
+                              Grade 4
+                            </SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyGradeLevel.Grade_5
+                              }
+                              className="text-sm"
+                            >
+                              Grade 5
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -240,19 +342,59 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
                     name="widaLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">WIDA Level</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel className="text-sm font-medium">
+                          WIDA Level
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
-                            <SelectTrigger data-testid="select-wida-level" className="text-sm">
+                            <SelectTrigger
+                              data-testid="select-wida-level"
+                              className="text-sm"
+                            >
                               <SelectValue placeholder="Select WIDA level" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={GenerateClassroomSupportBodyWidaLevel["WIDA_1-2"]} className="text-sm">WIDA 1–2</SelectItem>
-                            <SelectItem value={GenerateClassroomSupportBodyWidaLevel["WIDA_2-3"]} className="text-sm">WIDA 2–3</SelectItem>
-                            <SelectItem value={GenerateClassroomSupportBodyWidaLevel["WIDA_3-4"]} className="text-sm">WIDA 3–4</SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyWidaLevel[
+                                  "WIDA_1-2"
+                                ]
+                              }
+                              className="text-sm"
+                            >
+                              WIDA 1–2
+                            </SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyWidaLevel[
+                                  "WIDA_2-3"
+                                ]
+                              }
+                              className="text-sm"
+                            >
+                              WIDA 2–3
+                            </SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyWidaLevel[
+                                  "WIDA_3-4"
+                                ]
+                              }
+                              className="text-sm"
+                            >
+                              WIDA 3–4
+                            </SelectItem>
                           </SelectContent>
                         </Select>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          Not sure? Choose the range that best matches how
+                          independently students understand and use English.
+                          Lower ranges add more support.
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -268,7 +410,9 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
                         <FormLabel className="text-sm font-medium">
                           What do your students need help with right now?
                         </FormLabel>
-                        <span className={`text-xs tabular-nums shrink-0 ${needLength > MAX_NEED_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                        <span
+                          className={`text-xs tabular-nums shrink-0 ${needLength > MAX_NEED_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}
+                        >
                           {needLength}/{MAX_NEED_CHARS}
                         </span>
                       </div>
@@ -282,17 +426,27 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
                         />
                       </FormControl>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Please do not include student names or private student information.
+                        Please do not include student names or private student
+                        information.
                       </p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex-1 mr-4">
+                <div
+                  className={`flex flex-col gap-3 pt-1 sm:flex-row sm:items-start sm:justify-between ${
+                    needLength > 0
+                      ? "sticky bottom-3 z-20 -mx-2 rounded-2xl border border-border/80 bg-card/95 p-2 shadow-lg backdrop-blur-xl sm:static sm:mx-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+                      : ""
+                  }`}
+                >
+                  <div className="flex-1">
                     {errorMsg && (
-                      <p className="text-sm text-destructive font-medium" role="alert">
+                      <p
+                        className="text-sm text-destructive font-medium"
+                        role="alert"
+                      >
                         {errorMsg}
                       </p>
                     )}
@@ -302,27 +456,31 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
                       </p>
                     )}
                   </div>
-                  <Button
-                    data-testid="button-generate"
-                    type="submit"
-                    disabled={!canSubmit}
-                    className="text-sm font-semibold shrink-0"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : cooldownSecs > 0 ? (
-                      `Wait ${cooldownSecs}s`
-                    ) : isDemo ? (
-                      "Show Sample Support"
-                    ) : (
-                      "Generate Support"
+                  <div className="shrink-0 space-y-1.5 sm:min-w-52">
+                    <Button
+                      data-testid="button-generate"
+                      type="submit"
+                      disabled={!canSubmit}
+                      className="w-full text-sm font-semibold"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creating support...
+                        </>
+                      ) : cooldownSecs > 0 ? (
+                        `Wait ${cooldownSecs}s`
+                      ) : (
+                        "Create classroom support"
+                      )}
+                    </Button>
+                    {isDemo && cooldownSecs === 0 && !isGenerating && (
+                      <p className="text-center text-xs text-muted-foreground">
+                        Shows a prepared example without using AI.
+                      </p>
                     )}
-                  </Button>
+                  </div>
                 </div>
-
               </form>
             </Form>
           </CardContent>
@@ -331,23 +489,34 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
         {isGenerating && !displayed && (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
-            <p className="text-sm font-medium text-muted-foreground">Preparing your classroom support...</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Preparing your classroom support...
+            </p>
           </div>
         )}
 
         {displayed && !isGenerating && (
-          <div data-testid="section-results" className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
+          <div
+            data-testid="section-results"
+            className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   Classroom Support
                   {isDemo && (
-                    <Badge variant="outline" className="text-xs font-medium text-amber-700 border-amber-200 bg-amber-50">Sample</Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-xs font-medium text-amber-700 border-amber-200 bg-amber-50"
+                    >
+                      Sample
+                    </Badge>
                   )}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {displayed.gradeLevel} · {displayed.widaLevel} · {displayed.need.slice(0, 60)}{displayed.need.length > 60 ? "…" : ""}
+                  {displayed.gradeLevel} · {displayed.widaLevel} ·{" "}
+                  {displayed.need.slice(0, 60)}
+                  {displayed.need.length > 60 ? "…" : ""}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -365,9 +534,15 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
                   className="gap-1.5 text-xs font-medium h-8 px-3"
                 >
                   {copied ? (
-                    <><Check className="w-3.5 h-3.5" />Copied</>
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Copied
+                    </>
                   ) : (
-                    <><Copy className="w-3.5 h-3.5" />Copy All</>
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      Copy All
+                    </>
                   )}
                 </Button>
               </div>
@@ -379,20 +554,29 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
 
             <SupportCard title="Key Vocabulary">
               <div className="flex flex-wrap gap-1.5">
-                {displayed.support.keyVocabulary.map((word: string, i: number) => (
-                  <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15">{word}</span>
-                ))}
+                {displayed.support.keyVocabulary.map(
+                  (word: string, i: number) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
+                    >
+                      {word}
+                    </span>
+                  ),
+                )}
               </div>
             </SupportCard>
 
             <SupportCard title="Sentence Frames">
               <ul className="space-y-2">
-                {displayed.support.sentenceFrames.map((frame: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                    <span className="text-sm leading-relaxed">{frame}</span>
-                  </li>
-                ))}
+                {displayed.support.sentenceFrames.map(
+                  (frame: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      <span className="text-sm leading-relaxed">{frame}</span>
+                    </li>
+                  ),
+                )}
               </ul>
             </SupportCard>
 
@@ -401,15 +585,17 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
                 <RichText text={displayed.support.quickActivity} />
               </SupportCard>
               <SupportCard title="Extension Question">
-                <p className="text-sm leading-relaxed">{displayed.support.extensionQuestion}</p>
+                <p className="text-sm leading-relaxed">
+                  {displayed.support.extensionQuestion}
+                </p>
               </SupportCard>
             </div>
 
             <SupportCard title="Teacher Move">
-              <p className="text-sm leading-relaxed font-medium">{displayed.support.teacherMove}</p>
+              <p className="text-sm leading-relaxed font-medium">
+                {displayed.support.teacherMove}
+              </p>
             </SupportCard>
-
-
           </div>
         )}
 
@@ -419,7 +605,9 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <BookMarked className="w-4 h-4 text-muted-foreground" />
                 Session History
-                <span className="text-xs font-medium text-muted-foreground">({sessions.length})</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  ({sessions.length})
+                </span>
               </h2>
             </div>
             <div className="grid gap-2">
@@ -429,24 +617,38 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
                   <div
                     key={entry.id}
                     className={`group flex items-start gap-3 px-4 py-3 rounded-lg border transition-colors cursor-pointer ${
-                      isActive ? "border-primary/30 bg-primary/5" : "border-border bg-card hover:bg-muted/40"
+                      isActive
+                        ? "border-primary/30 bg-primary/5"
+                        : "border-border bg-card hover:bg-muted/40"
                     }`}
                     onClick={() => viewSession(entry)}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">{entry.preview}{entry.need.length > 80 ? "…" : ""}</p>
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {entry.preview}
+                        {entry.need.length > 80 ? "…" : ""}
+                      </p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-xs text-muted-foreground">{entry.gradeLevel}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {entry.gradeLevel}
+                        </span>
                         <span className="text-xs text-muted-foreground">·</span>
-                        <span className="text-xs text-muted-foreground">{entry.widaLevel}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {entry.widaLevel}
+                        </span>
                         <span className="text-xs text-muted-foreground">·</span>
-                        <span className="text-xs text-muted-foreground">{formatDate(entry.savedAt)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(entry.savedAt)}
+                        </span>
                       </div>
                     </div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (isActive) { setDisplayed(null); setSavedId(null); }
+                        if (isActive) {
+                          setDisplayed(null);
+                          setSavedId(null);
+                        }
                         remove(entry.id);
                       }}
                       className="shrink-0 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
@@ -460,7 +662,6 @@ export default function ClassroomCopilot({ accessCode, isDemo }: ClassroomCopilo
             </div>
           </section>
         )}
-
       </main>
     </div>
   );

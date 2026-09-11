@@ -417,7 +417,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       const id = save(plan, {
         gradeLevel: values.gradeLevel,
         widaBand: values.widaBand,
-        topic: values.topic || plan.title,
+        topic: plan.title,
         unitProfile: values.unitProfile,
       });
       setSavedId(id);
@@ -425,7 +425,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         lesson: plan,
         gradeLevel: values.gradeLevel,
         widaBand: values.widaBand,
-        topic: values.topic || plan.title,
+        topic: plan.title,
         unitProfile: values.unitProfile,
       });
       return;
@@ -511,36 +511,27 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       {displayed && <PrintableLesson displayed={displayed} />}
 
       <main className="max-w-4xl mx-auto px-4 py-10 sm:py-12 space-y-8 print:hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">
-              Lesson Planner
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Build a ready-to-teach lesson for multilingual learners from
-              your topic and planning notes.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0 mt-0.5">
-            {isDemo && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
-                <FlaskConical className="w-3.5 h-3.5" />
-                Sample mode
-              </span>
-            )}
-            {lessons.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1.5 bg-card">
-                <BookMarked className="w-3.5 h-3.5" />
-                {lessons.length} saved
-              </span>
-            )}
-          </div>
+        <div>
+          <h1 className="text-2xl sm:text-[1.75rem] font-semibold tracking-tight text-foreground">
+            Lesson Planner
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Build a ready-to-teach lesson for multilingual learners from your
+            topic and planning notes.
+          </p>
         </div>
 
         {isDemo && (
-          <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm text-amber-900 leading-relaxed">
-            <strong>Sample mode:</strong> Try the planner with pre-written
-            lesson plans. Your selections and notes stay in this browser.
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm leading-relaxed text-amber-900">
+            <FlaskConical
+              className="mt-0.5 h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
+            <p>
+              <strong>Sample preview.</strong> Create a plan to see a prepared
+              example. Your entries stay in this browser and won’t change the
+              example lesson.
+            </p>
           </div>
         )}
 
@@ -551,7 +542,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-8"
               >
-                <section className="space-y-5" aria-labelledby="learner-context-heading">
+                <section
+                  className="space-y-5"
+                  aria-labelledby="learner-context-heading"
+                >
                   <div className="flex gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                       1
@@ -648,6 +642,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                               ))}
                             </SelectContent>
                           </Select>
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            Not sure? Choose the range that best matches how
+                            independently students understand and use English.
+                            Lower ranges add more support.
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -740,7 +739,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
                 <div className="h-px bg-border/80" aria-hidden="true" />
 
-                <section className="space-y-5" aria-labelledby="lesson-details-heading">
+                <section
+                  className="space-y-5"
+                  aria-labelledby="lesson-details-heading"
+                >
                   <div className="flex gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                       2
@@ -811,82 +813,63 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       </FormItem>
                     )}
                   />
-                </section>
 
-                <aside className="rounded-2xl border border-primary/10 bg-primary/[0.035] p-4 sm:p-5">
-                  <div className="flex items-start gap-3">
-                    <Sparkles
-                      className="mt-0.5 h-5 w-5 shrink-0 text-primary"
-                      aria-hidden="true"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Your plan will include
-                      </p>
-                      <ul className="mt-2 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                        {[
-                          "Content and language objectives",
-                          "Key vocabulary and sentence frames",
-                          "A four-part lesson sequence",
-                          "Teacher notes and assessment ideas",
-                        ].map((item) => (
-                          <li key={item} className="flex items-start gap-2">
-                            <CheckCircle2
-                              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                              aria-hidden="true"
-                            />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
+                  <div
+                    className={`flex flex-col gap-3 pt-1 sm:flex-row sm:items-start sm:justify-between ${
+                      notesLength > 0
+                        ? "sticky bottom-3 z-20 -mx-2 rounded-2xl border border-border/80 bg-card/95 p-2 shadow-lg backdrop-blur-xl sm:static sm:mx-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex-1">
+                      {errorMsg && (
+                        <div
+                          className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive"
+                          role="alert"
+                        >
+                          <AlertTriangle
+                            className="mt-0.5 h-4 w-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span>{errorMsg}</span>
+                        </div>
+                      )}
+                      {cooldownSecs > 0 && !errorMsg && (
+                        <div
+                          className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]"
+                          role="status"
+                        >
+                          You can create another plan in {cooldownSecs} seconds.
+                          Your current notes will stay in place.
+                        </div>
+                      )}
+                    </div>
+                    <div className="shrink-0 space-y-1.5 sm:min-w-52">
+                      <Button
+                        type="submit"
+                        disabled={!canSubmit}
+                        data-testid="button-generate"
+                        className="w-full text-sm font-semibold"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating lesson plan...
+                          </>
+                        ) : cooldownSecs > 0 ? (
+                          `Wait ${cooldownSecs}s`
+                        ) : (
+                          "Create lesson plan"
+                        )}
+                      </Button>
+                      {isDemo && cooldownSecs === 0 && !isGenerating && (
+                        <p className="text-center text-xs text-muted-foreground">
+                          Shows a prepared example without using AI.
+                        </p>
+                      )}
                     </div>
                   </div>
-                </aside>
-
-                <div className="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex-1">
-                    {errorMsg && (
-                      <div
-                        className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive"
-                        role="alert"
-                      >
-                        <AlertTriangle
-                          className="mt-0.5 h-4 w-4 shrink-0"
-                          aria-hidden="true"
-                        />
-                        <span>{errorMsg}</span>
-                      </div>
-                    )}
-                    {cooldownSecs > 0 && !errorMsg && (
-                      <div
-                        className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]"
-                        role="status"
-                      >
-                        You can create another plan in {cooldownSecs} seconds.
-                        Your current notes will stay in place.
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={!canSubmit}
-                    data-testid="button-generate"
-                    className="w-full shrink-0 text-sm font-semibold sm:w-auto"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : cooldownSecs > 0 ? (
-                      `Wait ${cooldownSecs}s`
-                    ) : isDemo ? (
-                      "Show Sample Plan"
-                    ) : (
-                      "Generate Lesson Plan"
-                    )}
-                  </Button>
-                </div>
+                </section>
               </form>
             </Form>
           </CardContent>
@@ -894,22 +877,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
         {!displayed && !isGenerating && (
           <section
-            className="rounded-2xl border border-dashed border-border bg-card/40 px-6 py-10 text-center"
+            className="flex items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground"
             aria-labelledby="lesson-preview-heading"
           >
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/[0.07] text-primary">
-              <BookMarked className="h-5 w-5" aria-hidden="true" />
-            </div>
             <h2
               id="lesson-preview-heading"
-              className="mt-4 font-semibold text-foreground"
+              className="font-medium text-foreground"
             >
-              Your lesson plan will appear here
+              Ready when you are.
             </h2>
-            <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Complete the two steps above to see a structured plan you can
-              adapt, save, and print.
-            </p>
+            <p>Your lesson plan will appear below.</p>
           </section>
         )}
 
@@ -922,7 +899,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             <div className="h-1 w-full animate-pulse bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]" />
             <div className="px-6 py-12">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)]/20 via-[var(--brand-blue)]/20 to-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]">
-                <Sparkles className="h-5 w-5 animate-pulse" aria-hidden="true" />
+                <Sparkles
+                  className="h-5 w-5 animate-pulse"
+                  aria-hidden="true"
+                />
               </div>
               <h2
                 id="generating-lesson-heading"
@@ -948,9 +928,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               role="status"
               aria-live="polite"
             >
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <CheckCircle2
+                className="mt-0.5 h-5 w-5 shrink-0"
+                aria-hidden="true"
+              />
               <div>
-                <p className="text-sm font-semibold">Your lesson plan is ready</p>
+                <p className="text-sm font-semibold">
+                  Your lesson plan is ready
+                </p>
                 <p className="mt-0.5 text-sm leading-relaxed">
                   Review the supports below, adapt them for your learners, and
                   print when you’re ready.
@@ -1275,10 +1260,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       </AlertDialogTrigger>
                       <AlertDialogContent className="w-[calc(100%-2rem)] rounded-2xl border-border/80 bg-card sm:max-w-md">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this lesson?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Delete this lesson?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            “{entry.topic || entry.lesson.title}” will be removed
-                            from this browser. This can’t be undone.
+                            “{entry.topic || entry.lesson.title}” will be
+                            removed from this browser. This can’t be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { FlaskConical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resolveApiUrl } from "@/lib/api-base-url";
@@ -72,16 +72,27 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
       }
 
       if (res.status === 429) {
-        setError("Too many sign-in attempts. Please wait a few minutes and try again.");
+        setError(
+          "Too many sign-in attempts. Please wait a few minutes and try again.",
+        );
         return;
       }
       if (!res.ok) {
-        setError("The planning service is unavailable. Please try again shortly.");
+        setError(
+          "The planning service is unavailable. Please try again shortly.",
+        );
         return;
       }
       const result: unknown = await res.json();
-      if (!result || typeof result !== "object" || !("valid" in result) || result.valid !== true) {
-        setError("The planning service returned an unexpected response. Please try again.");
+      if (
+        !result ||
+        typeof result !== "object" ||
+        !("valid" in result) ||
+        result.valid !== true
+      ) {
+        setError(
+          "The planning service returned an unexpected response. Please try again.",
+        );
         return;
       }
       onUnlock(trimmed);
@@ -95,12 +106,13 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
-
         {/* Brand */}
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="flex items-center gap-2 text-primary">
             <ScaffoldMark className="w-7 h-7" />
-            <span className="text-xl font-semibold tracking-tight">Scaffold</span>
+            <span className="text-xl font-semibold tracking-tight">
+              Scaffold
+            </span>
           </div>
           <div>
             <h1 className="text-base font-semibold text-foreground mt-1">
@@ -115,7 +127,10 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="access-code" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="access-code"
+              className="text-sm font-medium text-foreground"
+            >
               Access Code
             </label>
             <Input
@@ -154,13 +169,23 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
                 Connecting to planning service...
               </>
             ) : (
-              "Unlock"
+              "Unlock and start planning"
             )}
           </Button>
         </form>
 
-        {/* Demo option + contact */}
-        <div className="text-center space-y-2">
+        {/* Sample option + contact */}
+        <div className="space-y-3 text-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onDemo}
+            className="w-full"
+            data-testid="button-demo"
+          >
+            <FlaskConical className="h-4 w-4" aria-hidden="true" />
+            Try a sample lesson
+          </Button>
           <p className="text-xs text-muted-foreground">
             Need a code?{" "}
             <a
@@ -170,16 +195,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
               Email forozc1@gmail.com
             </a>
           </p>
-          <button
-            type="button"
-            onClick={onDemo}
-            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-            data-testid="button-demo"
-          >
-            Or explore sample lesson plans (no code needed)
-          </button>
         </div>
-
       </div>
     </div>
   );
