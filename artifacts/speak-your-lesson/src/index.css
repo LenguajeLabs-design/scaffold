@@ -261,6 +261,14 @@
     break-inside: avoid;
     margin-bottom: 1.1em;
   }
+
+  details.scaffold-guidance:not([open]) > div {
+    display: block !important;
+  }
+
+  details.scaffold-guidance > summary svg {
+    display: none;
+  }
 }
 
 @layer utilities {

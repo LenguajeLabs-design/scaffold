@@ -359,6 +359,50 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
 // ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
+function GuidanceDetails({
+  number,
+  title,
+  description,
+  content,
+  tone,
+}: {
+  number: string;
+  title: string;
+  description: string;
+  content?: string;
+  tone: string;
+}) {
+  if (!content) return null;
+
+  return (
+    <details className="scaffold-guidance group border-t border-border/70 first:border-t-0">
+      <summary className="flex min-h-20 cursor-pointer list-none items-center gap-3 px-4 py-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden sm:px-5">
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${tone}`}
+          aria-hidden="true"
+        >
+          {number}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-foreground">
+            {title}
+          </span>
+          <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground sm:text-sm">
+            {description}
+          </span>
+        </span>
+        <ChevronDown
+          className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+          aria-hidden="true"
+        />
+      </summary>
+      <div className="px-5 pb-5 pl-[4.25rem] text-sm leading-relaxed text-muted-foreground">
+        <RichText text={content} />
+      </div>
+    </details>
+  );
+}
+
 export default function Home({ accessCode, isDemo }: HomeProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -1161,44 +1205,44 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </CardContent>
             </Card>
 
-            <div className="grid md:grid-cols-3 gap-4">
-              {displayed.lesson.scaffoldPlan && (
-                <Card className="border border-border shadow-none">
-                  <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Scaffold Plan
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4 text-muted-foreground">
-                    <RichText text={displayed.lesson.scaffoldPlan} />
-                  </CardContent>
-                </Card>
-              )}
-              {displayed.lesson.scaffoldFadingPlan && (
-                <Card className="border border-border shadow-none">
-                  <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Fade Toward Independence
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4 text-muted-foreground">
-                    <RichText text={displayed.lesson.scaffoldFadingPlan} />
-                  </CardContent>
-                </Card>
-              )}
-              {displayed.lesson.formativeAssessment && (
-                <Card className="border border-border shadow-none">
-                  <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Formative Assessment
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4 text-muted-foreground">
-                    <RichText text={displayed.lesson.formativeAssessment} />
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            {(displayed.lesson.scaffoldPlan ||
+              displayed.lesson.scaffoldFadingPlan ||
+              displayed.lesson.formativeAssessment) && (
+              <Card className="overflow-hidden border border-border/80 bg-card/85 shadow-none">
+                <CardHeader className="px-5 pb-4 pt-5">
+                  <CardTitle className="text-base font-semibold text-foreground">
+                    Support, fade, and check
+                  </CardTitle>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Open one section when you need it. Each gives you a clear
+                    next move.
+                  </p>
+                </CardHeader>
+                <CardContent className="border-t border-border/70 p-0">
+                  <GuidanceDetails
+                    number="1"
+                    title="Support to use now"
+                    description="Practical scaffolds for this lesson"
+                    content={displayed.lesson.scaffoldPlan}
+                    tone="bg-[var(--brand-teal)]/20 text-[var(--brand-teal-strong)]"
+                  />
+                  <GuidanceDetails
+                    number="2"
+                    title="Fade toward independence"
+                    description="When and how to reduce support"
+                    content={displayed.lesson.scaffoldFadingPlan}
+                    tone="bg-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]"
+                  />
+                  <GuidanceDetails
+                    number="3"
+                    title="Check for understanding"
+                    description="Evidence to collect while students work"
+                    content={displayed.lesson.formativeAssessment}
+                    tone="bg-[var(--brand-blue)]/20 text-[var(--brand-blue-strong)]"
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             {displayed.lesson.sourcesUsed?.length > 0 && (
               <Card className="border border-border shadow-none bg-muted/25">
