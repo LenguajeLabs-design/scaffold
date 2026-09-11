@@ -16,6 +16,13 @@ import {
   Trash2,
   FlaskConical,
   MessageSquareText,
+  FileText,
+  Tags,
+  MessageSquareQuote,
+  Zap,
+  CircleHelp,
+  Lightbulb,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Form,
@@ -70,10 +77,12 @@ interface ClassroomCopilotProps {
 }
 
 function SupportCard({
+  icon: Icon,
   title,
   children,
   tone = "blue",
 }: {
+  icon: LucideIcon;
   title: string;
   children: React.ReactNode;
   tone?: "teal" | "blue" | "purple" | "sun";
@@ -84,12 +93,22 @@ function SupportCard({
     purple: "bg-[var(--brand-purple)]",
     sun: "bg-[var(--brand-sun)]",
   };
+  const iconStyles = {
+    teal: "text-[var(--brand-teal-strong)]",
+    blue: "text-[var(--brand-blue-strong)]",
+    purple: "text-[var(--brand-purple-strong)]",
+    sun: "text-amber-700",
+  };
 
   return (
     <Card className="overflow-hidden border border-border/80 bg-card/90 shadow-[0_10px_30px_rgba(30,27,75,0.045)]">
       <div className={`h-1 ${toneStyles[tone]}`} aria-hidden="true" />
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Icon
+            className={`h-4 w-4 ${iconStyles[tone]}`}
+            aria-hidden="true"
+          />
           {title}
         </CardTitle>
       </CardHeader>
@@ -571,11 +590,11 @@ export default function ClassroomCopilot({
               </div>
             </div>
 
-            <SupportCard title="Simple Explanation" tone="teal">
+            <SupportCard icon={FileText} title="Simple Explanation" tone="teal">
               <RichText text={displayed.support.simpleExplanation} />
             </SupportCard>
 
-            <SupportCard title="Key Vocabulary" tone="blue">
+            <SupportCard icon={Tags} title="Key Vocabulary" tone="blue">
               <div className="flex flex-wrap gap-1.5">
                 {displayed.support.keyVocabulary.map(
                   (word: string, i: number) => (
@@ -590,7 +609,11 @@ export default function ClassroomCopilot({
               </div>
             </SupportCard>
 
-            <SupportCard title="Sentence Frames" tone="purple">
+            <SupportCard
+              icon={MessageSquareQuote}
+              title="Sentence Frames"
+              tone="purple"
+            >
               <ul className="space-y-2">
                 {displayed.support.sentenceFrames.map(
                   (frame: string, i: number) => (
@@ -604,17 +627,21 @@ export default function ClassroomCopilot({
             </SupportCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SupportCard title="Quick Activity" tone="sun">
+              <SupportCard icon={Zap} title="Quick Activity" tone="sun">
                 <RichText text={displayed.support.quickActivity} />
               </SupportCard>
-              <SupportCard title="Extension Question" tone="blue">
+              <SupportCard
+                icon={CircleHelp}
+                title="Extension Question"
+                tone="blue"
+              >
                 <p className="text-sm leading-relaxed">
                   {displayed.support.extensionQuestion}
                 </p>
               </SupportCard>
             </div>
 
-            <SupportCard title="Teacher Move" tone="teal">
+            <SupportCard icon={Lightbulb} title="Teacher Move" tone="teal">
               <p className="text-sm leading-relaxed font-medium">
                 {displayed.support.teacherMove}
               </p>

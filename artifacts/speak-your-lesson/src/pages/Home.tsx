@@ -20,6 +20,18 @@ import {
   FlaskConical,
   Sparkles,
   BookOpenText,
+  Target,
+  BookOpenCheck,
+  Languages,
+  Tags,
+  MessageSquareQuote,
+  Route,
+  StickyNote,
+  Layers3,
+  TrendingUp,
+  ClipboardCheck,
+  LibraryBig,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Form,
@@ -360,13 +372,13 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
 // Main page
 // ---------------------------------------------------------------------------
 function GuidanceDetails({
-  number,
+  icon: Icon,
   title,
   description,
   content,
   tone,
 }: {
-  number: string;
+  icon: LucideIcon;
   title: string;
   description: string;
   content?: string;
@@ -378,10 +390,10 @@ function GuidanceDetails({
     <details className="scaffold-guidance group border-t border-border/70 first:border-t-0">
       <summary className="flex min-h-20 cursor-pointer list-none items-center gap-3 px-4 py-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden sm:px-5">
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${tone}`}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${tone}`}
           aria-hidden="true"
         >
-          {number}
+          <Icon className="h-4 w-4" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-foreground">
@@ -1049,7 +1061,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             {displayed.lesson.integratedUnitGoal && (
               <Card className="border border-primary/20 bg-primary/[0.035] shadow-none">
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary">
+                  <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                    <Target className="h-4 w-4" aria-hidden="true" />
                     Integrated Unit Goal
                   </CardTitle>
                 </CardHeader>
@@ -1062,7 +1075,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             <div className="grid md:grid-cols-2 gap-4">
               <Card className="border border-border shadow-none">
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <BookOpenCheck
+                      className="h-4 w-4 text-[var(--brand-teal-strong)]"
+                      aria-hidden="true"
+                    />
                     Content Objective
                   </CardTitle>
                 </CardHeader>
@@ -1072,7 +1089,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </Card>
               <Card className="border border-border shadow-none">
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Languages
+                      className="h-4 w-4 text-[var(--brand-purple-strong)]"
+                      aria-hidden="true"
+                    />
                     Language Objective
                   </CardTitle>
                 </CardHeader>
@@ -1087,7 +1108,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               <div className="grid md:grid-cols-2 gap-4">
                 <Card className="border border-border shadow-none">
                   <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <Languages
+                        className="h-4 w-4 text-[var(--brand-blue-strong)]"
+                        aria-hidden="true"
+                      />
                       Language Function
                     </CardTitle>
                   </CardHeader>
@@ -1097,7 +1122,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </Card>
                 <Card className="border border-border shadow-none">
                   <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <MessageSquareQuote
+                        className="h-4 w-4 text-[var(--brand-purple-strong)]"
+                        aria-hidden="true"
+                      />
                       Language Feature
                     </CardTitle>
                   </CardHeader>
@@ -1110,7 +1139,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             <Card className="border border-border shadow-none">
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Tags
+                    className="h-4 w-4 text-[var(--brand-blue-strong)]"
+                    aria-hidden="true"
+                  />
                   Key Vocabulary
                 </CardTitle>
               </CardHeader>
@@ -1132,7 +1165,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             <Card className="border border-border shadow-none bg-primary text-primary-foreground">
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
+                <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
+                  <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
                   Sentence Frames
                 </CardTitle>
               </CardHeader>
@@ -1153,7 +1187,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             </Card>
 
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Route
+                  className="h-4 w-4 text-[var(--brand-teal-strong)]"
+                  aria-hidden="true"
+                />
                 Lesson Flow
               </h3>
               {[
@@ -1196,7 +1234,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             <Card className="border border-border shadow-none bg-muted/40">
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <StickyNote
+                    className="h-4 w-4 text-[var(--brand-purple-strong)]"
+                    aria-hidden="true"
+                  />
                   Teacher Notes
                 </CardTitle>
               </CardHeader>
@@ -1210,7 +1252,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               displayed.lesson.formativeAssessment) && (
               <Card className="overflow-hidden border border-border/80 bg-card/85 shadow-none">
                 <CardHeader className="px-5 pb-4 pt-5">
-                  <CardTitle className="text-base font-semibold text-foreground">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
+                    <Layers3
+                      className="h-4 w-4 text-[var(--brand-teal-strong)]"
+                      aria-hidden="true"
+                    />
                     Support, fade, and check
                   </CardTitle>
                   <p className="text-sm leading-relaxed text-muted-foreground">
@@ -1220,21 +1266,21 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </CardHeader>
                 <CardContent className="border-t border-border/70 p-0">
                   <GuidanceDetails
-                    number="1"
+                    icon={Layers3}
                     title="Support to use now"
                     description="Practical scaffolds for this lesson"
                     content={displayed.lesson.scaffoldPlan}
                     tone="bg-[var(--brand-teal)]/20 text-[var(--brand-teal-strong)]"
                   />
                   <GuidanceDetails
-                    number="2"
+                    icon={TrendingUp}
                     title="Fade toward independence"
                     description="When and how to reduce support"
                     content={displayed.lesson.scaffoldFadingPlan}
                     tone="bg-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]"
                   />
                   <GuidanceDetails
-                    number="3"
+                    icon={ClipboardCheck}
                     title="Check for understanding"
                     description="Evidence to collect while students work"
                     content={displayed.lesson.formativeAssessment}
@@ -1247,7 +1293,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             {displayed.lesson.sourcesUsed?.length > 0 && (
               <Card className="border border-border shadow-none bg-muted/25">
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <LibraryBig className="h-4 w-4" aria-hidden="true" />
                     Sources Used
                   </CardTitle>
                 </CardHeader>
