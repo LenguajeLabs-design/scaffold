@@ -12,6 +12,7 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH ?? "/";
+const previewApiTarget = process.env.PREVIEW_API_TARGET?.trim();
 
 export default defineConfig({
   base: basePath,
@@ -58,5 +59,20 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
+    ...(previewApiTarget
+      ? {
+          proxy: {
+            "/api": {
+              target: previewApiTarget,
+              changeOrigin: true,
+              configure(proxy) {
+                proxy.on("proxyReq", (proxyRequest) => {
+                  proxyRequest.removeHeader("origin");
+                });
+              },
+            },
+          },
+        }
+      : {}),
   },
 });
