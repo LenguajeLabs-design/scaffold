@@ -95,14 +95,14 @@ export function RichText({ text, className = "" }: RichTextProps) {
   const blocks = buildBlocks(text);
 
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={`space-y-3.5 ${className}`}>
       {blocks.map((block, bi) => {
         if (block.type === "bullet-list") {
           return (
-            <ul key={bi} className="space-y-1.5">
+            <ul key={bi} className="space-y-2.5">
               {block.items.map((line, li) => (
-                <li key={li} className="flex items-start gap-2 text-sm leading-relaxed">
-                  <span className="mt-2 w-1.5 h-1.5 rounded-full bg-current flex-shrink-0 opacity-50" />
+                <li key={li} className="flex items-start gap-3 text-[15px] leading-7">
+                  <span className="mt-[0.65rem] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--brand-teal-strong)]/55 ring-4 ring-[var(--brand-teal)]/10" />
                   <InlineLine line={line} />
                 </li>
               ))}
@@ -112,10 +112,10 @@ export function RichText({ text, className = "" }: RichTextProps) {
 
         if (block.type === "numbered-list") {
           return (
-            <ol key={bi} className="space-y-1.5">
+            <ol key={bi} className="space-y-2.5">
               {block.items.map((line, li) => (
-                <li key={li} className="flex items-start gap-2.5 text-sm leading-relaxed">
-                  <span className="flex-shrink-0 w-5 h-5 rounded bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">
+                <li key={li} className="flex items-start gap-3 text-[15px] leading-7">
+                  <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-xs font-semibold text-primary ring-1 ring-primary/10">
                     {(line as { kind: "numbered"; n: string; text: string }).n}
                   </span>
                   <InlineLine line={line} />
@@ -127,20 +127,20 @@ export function RichText({ text, className = "" }: RichTextProps) {
 
         // Paragraph — render lines with appropriate spacing
         return (
-          <div key={bi} className="space-y-1.5">
+          <div key={bi} className="space-y-2.5">
             {block.items.map((line, li) => {
               if (line.kind === "bullet") {
                 return (
-                  <div key={li} className="flex items-start gap-2 text-sm leading-relaxed">
-                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-current flex-shrink-0 opacity-50" />
+                  <div key={li} className="flex items-start gap-3 text-[15px] leading-7">
+                    <span className="mt-[0.65rem] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--brand-teal-strong)]/55 ring-4 ring-[var(--brand-teal)]/10" />
                     <span>{line.text}</span>
                   </div>
                 );
               }
               if (line.kind === "numbered") {
                 return (
-                  <div key={li} className="flex items-start gap-2.5 text-sm leading-relaxed">
-                    <span className="flex-shrink-0 w-5 h-5 rounded bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">
+                  <div key={li} className="flex items-start gap-3 text-[15px] leading-7">
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-xs font-semibold text-primary ring-1 ring-primary/10">
                       {line.n}
                     </span>
                     <span>{line.text}</span>
@@ -148,7 +148,7 @@ export function RichText({ text, className = "" }: RichTextProps) {
                 );
               }
               return (
-                <p key={li} className="text-sm leading-relaxed">
+                <p key={li} className="text-[15px] leading-7">
                   <InlineLine line={line} />
                 </p>
               );

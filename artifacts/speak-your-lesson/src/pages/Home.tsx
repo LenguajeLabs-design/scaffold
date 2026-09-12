@@ -1517,7 +1517,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             <Card
               id="plan-overview"
-              className="scroll-mt-24 overflow-hidden border border-border bg-card shadow-none"
+              className="lesson-card scroll-mt-24"
             >
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-5 pb-4 pt-5">
                 <div>
@@ -1604,7 +1604,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               displayed.lesson.languageFunctionObjective ||
               displayed.lesson.languageFeatureObjective) && (
               <div className="grid md:grid-cols-2 gap-4">
-                <Card className="border border-border shadow-none">
+                <Card className="lesson-card lesson-card--blue">
                   <CardHeader className="pb-2 pt-4 px-4">
                     <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       <Languages
@@ -1631,7 +1631,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     )}
                   </CardContent>
                 </Card>
-                <Card className="border border-border shadow-none">
+                <Card className="lesson-card lesson-card--purple">
                   <CardHeader className="pb-2 pt-4 px-4">
                     <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       <MessageSquareQuote
@@ -1663,7 +1663,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             <Card
               id="plan-supports"
-              className="scroll-mt-24 border border-border shadow-none"
+              className="lesson-card lesson-card--blue scroll-mt-24"
             >
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                 <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1718,7 +1718,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </CardContent>
             </Card>
 
-            <Card className="border border-border bg-primary text-primary-foreground shadow-none">
+            <Card className="overflow-hidden rounded-[1.35rem] border border-primary/20 bg-[linear-gradient(145deg,hsl(var(--primary)),#282262)] text-primary-foreground shadow-[0_18px_42px_-26px_rgba(30,27,75,0.65)]">
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4 [&_button]:text-primary-foreground/75 [&_button:hover]:bg-white/10 [&_button:hover]:text-primary-foreground">
                 <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
                   <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
@@ -1805,7 +1805,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   content: displayed.lesson.exitTicket,
                 },
               ].map(({ step, label, field, content }) => (
-                <Card key={step} className="border border-border shadow-none">
+                <Card key={step} className={`lesson-card ${Number(step) % 2 === 0 ? "lesson-card--blue" : ""}`}>
                   <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <span className="w-5 h-5 rounded bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
@@ -1841,14 +1841,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             <Card
               id="plan-assessment"
-              className="scroll-mt-24 border border-border bg-muted/40 shadow-none"
+              className="lesson-card lesson-card--purple scroll-mt-24 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(167,139,250,0.055))]"
             >
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                 <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <StickyNote
-                    className="h-4 w-4 text-[var(--brand-purple-strong)]"
-                    aria-hidden="true"
-                  />
+                  <span className="lesson-icon bg-[var(--brand-purple)]/12 text-[var(--brand-purple-strong)]">
+                    <StickyNote className="h-4 w-4" aria-hidden="true" />
+                  </span>
                   Teacher Notes
                 </CardTitle>
                 <CopyAction
@@ -1879,7 +1878,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               displayed.lesson.scaffoldPlan ||
               displayed.lesson.scaffoldFadingPlan ||
               displayed.lesson.formativeAssessment) && (
-              <Card className="overflow-hidden border border-border/80 bg-card/85 shadow-none">
+              <Card className="lesson-card lesson-card--sun">
                 <CardHeader className="px-5 pb-4 pt-5">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                     <Layers3
