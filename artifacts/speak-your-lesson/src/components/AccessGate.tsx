@@ -96,18 +96,13 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = code.trim().toUpperCase();
-    if (!credential) {
-      setError("Please sign in with Google first.");
-      return;
-    }
-
     setChecking(true);
     setError(null);
 
     try {
       const res = await fetch(resolveApiUrl("/api/access/validate"), {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${credential}` },
+        headers: { "Content-Type": "application/json", ...(credential ? { Authorization: `Bearer ${credential}` } : {}) },
         body: JSON.stringify({ accessCode: trimmed }),
         signal: AbortSignal.timeout(90_000),
       });
@@ -181,7 +176,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
               Plan stronger EAL lessons
             </h1>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              Join the private beta in two quick steps, or explore a prepared sample.
+              Enter the beta code to start planning, or explore a prepared sample.
             </p>
           </div>
         </div>
@@ -189,11 +184,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">1. Sign in</p>
-            <div ref={googleButton} aria-label="Sign in with Google" />
-            {credential && <p className="text-sm text-muted-foreground">Google sign-in ready. Continue below.</p>}
-            {dailyLimit !== null && <p className="text-xs text-muted-foreground">Beta teachers get {dailyLimit} lesson generations per day across both tools.</p>}
-            <p className="pt-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">2. Enter your code</p>
+            {dailyLimit !== null && <p className="text-xs text-muted-foreground">Beta teachers get {dailyLimit} lesson generations per day across both tools. No sign-in is required.</p>}
             <label
               htmlFor="access-code"
               className="text-sm font-medium text-foreground"
@@ -227,7 +218,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
           <Button
             type="submit"
             className="w-full text-sm font-semibold"
-            disabled={checking || !credential}
+            disabled={checking || (!code.trim() && !credential)}
             data-testid="button-unlock"
           >
             {checking ? (
@@ -240,6 +231,12 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
             )}
           </Button>
         </form>
+
+        <div className="space-y-2 border-t border-border/60 pt-4 text-center">
+          <p className="text-xs text-muted-foreground">Admin testing</p>
+          <div ref={googleButton} aria-label="Optional Google sign-in for admin testing" />
+          {credential && <p className="text-xs text-muted-foreground">Admin sign-in ready. You may leave the code blank.</p>}
+        </div>
 
         {/* Sample option + contact */}
         <div className="space-y-3 text-center">
