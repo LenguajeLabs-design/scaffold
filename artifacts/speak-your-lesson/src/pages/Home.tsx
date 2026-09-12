@@ -855,16 +855,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     <div className="bg-background text-foreground">
       {displayed && <PrintableLesson displayed={displayed} />}
 
-      <main className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-8 print:hidden">
+      <main className="max-w-5xl mx-auto px-4 py-9 sm:py-14 space-y-8 print:hidden">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)]/25 to-[var(--brand-blue)]/20 text-[var(--brand-teal-strong)] ring-1 ring-[var(--brand-teal)]/20">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--brand-blue-strong)] shadow-[0_10px_24px_rgba(15,45,74,0.08)] ring-1 ring-[var(--brand-blue)]/15">
             <BookOpenText className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-teal-strong)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-blue-strong)]">
               Plan and scaffold
             </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem]">
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
               Lesson Planner
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -904,9 +904,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
         )}
 
-        <Card className="overflow-hidden border-white/80 bg-card/90 shadow-[0_24px_64px_rgba(30,27,75,0.09)] backdrop-blur-sm">
+        <Card className="overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm">
           <div
-            className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]"
+            className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-sun)]"
             aria-hidden="true"
           />
           <CardContent className="pt-6 sm:p-7">
