@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
+  ArrowRight,
   BookOpenCheck,
   CheckCircle2,
   ClipboardCheck,
@@ -67,10 +68,12 @@ export function AccessGate({
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [showAccessForm, setShowAccessForm] = useState(adminOnly);
 
   const [credential, setGoogleCredential] = useState<string | null>(null);
   const [dailyLimit, setDailyLimit] = useState<number | null>(null);
   const googleButton = useRef<HTMLDivElement>(null);
+  const accessCodeInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     let cancelled = false;
     let script: HTMLScriptElement | undefined;
@@ -185,6 +188,11 @@ export function AccessGate({
     }
   }
 
+  function revealAccessForm() {
+    setShowAccessForm(true);
+    window.setTimeout(() => accessCodeInput.current?.focus(), 80);
+  }
+
   const previewRows = [
     {
       icon: BookOpenCheck,
@@ -227,6 +235,13 @@ export function AccessGate({
         <div className="hidden items-center gap-6 text-sm font-medium text-[var(--brand-indigo)]/80 md:flex">
           <span>Lesson Planner</span>
           <span>Classroom Copilot</span>
+          <button
+            type="button"
+            onClick={revealAccessForm}
+            className="transition-colors hover:text-[var(--brand-indigo)]"
+          >
+            Sign in
+          </button>
           {!adminOnly && (
             <button
               type="button"
@@ -236,6 +251,13 @@ export function AccessGate({
               Sample plan
             </button>
           )}
+          <Button
+            type="button"
+            onClick={revealAccessForm}
+            className="h-11 px-5 text-sm font-semibold shadow-[0_12px_28px_rgba(15,45,74,0.16)]"
+          >
+            Start planning
+          </Button>
         </div>
       </header>
 
@@ -267,154 +289,181 @@ export function AccessGate({
             </div>
           </div>
 
+          {!showAccessForm && !adminOnly && (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                onClick={revealAccessForm}
+                className="h-14 gap-2 px-7 text-base font-semibold shadow-[0_14px_30px_rgba(15,45,74,0.18)] sm:w-auto"
+              >
+                Start planning
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onDemo}
+                className="h-14 border-border/80 bg-white px-7 text-base font-semibold text-[var(--brand-indigo)] shadow-sm hover:bg-white"
+                data-testid="button-demo"
+              >
+                Explore sample plan
+              </Button>
+            </div>
+          )}
+
           {!adminOnly && (
-            <div className="grid gap-3 text-sm leading-relaxed text-muted-foreground sm:grid-cols-2">
-              <p className="flex items-start gap-2">
-                <ClipboardCheck
-                  className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-teal-strong)]"
-                  aria-hidden="true"
-                />
-                <span>Teacher judgment stays central.</span>
+            <div className="grid max-w-xl gap-4 text-sm leading-relaxed text-muted-foreground sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+              <p className="flex items-center gap-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#7ED957]/18 text-[var(--brand-teal-strong)]">
+                  <ClipboardCheck className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span>Teacher judgment stays central</span>
               </p>
-              <p className="flex items-start gap-2">
-                <ShieldCheck
-                  className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-blue-strong)]"
-                  aria-hidden="true"
-                />
-                <span>Student privacy comes first.</span>
+              <span
+                className="hidden h-10 w-px bg-border sm:block"
+                aria-hidden="true"
+              />
+              <p className="flex items-center gap-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#7C8CFF]/14 text-[#5062E8]">
+                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span>Student privacy first</span>
               </p>
             </div>
           )}
 
-          <div className="max-w-xl rounded-[1.35rem] border border-white/85 bg-white/90 p-4 shadow-[0_22px_70px_rgba(15,45,74,0.12)] backdrop-blur-xl sm:p-5">
-            <form
-              onSubmit={handleSubmit}
-              className="grid gap-3 sm:grid-cols-[1fr_auto]"
-            >
-              <div className="space-y-2">
-                <label
-                  htmlFor="access-code"
-                  className="text-sm font-medium text-foreground"
-                >
-                  {adminOnly ? "Admin access" : "Beta access code"}
-                </label>
-                <Input
-                  id="access-code"
-                  type="text"
-                  placeholder={adminOnly ? "No code needed" : "e.g. SUZHOU"}
-                  value={code}
-                  onChange={(e) => {
-                    setCode(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  autoFocus
-                  autoComplete="off"
-                  autoCapitalize="characters"
-                  spellCheck={false}
-                  className="h-12 text-sm tracking-wider uppercase placeholder:uppercase placeholder:tracking-normal"
-                  data-testid="input-access-code"
-                  disabled={checking}
-                />
-              </div>
-
-              <div className="flex items-end">
-                <Button
-                  type="submit"
-                  className="h-12 w-full px-6 text-sm font-semibold shadow-[0_12px_28px_rgba(15,45,74,0.18)] sm:w-auto"
-                  disabled={
-                    checking ||
-                    (adminOnly && !credential) ||
-                    (!adminOnly && !code.trim())
-                  }
-                  data-testid="button-unlock"
-                >
-                  {checking ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : adminOnly ? (
-                    "Enter Admin Mode"
-                  ) : (
-                    "Start planning"
-                  )}
-                </Button>
-              </div>
-            </form>
-
-            {error && (
-              <p
-                className="mt-3 text-sm font-medium text-destructive"
-                role="alert"
+          {showAccessForm && (
+            <div className="max-w-xl rounded-[1.35rem] border border-white/85 bg-white/90 p-4 shadow-[0_22px_70px_rgba(15,45,74,0.12)] backdrop-blur-xl sm:p-5">
+              <form
+                onSubmit={handleSubmit}
+                className="grid gap-3 sm:grid-cols-[1fr_auto]"
               >
-                {error}
-              </p>
-            )}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="access-code"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {adminOnly ? "Admin access" : "Beta access code"}
+                  </label>
+                  <Input
+                    ref={accessCodeInput}
+                    id="access-code"
+                    type="text"
+                    placeholder={adminOnly ? "No code needed" : "e.g. SUZHOU"}
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      if (error) setError(null);
+                    }}
+                    autoFocus
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    className="h-12 text-sm tracking-wider uppercase placeholder:uppercase placeholder:tracking-normal"
+                    data-testid="input-access-code"
+                    disabled={checking}
+                  />
+                </div>
 
-            <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-xs leading-relaxed text-muted-foreground">
-                {!adminOnly && dailyLimit !== null && (
-                  <p>
-                    {dailyLimit} guided generations per day across both tools.
-                    No sign-in required.
-                  </p>
-                )}
-                {adminOnly && (
-                  <p>
-                    Admin mode bypasses the public daily limit; emergency safety
-                    ceilings still apply.
-                  </p>
-                )}
+                <div className="flex items-end">
+                  <Button
+                    type="submit"
+                    className="h-12 w-full px-6 text-sm font-semibold shadow-[0_12px_28px_rgba(15,45,74,0.18)] sm:w-auto"
+                    disabled={
+                      checking ||
+                      (adminOnly && !credential) ||
+                      (!adminOnly && !code.trim())
+                    }
+                    data-testid="button-unlock"
+                  >
+                    {checking ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : adminOnly ? (
+                      "Enter Admin Mode"
+                    ) : (
+                      "Start planning"
+                    )}
+                  </Button>
+                </div>
+              </form>
+
+              {error && (
+                <p
+                  className="mt-3 text-sm font-medium text-destructive"
+                  role="alert"
+                >
+                  {error}
+                </p>
+              )}
+
+              <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-xs leading-relaxed text-muted-foreground">
+                  {!adminOnly && dailyLimit !== null && (
+                    <p>
+                      {dailyLimit} guided generations per day across both tools.
+                      No sign-in required.
+                    </p>
+                  )}
+                  {adminOnly && (
+                    <p>
+                      Admin mode bypasses the public daily limit; emergency
+                      safety ceilings still apply.
+                    </p>
+                  )}
+                  {!adminOnly && (
+                    <p>
+                      Need a code?{" "}
+                      <a
+                        href="mailto:forozc1@gmail.com"
+                        className="font-medium text-primary hover:underline"
+                      >
+                        Email forozc1@gmail.com
+                      </a>
+                    </p>
+                  )}
+                </div>
                 {!adminOnly && (
-                  <p>
-                    Need a code?{" "}
-                    <a
-                      href="mailto:forozc1@gmail.com"
-                      className="font-medium text-primary hover:underline"
-                    >
-                      Email forozc1@gmail.com
-                    </a>
-                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onDemo}
+                    className="min-h-11 shrink-0 border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/[0.07] text-[var(--brand-teal-strong)] hover:border-[var(--brand-teal)]/45 hover:bg-[var(--brand-teal)]/[0.12] md:hidden"
+                    data-testid="button-demo"
+                  >
+                    <FlaskConical className="h-4 w-4" aria-hidden="true" />
+                    Explore a sample plan
+                  </Button>
                 )}
               </div>
-              {!adminOnly && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onDemo}
-                  className="min-h-11 shrink-0 border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/[0.07] text-[var(--brand-teal-strong)] hover:border-[var(--brand-teal)]/45 hover:bg-[var(--brand-teal)]/[0.12] md:hidden"
-                  data-testid="button-demo"
+
+              {adminOnly ? (
+                <div className="mt-4 space-y-2 border-t border-border/60 pt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Google admin sign-in
+                  </p>
+                  <div
+                    ref={googleButton}
+                    aria-label="Sign in with Google for admin testing"
+                  />
+                  {credential && (
+                    <p className="text-xs text-muted-foreground">
+                      Admin sign-in ready.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <a
+                  href="/scaffold/admin"
+                  className="mt-4 block text-xs text-muted-foreground hover:text-primary hover:underline"
                 >
-                  <FlaskConical className="h-4 w-4" aria-hidden="true" />
-                  Explore a sample plan
-                </Button>
+                  Admin testing link
+                </a>
               )}
             </div>
-
-            {adminOnly ? (
-              <div className="mt-4 space-y-2 border-t border-border/60 pt-4">
-                <p className="text-xs text-muted-foreground">
-                  Google admin sign-in
-                </p>
-                <div
-                  ref={googleButton}
-                  aria-label="Sign in with Google for admin testing"
-                />
-                {credential && (
-                  <p className="text-xs text-muted-foreground">
-                    Admin sign-in ready.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <a
-                href="/scaffold/admin"
-                className="mt-4 block text-xs text-muted-foreground hover:text-primary hover:underline"
-              >
-                Admin testing link
-              </a>
-            )}
-          </div>
+          )}
         </section>
 
         <section className="relative hidden min-h-[40rem] overflow-hidden rounded-[2rem] bg-[var(--brand-indigo)] shadow-[0_28px_90px_rgba(15,45,74,0.22)] lg:block">
