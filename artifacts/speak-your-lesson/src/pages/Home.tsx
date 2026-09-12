@@ -78,9 +78,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
 import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
@@ -577,7 +574,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [shareError, setShareError] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
-  const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1026,88 +1022,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     />
                   </div>
 
-                  <Collapsible
-                    open={curriculumOpen}
-                    onOpenChange={setCurriculumOpen}
-                    className="rounded-2xl border border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.045]"
-                  >
-                    <CollapsibleTrigger asChild>
-                      <button
-                        type="button"
-                        className="flex min-h-12 w-full items-center justify-between gap-4 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        data-testid="button-curriculum-settings"
-                      >
-                        <span>
-                          <span className="block text-sm font-semibold text-foreground">
-                            Optional curriculum settings
-                          </span>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
-                            Connect the plan to an available EALDesk unit.
-                          </span>
-                        </span>
-                        <ChevronDown
-                          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${curriculumOpen ? "rotate-180" : ""}`}
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="border-t border-border/70 px-4 pb-4 pt-3">
-                      <FormField
-                        control={form.control}
-                        name="unitProfile"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">
-                              Curriculum Unit
-                            </FormLabel>
-                            <Select
-                              value={field.value ?? "general"}
-                              onValueChange={(value) => {
-                                if (value === "general") {
-                                  field.onChange(undefined);
-                                  return;
-                                }
-                                field.onChange(value);
-                                form.setValue(
-                                  "gradeLevel",
-                                  GenerateLessonPlanBodyGradeLevel.Grade_4,
-                                );
-                              }}
-                            >
-                              <FormControl>
-                                <SelectTrigger
-                                  data-testid="select-unit-profile"
-                                  className="text-sm"
-                                >
-                                  <SelectValue placeholder="Select a curriculum unit" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="general" className="text-sm">
-                                  General lesson planning
-                                </SelectItem>
-                                <SelectItem
-                                  value={
-                                    GenerateLessonPlanBodyUnitProfile[
-                                      "Grade_4_Discipline-Based_Writing"
-                                    ]
-                                  }
-                                  className="text-sm"
-                                >
-                                  Grade 4 Discipline-Based Writing
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <p className="text-xs leading-relaxed text-muted-foreground">
-                              More EALDesk Elementary units can be added here
-                              after the core planning flow is validated.
-                            </p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CollapsibleContent>
-                  </Collapsible>
                 </section>
 
                 <div className="h-px bg-border/80" aria-hidden="true" />
