@@ -220,7 +220,7 @@ export function AccessGate({ onUnlock, onDemo, adminOnly = false }: AccessGatePr
           <Button
             type="submit"
             className="w-full text-sm font-semibold"
-            disabled={checking || !credential || (!adminOnly && !code.trim())}
+            disabled={checking || (adminOnly && !credential) || (!adminOnly && !code.trim())}
             data-testid="button-unlock"
           >
             {checking ? (
