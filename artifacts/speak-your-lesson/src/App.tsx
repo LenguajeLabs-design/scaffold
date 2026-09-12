@@ -178,9 +178,11 @@ function Router() {
     useAccessCode();
   const [, navigate] = useLocation();
   const { open: onboardingOpen, setOnboardingOpen } = useFirstVisitOnboarding();
+  const [location] = useLocation();
+  const adminOnly = location === "/admin";
 
   if (ACCESS_GATE_ENABLED && !isUnlocked) {
-    return <AccessGate onUnlock={unlock} onDemo={enterDemo} />;
+    return <AccessGate onUnlock={unlock} onDemo={enterDemo} adminOnly={adminOnly} />;
   }
 
   const activeAccessCode = accessCode ?? DEMO_CODE;
