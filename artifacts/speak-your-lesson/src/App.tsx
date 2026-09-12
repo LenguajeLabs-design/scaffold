@@ -19,33 +19,17 @@ import {
 import { DEMO_CODE, useAccessCode } from "@/hooks/use-access-code";
 import { HelpCircle, KeyRound } from "lucide-react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
 const ACCESS_GATE_ENABLED =
   import.meta.env.VITE_ACCESS_GATE_ENABLED !== "false";
 
 function ScaffoldMark({ className }: { className?: string }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M3 21 L3 16 L9 16 L9 11 L15 11 L15 6 L21 6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 21 L21 21"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
+    <span className={`scaffold-mark ${className ?? ""}`} aria-hidden="true">
+      <span />
+      <span />
+      <span />
+    </span>
   );
 }
 
@@ -72,14 +56,14 @@ function NavBar({
   ];
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-white/70 bg-background/80 shadow-[0_1px_0_rgba(30,27,75,0.04)] backdrop-blur-xl print:hidden">
-      <div className="max-w-4xl mx-auto px-4 min-h-16 flex items-center gap-2 sm:gap-5">
+    <nav className="sticky top-0 z-40 border-b border-white/80 bg-background/85 shadow-[0_1px_0_rgba(15,45,74,0.05)] backdrop-blur-xl print:hidden">
+      <div className="max-w-6xl mx-auto px-4 min-h-[4.5rem] flex items-center gap-2 sm:gap-5">
         <Link
           href="/"
           className="flex min-h-11 items-center gap-2 shrink-0 text-primary hover:opacity-80 transition-opacity"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_20px_rgba(30,27,75,0.16)]">
-            <ScaffoldMark className="h-5 w-5" />
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-[0_8px_20px_rgba(15,45,74,0.10)] ring-1 ring-[var(--brand-blue)]/15">
+            <ScaffoldMark className="w-5" />
           </span>
           <span className="hidden text-sm font-semibold tracking-tight sm:inline">
             Scaffold
@@ -128,12 +112,12 @@ function NavBar({
           <button
             onClick={onLogout}
             className="shrink-0 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            title={isDemo ? "Use an access code" : "Change access code"}
-            aria-label={isDemo ? "Use an access code" : "Change access code"}
+            title={isDemo ? "Use an access code" : "Sign out"}
+            aria-label={isDemo ? "Use an access code" : "Sign out"}
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">
-              {isDemo ? "Use access code" : "Change code"}
+              {isDemo ? "Use access code" : "Sign out"}
             </span>
           </button>
         )}
@@ -145,11 +129,11 @@ function NavBar({
 function Footer() {
   return (
     <footer className="mt-16 border-t border-white/70 bg-card/70 backdrop-blur-xl print:hidden">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row sm:items-start gap-6">
           <div className="flex items-center gap-2 shrink-0">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--brand-teal)]/15 text-[var(--brand-teal-strong)]">
-              <ScaffoldMark className="h-4 w-4" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white ring-1 ring-[var(--brand-blue)]/15">
+              <ScaffoldMark className="w-4" />
             </span>
             <span className="text-sm font-semibold tracking-tight text-primary">
               Scaffold
@@ -190,7 +174,7 @@ function Footer() {
 }
 
 function Router() {
-  const { accessCode, isDemo, isUnlocked, unlock, enterDemo, logout } =
+  const { accessCode, isAdmin, isDemo, isUnlocked, unlock, enterDemo, logout } =
     useAccessCode();
   const [, navigate] = useLocation();
   const { open: onboardingOpen, setOnboardingOpen } = useFirstVisitOnboarding();
@@ -210,6 +194,7 @@ function Router() {
         showAccessControl={ACCESS_GATE_ENABLED}
         onOpenOnboarding={() => setOnboardingOpen(true)}
       />
+      {isAdmin && <div role="status" className="mx-auto mt-3 w-full max-w-4xl rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm print:hidden"><strong>Admin Mode</strong> · Unlimited testing access<span className="block text-xs text-muted-foreground">Emergency usage limits still apply.</span></div>}
       <div className="flex-1">
         <Switch>
           <Route

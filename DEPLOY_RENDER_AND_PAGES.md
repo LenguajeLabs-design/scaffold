@@ -17,6 +17,12 @@ This is the lowest-friction path for the current codebase:
 |---|---|
 | `OPENAI_API_KEY` | Your OpenAI API key |
 | `VALID_ACCESS_CODES` | School access codes, separated by commas |
+| `GOOGLE_CLIENT_ID` | Web OAuth client ID from Google Cloud; this identifier is public, not a secret |
+| `ADMIN_EMAILS` | Comma-separated Google account emails allowed to test without the public daily limit |
+| `USAGE_HASH_SECRET` | A random 32+-character server secret for irreversible usage identifiers |
+| `DATABASE_URL` | PostgreSQL connection string used for durable quotas and usage records |
+| `GENERATION_ENABLED` | Set `true` to permit generation; set `false` to stop all paid calls immediately |
+| `TRUST_PROXY` | Set `1` on Render so connection-level abuse protection sees the original client IP |
 | `CORS_ALLOWED_ORIGINS` | Your GitHub Pages origin, for example `https://lenguajelabs-design.github.io` |
 
 ### Notes
@@ -53,9 +59,37 @@ passes `VITE_ACCESS_GATE_ENABLED` into the frontend build, defaulting to `true`.
 Teachers can still choose sample lessons without signing in.
 
 Only set `VITE_ACCESS_GATE_ENABLED=false` for an intentionally sample-only site.
-Set `VALID_ACCESS_CODES` on the Render API (comma-separated codes); codes and the
-OpenAI key must never be placed in frontend build variables. Replit secrets do
-not automatically transfer to Render.
+Set `VALID_ACCESS_CODES=SUZHOU` on the Render API. Teachers sign in with Google
+and use that code; their four daily generations are recorded server-side across
+both tools. Set `ADMIN_EMAILS` only in Render, never in a Pages variable or
+source file. Codes, the admin allowlist, database URL, hash secret, and OpenAI
+key must never be placed in frontend build variables. Replit secrets do not
+automatically transfer to Render.
+
+Create a Google OAuth **Web application** client and add both the production
+GitHub Pages URL and local development URL to its authorized JavaScript origins.
+The browser receives an ID token, but the API verifies its signature and
+audience before it checks `ADMIN_EMAILS`. Google recommends server-side ID-token
+verification for this flow: [Google Identity documentation](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
+
+### Beta safety defaults
+
+The API defaults to four public generations per account per UTC day, a 30-second
+public cooldown, a smaller admin cooldown, three concurrent calls, and both
+daily and lifetime emergency ceilings. These values are server-only environment
+variables: `BETA_DAILY_LIMIT`, `BETA_COOLDOWN_SECONDS`,
+`ADMIN_COOLDOWN_SECONDS`, `BETA_IP_DAILY_LIMIT`,
+`GLOBAL_CONCURRENT_GENERATIONS`, `GLOBAL_DAILY_GENERATION_LIMIT`,
+`GLOBAL_DAILY_TOKEN_LIMIT`, `GLOBAL_LIFETIME_GENERATION_LIMIT`,
+`GLOBAL_LIFETIME_TOKEN_LIMIT`, and `GENERATION_DUPLICATE_SECONDS`.
+`LESSON_PLAN_MAX_TOKENS` and `CLASSROOM_COPILOT_MAX_TOKENS` cap each provider
+response; their safe defaults are 3,000 and 1,200 tokens respectively.
+
+Every generation is reserved before OpenAI is called. This means a provider
+failure can still use an allowance, which prevents retry storms. Logs contain
+event type, hashed account/connection IDs, beta/admin traffic type, model, and
+provider usage tokens when returned; they never contain lesson text, email,
+student data, access codes, or API keys.
 
 Deploy the API before the frontend when introducing `/api/access/validate`.
 Confirm the API health endpoint, invalid-code rejection, and valid-code sign-in;

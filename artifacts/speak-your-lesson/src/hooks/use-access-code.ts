@@ -6,14 +6,17 @@
  * It is handled purely client-side — no demo code is ever sent to the API.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+
+import { clearCredential, getCredential } from "@/lib/auth-session";
 
 const STORAGE_KEY = "scaffold-access-code";
 export const DEMO_CODE = "demo";
 
 function readStored(): string | null {
   try {
-    return sessionStorage.getItem(STORAGE_KEY);
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    return stored === DEMO_CODE || getCredential() ? stored : null;
   } catch {
     return null;
   }
@@ -35,7 +38,8 @@ export interface UseAccessCode {
   accessCode: string | null;
   isDemo: boolean;
   isUnlocked: boolean;
-  unlock: (code: string) => void;
+  isAdmin: boolean;
+  unlock: (code: string, admin?: boolean) => void;
   enterDemo: () => void;
   logout: () => void;
 }
@@ -43,10 +47,18 @@ export interface UseAccessCode {
 export function useAccessCode(): UseAccessCode {
   const [accessCode, setAccessCode] = useState<string | null>(() => readStored());
 
+  const [isAdmin, setAdmin] = useState(false);
+  useEffect(() => {
+    const reset = () => { setAccessCode(null); setAdmin(false); writeStored(null); };
+    window.addEventListener("scaffold-signout", reset);
+    return () => window.removeEventListener("scaffold-signout", reset);
+  }, []);
+
   const isDemo = accessCode === DEMO_CODE;
   const isUnlocked = accessCode !== null;
 
-  const unlock = useCallback((code: string) => {
+  const unlock = useCallback((code: string, admin = false) => {
+    setAdmin(admin);
     const upper = code.trim().toUpperCase();
     writeStored(upper);
     setAccessCode(upper);
@@ -58,9 +70,11 @@ export function useAccessCode(): UseAccessCode {
   }, []);
 
   const logout = useCallback(() => {
+    setAdmin(false);
+    clearCredential();
     writeStored(null);
     setAccessCode(null);
   }, []);
 
-  return { accessCode, isDemo, isUnlocked, unlock, logout, enterDemo };
+  return { accessCode, isAdmin, isDemo, isUnlocked, unlock, logout, enterDemo };
 }

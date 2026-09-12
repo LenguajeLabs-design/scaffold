@@ -1,5 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { initializeUsageStore } from "./lib/usage-store";
+import { privateHash } from "./lib/auth";
 
 const rawPort = process.env["PORT"];
 
@@ -14,6 +16,10 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+if (!process.env.GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID is required");
+privateHash("startup", "configuration-check");
+await initializeUsageStore();
 
 app.listen(port, (err) => {
   if (err) {

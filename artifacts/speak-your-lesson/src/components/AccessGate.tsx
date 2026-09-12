@@ -5,11 +5,22 @@
  * "Try the demo" skips to local sample data without hitting the API.
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FlaskConical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resolveApiUrl } from "@/lib/api-base-url";
+
+import { setCredential } from "@/lib/auth-session";
+
+declare global {
+  interface Window {
+    google?: { accounts: { id: {
+      initialize(options: { client_id: string; callback: (response: { credential: string }) => void; auto_select: boolean }): void;
+      renderButton(element: HTMLElement, options: { theme: string; size: string }): void;
+    } } };
+  }
+}
 
 function ScaffoldMark({ className }: { className?: string }) {
   return (
@@ -38,7 +49,7 @@ function ScaffoldMark({ className }: { className?: string }) {
 }
 
 interface AccessGateProps {
-  onUnlock: (code: string) => void;
+  onUnlock: (code: string, admin?: boolean) => void;
   onDemo: () => void;
 }
 
@@ -47,11 +58,46 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
+  const [credential, setGoogleCredential] = useState<string | null>(null);
+  const [dailyLimit, setDailyLimit] = useState<number | null>(null);
+  const googleButton = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let cancelled = false;
+    let script: HTMLScriptElement | undefined;
+    async function initialize() {
+      try {
+        const response = await fetch(resolveApiUrl("/api/access/config"), { signal: AbortSignal.timeout(30_000) });
+        if (!response.ok) throw new Error();
+        const config = await response.json();
+        if (!config.googleClientId) throw new Error();
+        if (cancelled) return;
+        setDailyLimit(config.dailyLimit);
+        const render = () => {
+          if (cancelled || !googleButton.current) return;
+          window.google?.accounts.id.initialize({ client_id: config.googleClientId, auto_select: false,
+            callback: ({ credential }) => { setGoogleCredential(credential); setError(null); } });
+          window.google?.accounts.id.renderButton(googleButton.current, { theme: "outline", size: "large" });
+        };
+        if (window.google) render();
+        else {
+          script = document.createElement("script");
+          script.src = "https://accounts.google.com/gsi/client";
+          script.async = true;
+          script.onload = render;
+          script.onerror = () => { if (!cancelled) setError("Google sign-in could not load. Please check your connection or try a sample lesson."); };
+          document.head.appendChild(script);
+        }
+      } catch { if (!cancelled) setError("Sign-in is temporarily unavailable. You can still try a sample lesson."); }
+    }
+    void initialize();
+    return () => { cancelled = true; script?.remove(); };
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = code.trim().toUpperCase();
-    if (!trimmed) {
-      setError("Please enter your access code.");
+    if (!credential) {
+      setError("Please sign in with Google first.");
       return;
     }
 
@@ -61,13 +107,14 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
     try {
       const res = await fetch(resolveApiUrl("/api/access/validate"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${credential}` },
         body: JSON.stringify({ accessCode: trimmed }),
         signal: AbortSignal.timeout(90_000),
       });
 
       if (res.status === 401) {
-        setError("That code isn't recognized. Please check and try again.");
+        const details = await res.json();
+        setError(details.error ?? "Please sign in again and check your beta code.");
         return;
       }
 
@@ -95,7 +142,8 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         );
         return;
       }
-      onUnlock(trimmed);
+      setCredential(credential);
+      onUnlock(trimmed || "admin", "admin" in result && result.admin === true);
     } catch {
       setError("Couldn't reach the server. Please check your connection.");
     } finally {
@@ -133,7 +181,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
               Plan stronger EAL lessons
             </h1>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              Enter your school access code, or explore a prepared sample.
+              Sign in with Google and enter your beta code, or explore a prepared sample.
             </p>
           </div>
         </div>
@@ -141,6 +189,9 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <div ref={googleButton} aria-label="Sign in with Google" />
+            {credential && <p className="text-sm text-muted-foreground">Google sign-in ready. Continue below.</p>}
+            {dailyLimit !== null && <p className="text-xs text-muted-foreground">Beta access includes {dailyLimit} generations per day across both tools. Admins may leave the code blank.</p>}
             <label
               htmlFor="access-code"
               className="text-sm font-medium text-foreground"
@@ -174,7 +225,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
           <Button
             type="submit"
             className="w-full text-sm font-semibold"
-            disabled={checking}
+            disabled={checking || !credential}
             data-testid="button-unlock"
           >
             {checking ? (
