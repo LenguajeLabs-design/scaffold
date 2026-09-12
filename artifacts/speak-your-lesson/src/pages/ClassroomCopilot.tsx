@@ -52,6 +52,22 @@ import { RichText } from "@/components/RichText";
 
 const MAX_NEED_CHARS = 2000;
 
+const supportGenerationSteps = [
+  "Reading the classroom moment",
+  "Identifying the likely language barrier",
+  "Preparing a quick student-facing support",
+  "Adding a teacher move you can try now",
+];
+
+const widaLevelDescriptions: Record<string, string> = {
+  "WIDA 1-2": "Beginning to develop classroom English",
+  "WIDA 1–2": "Beginning to develop classroom English",
+  "WIDA 2-3": "Developing classroom English",
+  "WIDA 2–3": "Developing classroom English",
+  "WIDA 3-4": "More independent classroom English use",
+  "WIDA 3–4": "More independent classroom English use",
+};
+
 const formSchema = z.object({
   need: z
     .string()
@@ -105,10 +121,7 @@ function SupportCard({
       <div className={`h-1 ${toneStyles[tone]}`} aria-hidden="true" />
       <CardHeader className="pb-2 pt-4 px-4">
         <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <Icon
-            className={`h-4 w-4 ${iconStyles[tone]}`}
-            aria-hidden="true"
-          />
+          <Icon className={`h-4 w-4 ${iconStyles[tone]}`} aria-hidden="true" />
           {title}
         </CardTitle>
       </CardHeader>
@@ -287,8 +300,8 @@ export default function ClassroomCopilot({
               Classroom Copilot
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Get practical language supports for the teaching moment in front
-              of you.
+              Get a quick, reviewable language support for the teaching moment
+              in front of you.
             </p>
           </div>
         </div>
@@ -300,9 +313,9 @@ export default function ClassroomCopilot({
               aria-hidden="true"
             />
             <p>
-              <strong>Sample preview.</strong> Create support to see a prepared
-              example. Your entry stays in this browser and won’t change the
-              example response.
+              <strong>Sample preview.</strong> Explore a prepared classroom
+              support before using your beta access. Your entry stays in this
+              browser and won’t change the example response.
             </p>
           </div>
         )}
@@ -408,7 +421,12 @@ export default function ClassroomCopilot({
                               }
                               className="text-sm"
                             >
-                              WIDA 1–2
+                              <span className="flex flex-col">
+                                <span>WIDA 1–2</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {widaLevelDescriptions["WIDA 1–2"]}
+                                </span>
+                              </span>
                             </SelectItem>
                             <SelectItem
                               value={
@@ -418,7 +436,12 @@ export default function ClassroomCopilot({
                               }
                               className="text-sm"
                             >
-                              WIDA 2–3
+                              <span className="flex flex-col">
+                                <span>WIDA 2–3</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {widaLevelDescriptions["WIDA 2–3"]}
+                                </span>
+                              </span>
                             </SelectItem>
                             <SelectItem
                               value={
@@ -428,14 +451,19 @@ export default function ClassroomCopilot({
                               }
                               className="text-sm"
                             >
-                              WIDA 3–4
+                              <span className="flex flex-col">
+                                <span>WIDA 3–4</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {widaLevelDescriptions["WIDA 3–4"]}
+                                </span>
+                              </span>
                             </SelectItem>
                           </SelectContent>
                         </Select>
                         <p className="text-xs leading-relaxed text-muted-foreground">
                           Not sure? Choose the range that best matches how
-                          independently students understand and use English.
-                          Lower ranges add more support.
+                          independently students understand and use English in
+                          class. You can adapt the support before using it.
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -461,15 +489,15 @@ export default function ClassroomCopilot({
                       <FormControl>
                         <Textarea
                           data-testid="input-need"
-                          placeholder="Describe what your students need help with..."
+                          placeholder="For example: Students can solve the problem, but they are struggling to explain how they know the fractions are equivalent."
                           className="min-h-[120px] resize-none text-sm leading-relaxed"
                           maxLength={MAX_NEED_CHARS}
                           {...field}
                         />
                       </FormControl>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Please do not include student names or private student
-                        information.
+                        Describe the teaching moment, not the student. Leave out
+                        names and identifying information.
                       </p>
                       <FormMessage />
                     </FormItem>
@@ -508,12 +536,12 @@ export default function ClassroomCopilot({
                       {isGenerating ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating support...
+                          Building quick support...
                         </>
                       ) : cooldownSecs > 0 ? (
                         `Wait ${cooldownSecs}s`
                       ) : (
-                        "Create classroom support"
+                        "Build quick support"
                       )}
                     </Button>
                     {isDemo && cooldownSecs === 0 && !isGenerating && (
@@ -529,12 +557,41 @@ export default function ClassroomCopilot({
         </Card>
 
         {isGenerating && !displayed && (
-          <div className="flex flex-col items-center justify-center py-12 gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
-            <p className="text-sm font-medium text-muted-foreground">
-              Preparing your classroom support...
-            </p>
-          </div>
+          <section
+            className="overflow-hidden rounded-2xl border border-[var(--brand-blue)]/25 bg-card text-center shadow-[0_16px_40px_rgba(30,27,75,0.06)] animate-in fade-in duration-300"
+            aria-labelledby="generating-support-heading"
+            aria-live="polite"
+          >
+            <div className="h-1 w-full animate-pulse bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]" />
+            <div className="px-6 py-12">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+              </div>
+              <h2
+                id="generating-support-heading"
+                className="mt-4 font-semibold text-foreground"
+              >
+                Building a quick support
+              </h2>
+              <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Scaffold is turning the classroom moment into a small support
+                you can review and use right away.
+              </p>
+              <ol className="mx-auto mt-6 max-w-sm space-y-2 text-left">
+                {supportGenerationSteps.map((step, index) => (
+                  <li
+                    key={step}
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                  >
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
         )}
 
         {displayed && !isGenerating && (
@@ -545,7 +602,7 @@ export default function ClassroomCopilot({
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  Classroom Support
+                  Quick support draft
                   {isDemo && (
                     <Badge
                       variant="outline"
@@ -556,8 +613,8 @@ export default function ClassroomCopilot({
                   )}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {displayed.gradeLevel} · {displayed.widaLevel} ·{" "}
-                  {displayed.need.slice(0, 60)}
+                  Review and adapt before using · {displayed.gradeLevel} ·{" "}
+                  {displayed.widaLevel} · {displayed.need.slice(0, 60)}
                   {displayed.need.length > 60 ? "…" : ""}
                 </p>
               </div>
@@ -583,18 +640,26 @@ export default function ClassroomCopilot({
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      Copy All
+                      Copy support
                     </>
                   )}
                 </Button>
               </div>
             </div>
 
-            <SupportCard icon={FileText} title="Simple Explanation" tone="teal">
+            <SupportCard
+              icon={FileText}
+              title="Student-friendly explanation"
+              tone="teal"
+            >
               <RichText text={displayed.support.simpleExplanation} />
             </SupportCard>
 
-            <SupportCard icon={Tags} title="Key Vocabulary" tone="blue">
+            <SupportCard
+              icon={Tags}
+              title="Words students may need"
+              tone="blue"
+            >
               <div className="flex flex-wrap gap-1.5">
                 {displayed.support.keyVocabulary.map(
                   (word: string, i: number) => (
@@ -611,7 +676,7 @@ export default function ClassroomCopilot({
 
             <SupportCard
               icon={MessageSquareQuote}
-              title="Sentence Frames"
+              title="Language students can use"
               tone="purple"
             >
               <ul className="space-y-2">
@@ -627,12 +692,16 @@ export default function ClassroomCopilot({
             </SupportCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SupportCard icon={Zap} title="Quick Activity" tone="sun">
+              <SupportCard
+                icon={Zap}
+                title="A quick way to practice"
+                tone="sun"
+              >
                 <RichText text={displayed.support.quickActivity} />
               </SupportCard>
               <SupportCard
                 icon={CircleHelp}
-                title="Extension Question"
+                title="A question to extend thinking"
                 tone="blue"
               >
                 <p className="text-sm leading-relaxed">
@@ -641,7 +710,11 @@ export default function ClassroomCopilot({
               </SupportCard>
             </div>
 
-            <SupportCard icon={Lightbulb} title="Teacher Move" tone="teal">
+            <SupportCard
+              icon={Lightbulb}
+              title="Teacher move to try"
+              tone="teal"
+            >
               <p className="text-sm leading-relaxed font-medium">
                 {displayed.support.teacherMove}
               </p>
