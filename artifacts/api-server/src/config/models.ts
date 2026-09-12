@@ -1,13 +1,11 @@
-/**
- * AI model identifiers and token limits.
- *
- * All model names and token budgets are defined here so they can be changed
- * in one place without hunting through route or service files.
- *
- * Lesson planning uses the more capable model because it produces longer,
- * more structured output. Classroom support uses the faster, cheaper model
- * because teachers need a quick answer during a live lesson.
- */
+function maxTokens(name: string, fallback: number): number {
+  const raw = process.env[name];
+  const value = raw === undefined ? fallback : Number(raw);
+  if (!Number.isSafeInteger(value) || value < 256 || value > 8192) {
+    throw new Error(`${name} must be an integer from 256 to 8192`);
+  }
+  return value;
+}
 
 export const MODELS = {
   LESSON_PLAN: "gpt-5.2",
@@ -15,6 +13,8 @@ export const MODELS = {
 } as const;
 
 export const MAX_TOKENS = {
-  LESSON_PLAN: 8192,
-  CLASSROOM_COPILOT: 4096,
+  // These are deliberately modest beta defaults. Raise them only through
+  // server configuration, where the global token ceilings still apply.
+  LESSON_PLAN: maxTokens("LESSON_PLAN_MAX_TOKENS", 3000),
+  CLASSROOM_COPILOT: maxTokens("CLASSROOM_COPILOT_MAX_TOKENS", 1200),
 } as const;

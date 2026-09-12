@@ -358,6 +358,9 @@ export async function customFetch<T = unknown>(
     }
   }
 
+  if (method === "POST" && /\/(lesson-plan|classroom-copilot)\/generate$/.test(resolveUrl(input)) && !headers.has("Idempotency-Key")) {
+    headers.set("Idempotency-Key", crypto.randomUUID());
+  }
   const requestInfo = { method, url: resolveUrl(input) };
 
   const response = await fetch(input, { ...init, method, headers });

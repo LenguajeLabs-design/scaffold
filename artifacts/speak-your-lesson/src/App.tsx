@@ -19,7 +19,7 @@ import {
 import { DEMO_CODE, useAccessCode } from "@/hooks/use-access-code";
 import { HelpCircle, KeyRound } from "lucide-react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
 const ACCESS_GATE_ENABLED =
   import.meta.env.VITE_ACCESS_GATE_ENABLED !== "false";
 
@@ -112,12 +112,12 @@ function NavBar({
           <button
             onClick={onLogout}
             className="shrink-0 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            title={isDemo ? "Use an access code" : "Change access code"}
-            aria-label={isDemo ? "Use an access code" : "Change access code"}
+            title={isDemo ? "Use an access code" : "Sign out"}
+            aria-label={isDemo ? "Use an access code" : "Sign out"}
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">
-              {isDemo ? "Use access code" : "Change code"}
+              {isDemo ? "Use access code" : "Sign out"}
             </span>
           </button>
         )}
@@ -174,7 +174,7 @@ function Footer() {
 }
 
 function Router() {
-  const { accessCode, isDemo, isUnlocked, unlock, enterDemo, logout } =
+  const { accessCode, isAdmin, isDemo, isUnlocked, unlock, enterDemo, logout } =
     useAccessCode();
   const [, navigate] = useLocation();
   const { open: onboardingOpen, setOnboardingOpen } = useFirstVisitOnboarding();
@@ -194,6 +194,7 @@ function Router() {
         showAccessControl={ACCESS_GATE_ENABLED}
         onOpenOnboarding={() => setOnboardingOpen(true)}
       />
+      {isAdmin && <div role="status" className="mx-auto mt-3 w-full max-w-4xl rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm print:hidden"><strong>Admin Mode</strong> · Unlimited testing access<span className="block text-xs text-muted-foreground">Emergency usage limits still apply.</span></div>}
       <div className="flex-1">
         <Switch>
           <Route

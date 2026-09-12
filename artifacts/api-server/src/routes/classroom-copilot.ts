@@ -1,84 +1,47 @@
 import { Router, type IRouter } from "express";
-import { rateLimit } from "express-rate-limit";
 import { GenerateClassroomSupportBody, GenerateClassroomSupportResponse } from "@workspace/api-zod";
-import type { z } from "zod/v4";
 import { MODELS, MAX_TOKENS } from "../config/models";
 import { callOpenAIForJSON } from "../services/openai.service";
 import { buildClassroomSupportPrompt } from "../services/prompts";
-import { isValidCode, checkAndRecord } from "../lib/access-codes";
+import { authenticate, AccessError, type Actor } from "../lib/auth";
+import { UsageLimit } from "../lib/usage-store";
 import { logUsage } from "../lib/usage-logger";
 
-type ClassroomSupport = z.infer<typeof GenerateClassroomSupportResponse>;
-
 const router: IRouter = Router();
-
-// Backstop IP-based flood limit.
-const ipRateLimit = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  limit: 40,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: {
-    error: "Too many requests from this connection. Please try again later.",
-  },
-});
-
-const MAX_INPUT_CHARS = 2000;
-
-router.post("/classroom-copilot/generate", ipRateLimit, async (req, res) => {
-  // --- Access code check ---
-  const rawCode = (req.body?.accessCode as string | undefined) ?? "";
-  if (!rawCode || !isValidCode(rawCode)) {
-    logUsage({ feature: "classroom-copilot", accessCode: rawCode || "none", inputLength: 0, success: false, errorKind: "auth" });
-    res.status(401).json({ error: "Invalid or missing access code." });
-    return;
-  }
-
-  // --- Per-code rate limit (3/day + 30s cooldown) ---
-  const limitResult = checkAndRecord(rawCode, "classroom-copilot");
-  if (!limitResult.allowed) {
-    const message =
-      limitResult.reason === "cooldown"
-        ? `Please wait ${Math.ceil(limitResult.waitMs / 1000)} seconds before generating again.`
-        : "You've used all 3 Classroom Copilot requests for today. Your limit resets at midnight UTC.";
-    logUsage({ feature: "classroom-copilot", accessCode: rawCode, inputLength: 0, success: false, errorKind: "rate_limit" });
-    res.status(429).json({ error: message });
-    return;
-  }
-
-  // --- Body validation ---
-  const parseResult = GenerateClassroomSupportBody.safeParse(req.body);
-  if (!parseResult.success) {
-    req.log.warn({ issues: parseResult.error.issues }, "Invalid classroom support request body");
-    logUsage({ feature: "classroom-copilot", accessCode: rawCode, inputLength: 0, success: false, errorKind: "validation" });
-    res.status(400).json({ error: "Invalid request body" });
-    return;
-  }
-
-  // --- Input length guard ---
-  const { need } = parseResult.data;
-  if (need.length > MAX_INPUT_CHARS) {
-    logUsage({ feature: "classroom-copilot", accessCode: rawCode, inputLength: need.length, success: false, errorKind: "validation" });
-    res.status(400).json({ error: `Your description must be ${MAX_INPUT_CHARS} characters or fewer.` });
-    return;
-  }
-
-  const { systemPrompt, userPrompt } = buildClassroomSupportPrompt(parseResult.data);
-
+router.post("/classroom-copilot/generate", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  let actor: Actor | undefined;
   try {
-    const support = await callOpenAIForJSON<ClassroomSupport>({
-      model: MODELS.CLASSROOM_COPILOT,
-      maxTokens: MAX_TOKENS.CLASSROOM_COPILOT,
-      systemPrompt,
-      userPrompt,
-    });
-    logUsage({ feature: "classroom-copilot", accessCode: rawCode, inputLength: need.length, success: true });
-    res.json(support);
-  } catch (err) {
-    req.log.error({ err }, "Failed to generate classroom support");
-    logUsage({ feature: "classroom-copilot", accessCode: rawCode, inputLength: need.length, success: false, errorKind: "openai" });
-    res.status(500).json({ error: "Failed to generate classroom support. Please try again." });
+    actor = await authenticate(req);
+    const parsed = GenerateClassroomSupportBody.safeParse({ ...req.body, accessCode: actor.admin ? "admin" : req.body?.accessCode });
+    const requestKey = req.get("Idempotency-Key") ?? "";
+    if (!parsed.success || !/^[a-zA-Z0-9_-]{16,128}$/.test(requestKey)) {
+      logUsage({ feature: "classroom-copilot", event: "blocked", reason: "validation" });
+      res.status(400).json({ error: "Invalid request. Please refresh and try again." });
+      return;
+    }
+    const input = parsed.data;
+    if (!input.need.trim() || input.need.length > 2000) {
+      res.status(400).json({ error: "Please keep your description within 2,000 characters." });
+      return;
+    }
+    const prompts = buildClassroomSupportPrompt(input);
+    const result = await callOpenAIForJSON({ ...prompts, actor, ip: req.ip ?? "unknown", requestKey,
+      feature: "classroom-copilot", model: MODELS.CLASSROOM_COPILOT, maxTokens: MAX_TOKENS.CLASSROOM_COPILOT });
+    const validated = GenerateClassroomSupportResponse.safeParse(result);
+    if (!validated.success) throw new Error("Invalid generated response");
+    res.json(validated.data);
+  } catch (error) {
+    const reason = error instanceof UsageLimit ? error.reason : error instanceof AccessError ? "auth" : "generation_unavailable";
+    logUsage({ feature: "classroom-copilot", event: "blocked", actor: actor?.id, traffic: actor ? actor.admin ? "admin_test" : "beta" : undefined, reason });
+    if (error instanceof UsageLimit) {
+      res.set("Retry-After", String(error.retryAfter));
+      res.status(error.status).json({ error: error.message, code: error.reason });
+    } else if (error instanceof AccessError) {
+      res.status(401).json({ error: error.message });
+    } else {
+      res.status(503).json({ error: "Scaffold couldn't complete this generation. Please wait before trying again. Submitted attempts may count toward your beta allowance." });
+    }
   }
 });
-
 export default router;

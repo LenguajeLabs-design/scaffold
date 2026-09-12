@@ -12,9 +12,13 @@ const allowedOrigins = (process.env["CORS_ALLOWED_ORIGINS"] ?? "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-// Trust the first proxy hop (Replit's reverse proxy sets X-Forwarded-For).
-// Required for express-rate-limit to identify clients correctly.
-app.set("trust proxy", 1);
+// Render terminates TLS at one reverse proxy. This must stay explicit: trusting
+// arbitrary forwarded headers lets callers choose their own apparent IP.
+const trustedProxyHops = Number(process.env.TRUST_PROXY ?? "0");
+if (!Number.isInteger(trustedProxyHops) || trustedProxyHops < 0 || trustedProxyHops > 2) {
+  throw new Error("TRUST_PROXY must be an integer from 0 to 2");
+}
+app.set("trust proxy", trustedProxyHops);
 
 // Security headers: X-Content-Type-Options, X-Frame-Options, HSTS, etc.
 // contentSecurityPolicy is disabled here because the frontend is served from a
@@ -46,7 +50,7 @@ app.use(
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && allowedOrigins.length === 0)) {
         callback(null, true);
         return;
       }
@@ -75,5 +79,9 @@ app.use(
 );
 
 app.use("/api", router);
+
+app.use((_err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  res.status(400).json({ error: "The request could not be processed." });
+});
 
 export default app;
