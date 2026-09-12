@@ -63,8 +63,12 @@ function NavBar({
   const [location] = useLocation();
 
   const tabs = [
-    { label: "Lesson Planner", href: "/" },
-    { label: "Classroom Copilot", href: "/classroom-copilot" },
+    { label: "Lesson Planner", shortLabel: "Planner", href: "/" },
+    {
+      label: "Classroom Copilot",
+      shortLabel: "Copilot",
+      href: "/classroom-copilot",
+    },
   ];
 
   return (
@@ -101,7 +105,8 @@ function NavBar({
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   }`}
                 >
-                  {tab.label}
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </span>
               </Link>
             );
