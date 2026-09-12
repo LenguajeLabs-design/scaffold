@@ -23,7 +23,14 @@ export async function authenticate(req: Request): Promise<Actor> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID is required");
   const authorization = req.get("authorization") ?? "";
-  if (!/^Bearer [A-Za-z0-9._-]{100,8192}$/.test(authorization)) throw new AccessError("Please sign in with Google to generate lessons.");
+  // Public beta teachers can use the code as guests. Their server-side quota
+  // is keyed to a privacy-safe hash of the connection IP; admin access still
+  // requires a verified Google identity.
+  if (!authorization) {
+    if (!isValidCode(req.body?.accessCode)) throw new AccessError("Enter the beta access code to continue.");
+    return { id: privateHash("guest-ip", req.ip ?? "unknown"), admin: false };
+  }
+  if (!/^Bearer [A-Za-z0-9._-]{100,8192}$/.test(authorization)) throw new AccessError("Invalid sign-in session. Please try again.");
   let claims: TokenPayload | undefined;
   try {
     const ticket = await google.verifyIdToken({ idToken: authorization.slice(7), audience: clientId });
