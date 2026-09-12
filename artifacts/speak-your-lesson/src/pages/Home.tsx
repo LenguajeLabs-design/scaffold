@@ -36,6 +36,9 @@ import {
   Plus,
   ListTree,
   ChevronRight,
+  Pencil,
+  MoreHorizontal,
+  Files,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -59,6 +62,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -75,7 +92,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 const MAX_NOTES_CHARS = 2000;
@@ -388,6 +404,8 @@ function GuidanceDetails({
   tone,
   copied,
   onCopy,
+  isEditing,
+  onChange,
 }: {
   icon: LucideIcon;
   title: string;
@@ -396,8 +414,10 @@ function GuidanceDetails({
   tone: string;
   copied: boolean;
   onCopy: () => void;
+  isEditing: boolean;
+  onChange: (value: string) => void;
 }) {
-  if (!content) return null;
+  if (!content && !isEditing) return null;
 
   return (
     <details className="scaffold-guidance group border-t border-border/70 first:border-t-0">
@@ -439,7 +459,16 @@ function GuidanceDetails({
             {copied ? "Copied" : "Copy"}
           </Button>
         </div>
-        <RichText text={content} />
+        {isEditing ? (
+          <Textarea
+            value={content}
+            onChange={(event) => onChange(event.target.value)}
+            aria-label={`Edit ${title}`}
+            className="min-h-32 resize-y bg-background text-sm leading-relaxed text-foreground"
+          />
+        ) : (
+          <RichText text={content ?? ""} />
+        )}
       </div>
     </details>
   );
@@ -531,9 +560,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     isError,
     error,
   } = useGenerateLessonPlan();
-  const { lessons, save, remove } = useSavedLessons();
+  const { lessons, save, update, duplicate, remove } = useSavedLessons();
   const [displayed, setDisplayed] = useState<DisplayedLesson | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [renamingLesson, setRenamingLesson] = useState<SavedLesson | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deletingLesson, setDeletingLesson] = useState<SavedLesson | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
   const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -558,6 +591,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsEditing(false);
     if (isDemo) {
       const hasPilotUnit =
         values.unitProfile ===
@@ -624,6 +658,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   }, [error]);
 
   function viewSavedLesson(entry: SavedLesson) {
+    setIsEditing(false);
     setSavedId(entry.id);
     setDisplayed({
       lesson: entry.lesson,
@@ -646,6 +681,53 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     }
   }
 
+  function updateLesson(changes: Partial<LessonPlan>) {
+    if (!displayed) return;
+    const lesson = { ...displayed.lesson, ...changes };
+    setDisplayed({ ...displayed, lesson });
+    if (savedId) {
+      update(savedId, { lesson, title: lesson.title });
+    }
+  }
+
+  function toggleEditing() {
+    if (isEditing && displayed) {
+      updateLesson({
+        title: displayed.lesson.title.trim() || "Untitled lesson",
+        keyVocabulary: displayed.lesson.keyVocabulary
+          .map((item) => item.trim())
+          .filter(Boolean),
+        sentenceFrames: displayed.lesson.sentenceFrames
+          .map((item) => item.trim())
+          .filter(Boolean),
+      });
+    }
+    setIsEditing((current) => !current);
+  }
+
+  function duplicateSavedLesson(entry: SavedLesson) {
+    const copy = duplicate(entry);
+    viewSavedLesson(copy);
+  }
+
+  function beginRename(entry: SavedLesson) {
+    setRenamingLesson(entry);
+    setRenameValue(entry.lesson.title);
+  }
+
+  function confirmRename() {
+    if (!renamingLesson) return;
+    const title = renameValue.trim();
+    if (!title) return;
+    const lesson = { ...renamingLesson.lesson, title };
+    update(renamingLesson.id, { title, lesson });
+    if (savedId === renamingLesson.id && displayed) {
+      setDisplayed({ ...displayed, lesson });
+    }
+    setRenamingLesson(null);
+    setRenameValue("");
+  }
+
   function startNewPlan() {
     const current = form.getValues();
     form.reset({
@@ -657,6 +739,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     });
     setDisplayed(null);
     setSavedId(null);
+    setIsEditing(false);
     window.history.replaceState(
       null,
       "",
@@ -1144,9 +1227,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             </div>
             <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h2 className="text-lg font-semibold text-foreground">
-                  {displayed.lesson.title}
-                </h2>
+                {isEditing ? (
+                  <Input
+                    value={displayed.lesson.title}
+                    onChange={(event) =>
+                      updateLesson({ title: event.target.value })
+                    }
+                    aria-label="Edit lesson title"
+                    className="h-11 max-w-xl bg-card text-lg font-semibold"
+                  />
+                ) : (
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {displayed.lesson.title}
+                  </h2>
+                )}
                 <div className="flex flex-wrap gap-2 mt-2 items-center">
                   <Badge variant="secondary" className="text-xs font-medium">
                     {displayed.gradeLevel}
@@ -1173,12 +1267,26 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   {savedId && (
                     <span className="inline-flex items-center gap-1 text-xs text-[var(--brand-teal-strong)] font-medium">
                       <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-teal-strong)]" />
-                      Saved to library
+                      {isEditing ? "Saved automatically" : "Saved to library"}
                     </span>
                   )}
                 </div>
               </div>
               <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+                <Button
+                  type="button"
+                  variant={isEditing ? "default" : "outline"}
+                  size="sm"
+                  className="min-h-10 flex-1 gap-1.5 font-medium sm:flex-none"
+                  onClick={toggleEditing}
+                >
+                  {isEditing ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <Pencil className="h-3.5 w-3.5" />
+                  )}
+                  {isEditing ? "Done" : "Edit"}
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
@@ -1218,6 +1326,22 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </div>
             </div>
 
+            {isEditing && (
+              <div
+                className="flex items-start gap-3 rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 px-4 py-3 text-sm text-foreground"
+                role="status"
+              >
+                <Pencil
+                  className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-purple-strong)]"
+                  aria-hidden="true"
+                />
+                <p>
+                  Edit the plan below. Changes save automatically in this
+                  browser.
+                </p>
+              </div>
+            )}
+
             <nav
               aria-label="Lesson plan sections"
               className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1"
@@ -1242,7 +1366,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               ))}
             </nav>
 
-            {displayed.lesson.integratedUnitGoal && (
+            {(isEditing || displayed.lesson.integratedUnitGoal) && (
               <Card className="border border-primary/20 bg-primary/[0.035] shadow-none">
                 <CardHeader className="pb-2 pt-4 px-4">
                   <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
@@ -1251,7 +1375,18 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 text-sm leading-relaxed">
-                  {displayed.lesson.integratedUnitGoal}
+                  {isEditing ? (
+                    <Textarea
+                      value={displayed.lesson.integratedUnitGoal}
+                      onChange={(event) =>
+                        updateLesson({ integratedUnitGoal: event.target.value })
+                      }
+                      aria-label="Edit integrated unit goal"
+                      className="min-h-24 resize-y bg-background"
+                    />
+                  ) : (
+                    displayed.lesson.integratedUnitGoal
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -1291,18 +1426,40 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
                       Content objective
                     </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {displayed.lesson.contentObjective}
-                    </p>
+                    {isEditing ? (
+                      <Textarea
+                        value={displayed.lesson.contentObjective}
+                        onChange={(event) =>
+                          updateLesson({ contentObjective: event.target.value })
+                        }
+                        aria-label="Edit content objective"
+                        className="min-h-28 resize-y border-[var(--brand-teal)]/30 bg-background/80 text-sm leading-relaxed"
+                      />
+                    ) : (
+                      <p className="text-sm leading-relaxed text-foreground">
+                        {displayed.lesson.contentObjective}
+                      </p>
+                    )}
                   </div>
                   <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
                     <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
                       <Languages className="h-4 w-4" aria-hidden="true" />
                       Language objective
                     </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {displayed.lesson.languageObjective}
-                    </p>
+                    {isEditing ? (
+                      <Textarea
+                        value={displayed.lesson.languageObjective}
+                        onChange={(event) =>
+                          updateLesson({ languageObjective: event.target.value })
+                        }
+                        aria-label="Edit language objective"
+                        className="min-h-28 resize-y border-[var(--brand-purple)]/30 bg-background/80 text-sm leading-relaxed"
+                      />
+                    ) : (
+                      <p className="text-sm leading-relaxed text-foreground">
+                        {displayed.lesson.languageObjective}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -1319,7 +1476,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </CardContent>
             </Card>
 
-            {(displayed.lesson.languageFunctionObjective ||
+            {(isEditing ||
+              displayed.lesson.languageFunctionObjective ||
               displayed.lesson.languageFeatureObjective) && (
               <div className="grid md:grid-cols-2 gap-4">
                 <Card className="border border-border shadow-none">
@@ -1333,7 +1491,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="px-4 pb-4 text-sm leading-relaxed">
-                    {displayed.lesson.languageFunctionObjective}
+                    {isEditing ? (
+                      <Textarea
+                        value={displayed.lesson.languageFunctionObjective}
+                        onChange={(event) =>
+                          updateLesson({
+                            languageFunctionObjective: event.target.value,
+                          })
+                        }
+                        aria-label="Edit language function"
+                        className="min-h-24 resize-y bg-background"
+                      />
+                    ) : (
+                      displayed.lesson.languageFunctionObjective
+                    )}
                   </CardContent>
                 </Card>
                 <Card className="border border-border shadow-none">
@@ -1347,7 +1518,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="px-4 pb-4 text-sm leading-relaxed">
-                    {displayed.lesson.languageFeatureObjective}
+                    {isEditing ? (
+                      <Textarea
+                        value={displayed.lesson.languageFeatureObjective}
+                        onChange={(event) =>
+                          updateLesson({
+                            languageFeatureObjective: event.target.value,
+                          })
+                        }
+                        aria-label="Edit language feature"
+                        className="min-h-24 resize-y bg-background"
+                      />
+                    ) : (
+                      displayed.lesson.languageFeatureObjective
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -1377,18 +1561,36 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 />
               </CardHeader>
               <CardContent className="px-4 pb-4">
-                <div className="flex flex-wrap gap-1.5">
-                  {displayed.lesson.keyVocabulary.map(
-                    (vocab: string, i: number) => (
-                      <span
-                        key={i}
-                        className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
-                      >
-                        {vocab}
-                      </span>
-                    ),
-                  )}
-                </div>
+                {isEditing ? (
+                  <div>
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      Enter one word or phrase per line.
+                    </p>
+                    <Textarea
+                      value={displayed.lesson.keyVocabulary.join("\n")}
+                      onChange={(event) =>
+                        updateLesson({
+                          keyVocabulary: event.target.value.split("\n"),
+                        })
+                      }
+                      aria-label="Edit key vocabulary"
+                      className="min-h-32 resize-y bg-background"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {displayed.lesson.keyVocabulary.map(
+                      (vocab: string, i: number) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/8 text-primary text-sm font-medium border border-primary/15"
+                        >
+                          {vocab}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -1412,18 +1614,36 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 />
               </CardHeader>
               <CardContent className="px-4 pb-4">
-                <ul className="space-y-2.5">
-                  {displayed.lesson.sentenceFrames.map(
-                    (frame: string, i: number) => (
-                      <li key={i} className="flex gap-3 items-start text-sm">
-                        <span className="shrink-0 w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold mt-0.5">
-                          {i + 1}
-                        </span>
-                        <span className="leading-relaxed">{frame}</span>
-                      </li>
-                    ),
-                  )}
-                </ul>
+                {isEditing ? (
+                  <div>
+                    <p className="mb-2 text-xs text-primary-foreground/65">
+                      Enter one sentence frame per line.
+                    </p>
+                    <Textarea
+                      value={displayed.lesson.sentenceFrames.join("\n")}
+                      onChange={(event) =>
+                        updateLesson({
+                          sentenceFrames: event.target.value.split("\n"),
+                        })
+                      }
+                      aria-label="Edit sentence frames"
+                      className="min-h-32 resize-y border-white/25 bg-white/10 text-primary-foreground placeholder:text-primary-foreground/50"
+                    />
+                  </div>
+                ) : (
+                  <ul className="space-y-2.5">
+                    {displayed.lesson.sentenceFrames.map(
+                      (frame: string, i: number) => (
+                        <li key={i} className="flex gap-3 items-start text-sm">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold mt-0.5">
+                            {i + 1}
+                          </span>
+                          <span className="leading-relaxed">{frame}</span>
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                )}
               </CardContent>
             </Card>
 
@@ -1439,24 +1659,28 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 {
                   step: "1",
                   label: "Warm-Up",
+                  field: "warmUp" as const,
                   content: displayed.lesson.warmUp,
                 },
                 {
                   step: "2",
                   label: "Main Activity",
+                  field: "mainActivity" as const,
                   content: displayed.lesson.mainActivity,
                 },
                 {
                   step: "3",
                   label: "Speaking Activity",
+                  field: "speakingActivity" as const,
                   content: displayed.lesson.speakingActivity,
                 },
                 {
                   step: "4",
                   label: "Exit Ticket",
+                  field: "exitTicket" as const,
                   content: displayed.lesson.exitTicket,
                 },
-              ].map(({ step, label, content }) => (
+              ].map(({ step, label, field, content }) => (
                 <Card key={step} className="border border-border shadow-none">
                   <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -1474,7 +1698,18 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     />
                   </CardHeader>
                   <CardContent className="px-4 pb-4 text-muted-foreground">
-                    <RichText text={content} />
+                    {isEditing ? (
+                      <Textarea
+                        value={content}
+                        onChange={(event) =>
+                          updateLesson({ [field]: event.target.value })
+                        }
+                        aria-label={`Edit ${label}`}
+                        className="min-h-40 resize-y bg-background text-foreground"
+                      />
+                    ) : (
+                      <RichText text={content} />
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -1501,11 +1736,23 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 />
               </CardHeader>
               <CardContent className="px-4 pb-4 text-muted-foreground">
-                <RichText text={displayed.lesson.teacherNotes} />
+                {isEditing ? (
+                  <Textarea
+                    value={displayed.lesson.teacherNotes}
+                    onChange={(event) =>
+                      updateLesson({ teacherNotes: event.target.value })
+                    }
+                    aria-label="Edit teacher notes"
+                    className="min-h-40 resize-y bg-background text-foreground"
+                  />
+                ) : (
+                  <RichText text={displayed.lesson.teacherNotes} />
+                )}
               </CardContent>
             </Card>
 
-            {(displayed.lesson.scaffoldPlan ||
+            {(isEditing ||
+              displayed.lesson.scaffoldPlan ||
               displayed.lesson.scaffoldFadingPlan ||
               displayed.lesson.formativeAssessment) && (
               <Card className="overflow-hidden border border-border/80 bg-card/85 shadow-none">
@@ -1536,6 +1783,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         displayed.lesson.scaffoldPlan ?? "",
                       )
                     }
+                    isEditing={isEditing}
+                    onChange={(value) =>
+                      updateLesson({ scaffoldPlan: value })
+                    }
                   />
                   <GuidanceDetails
                     icon={TrendingUp}
@@ -1550,6 +1801,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         displayed.lesson.scaffoldFadingPlan ?? "",
                       )
                     }
+                    isEditing={isEditing}
+                    onChange={(value) =>
+                      updateLesson({ scaffoldFadingPlan: value })
+                    }
                   />
                   <GuidanceDetails
                     icon={ClipboardCheck}
@@ -1563,6 +1818,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         "formative-assessment",
                         displayed.lesson.formativeAssessment ?? "",
                       )
+                    }
+                    isEditing={isEditing}
+                    onChange={(value) =>
+                      updateLesson({ formativeAssessment: value })
                     }
                   />
                 </CardContent>
@@ -1652,48 +1911,126 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         aria-hidden="true"
                       />
                     </button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <button
-                          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground opacity-100 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-                          aria-label={`Delete ${entry.lesson.title}`}
+                          type="button"
+                          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label={`More options for ${entry.lesson.title}`}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <MoreHorizontal className="h-4 w-4" />
                         </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="w-[calc(100%-2rem)] rounded-2xl border-border/80 bg-card sm:max-w-md">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Delete this lesson?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            “{entry.lesson.title}” will be removed from this
-                            browser. This can’t be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Keep lesson</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => {
-                              if (isActive) {
-                                setDisplayed(null);
-                                setSavedId(null);
-                              }
-                              remove(entry.id);
-                            }}
-                          >
-                            Delete lesson
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
+                        <DropdownMenuItem
+                          className="min-h-10 rounded-lg"
+                          onSelect={() => beginRename(entry)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="min-h-10 rounded-lg"
+                          onSelect={() => duplicateSavedLesson(entry)}
+                        >
+                          <Files className="h-4 w-4" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="min-h-10 rounded-lg text-destructive focus:bg-destructive/10 focus:text-destructive"
+                          onSelect={() => setDeletingLesson(entry)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 );
               })}
             </div>
           </section>
         )}
+
+        <Dialog
+          open={Boolean(renamingLesson)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRenamingLesson(null);
+              setRenameValue("");
+            }
+          }}
+        >
+          <DialogContent className="w-[calc(100%-2rem)] rounded-2xl border-border/80 bg-card sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Rename plan</DialogTitle>
+              <DialogDescription>
+                Choose a name that will be easy to find later.
+              </DialogDescription>
+            </DialogHeader>
+            <Input
+              value={renameValue}
+              onChange={(event) => setRenameValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") confirmRename();
+              }}
+              aria-label="Plan name"
+              className="h-12"
+              autoFocus
+            />
+            <DialogFooter className="gap-2 sm:space-x-0">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setRenamingLesson(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmRename}
+                disabled={!renameValue.trim()}
+              >
+                Save name
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog
+          open={Boolean(deletingLesson)}
+          onOpenChange={(open) => {
+            if (!open) setDeletingLesson(null);
+          }}
+        >
+          <AlertDialogContent className="w-[calc(100%-2rem)] rounded-2xl border-border/80 bg-card sm:max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this lesson?</AlertDialogTitle>
+              <AlertDialogDescription>
+                “{deletingLesson?.lesson.title}” will be removed from this
+                browser. This can’t be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep lesson</AlertDialogCancel>
+              <AlertDialogAction
+                className="border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (!deletingLesson) return;
+                  if (savedId === deletingLesson.id) {
+                    setDisplayed(null);
+                    setSavedId(null);
+                    setIsEditing(false);
+                  }
+                  remove(deletingLesson.id);
+                  setDeletingLesson(null);
+                }}
+              >
+                Delete lesson
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

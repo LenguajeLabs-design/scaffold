@@ -78,5 +78,38 @@ export function useSavedLessons() {
     });
   }, []);
 
-  return { lessons, save, remove };
+  const update = useCallback(
+    (
+      id: string,
+      changes: Partial<Pick<SavedLesson, "title" | "topic" | "lesson">>,
+    ): void => {
+      setLessons((prev) => {
+        const next = prev.map((entry) =>
+          entry.id === id ? { ...entry, ...changes } : entry,
+        );
+        writeToStorage(next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const duplicate = useCallback((entry: SavedLesson): SavedLesson => {
+    const title = `${entry.lesson.title} — Copy`;
+    const copy: SavedLesson = {
+      ...entry,
+      id: crypto.randomUUID(),
+      savedAt: new Date().toISOString(),
+      title,
+      lesson: { ...entry.lesson, title },
+    };
+    setLessons((prev) => {
+      const next = [copy, ...prev];
+      writeToStorage(next);
+      return next;
+    });
+    return copy;
+  }, []);
+
+  return { lessons, save, update, duplicate, remove };
 }
