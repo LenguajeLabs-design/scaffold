@@ -51,9 +51,10 @@ function ScaffoldMark({ className }: { className?: string }) {
 interface AccessGateProps {
   onUnlock: (code: string, admin?: boolean) => void;
   onDemo: () => void;
+  adminOnly?: boolean;
 }
 
-export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
+export function AccessGate({ onUnlock, onDemo, adminOnly = false }: AccessGateProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -137,7 +138,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         );
         return;
       }
-      setCredential(credential);
+      if (credential) setCredential(credential);
       onUnlock(trimmed || "admin", "admin" in result && result.admin === true);
     } catch {
       setError("Couldn't reach the server. Please check your connection.");
@@ -176,7 +177,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
               Plan stronger EAL lessons
             </h1>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              Enter the beta code to start planning, or explore a prepared sample.
+              {adminOnly ? "Sign in with your allowlisted Google account to test Scaffold." : "Enter the beta code to start planning, or explore a prepared sample."}
             </p>
           </div>
         </div>
@@ -184,7 +185,8 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            {dailyLimit !== null && <p className="text-xs text-muted-foreground">Beta teachers get {dailyLimit} lesson generations per day across both tools. No sign-in is required.</p>}
+            {!adminOnly && dailyLimit !== null && <p className="text-xs text-muted-foreground">Beta teachers get {dailyLimit} lesson generations per day across both tools. No sign-in is required.</p>}
+            {adminOnly && <p className="text-xs text-muted-foreground">Admin mode bypasses the public daily limit; emergency safety ceilings still apply.</p>}
             <label
               htmlFor="access-code"
               className="text-sm font-medium text-foreground"
@@ -194,7 +196,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
             <Input
               id="access-code"
               type="text"
-              placeholder="e.g. SUZHOU"
+              placeholder={adminOnly ? "No code needed" : "e.g. SUZHOU"}
               value={code}
               onChange={(e) => {
                 setCode(e.target.value);
@@ -218,7 +220,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
           <Button
             type="submit"
             className="w-full text-sm font-semibold"
-            disabled={checking || (!code.trim() && !credential)}
+            disabled={checking || !credential || (!adminOnly && !code.trim())}
             data-testid="button-unlock"
           >
             {checking ? (
@@ -227,16 +229,20 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
                 Connecting to planning service...
               </>
             ) : (
-              "Unlock and start planning"
+              adminOnly ? "Enter Admin Mode" : "Unlock and start planning"
             )}
           </Button>
         </form>
 
-        <div className="space-y-2 border-t border-border/60 pt-4 text-center">
-          <p className="text-xs text-muted-foreground">Admin testing</p>
-          <div ref={googleButton} aria-label="Optional Google sign-in for admin testing" />
-          {credential && <p className="text-xs text-muted-foreground">Admin sign-in ready. You may leave the code blank.</p>}
-        </div>
+        {adminOnly ? (
+          <div className="space-y-2 border-t border-border/60 pt-4 text-center">
+            <p className="text-xs text-muted-foreground">Google admin sign-in</p>
+            <div ref={googleButton} aria-label="Sign in with Google for admin testing" />
+            {credential && <p className="text-xs text-muted-foreground">Admin sign-in ready.</p>}
+          </div>
+        ) : (
+          <a href="/scaffold/admin" className="block text-center text-xs text-muted-foreground hover:text-primary hover:underline">Admin testing link</a>
+        )}
 
         {/* Sample option + contact */}
         <div className="space-y-3 text-center">
