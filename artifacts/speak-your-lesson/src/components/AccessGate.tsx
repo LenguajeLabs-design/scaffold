@@ -22,30 +22,8 @@ declare global {
   }
 }
 
-function ScaffoldMark({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M3 21 L3 16 L9 16 L9 11 L15 11 L15 6 L21 6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 21 L21 21"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+function ScaffoldMark() {
+  return <span className="scaffold-mark" aria-hidden="true"><span /><span /><span /></span>;
 }
 
 interface AccessGateProps {
@@ -162,10 +140,10 @@ export function AccessGate({ onUnlock, onDemo, adminOnly = false }: AccessGatePr
         {/* Brand */}
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="flex items-center gap-2.5 text-primary">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(30,27,75,0.18)]">
-              <ScaffoldMark className="h-6 w-6" />
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-indigo)] shadow-[0_10px_24px_rgba(15,45,74,0.18)]">
+              <ScaffoldMark />
             </span>
-            <span className="text-2xl font-semibold tracking-tight">
+            <span className="text-2xl font-semibold tracking-tight text-[var(--brand-indigo)]">
               Scaffold
             </span>
           </div>
