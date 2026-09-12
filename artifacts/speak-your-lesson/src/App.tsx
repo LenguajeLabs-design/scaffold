@@ -179,9 +179,9 @@ function Footer() {
           </div>
 
           <p className="text-xs text-muted-foreground shrink-0 sm:text-right">
-            Version 1.0
+            Version 2.0
             <br />
-            Updated May 2026
+            Updated September 2026
           </p>
         </div>
       </div>
