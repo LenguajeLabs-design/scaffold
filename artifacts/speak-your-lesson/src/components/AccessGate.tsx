@@ -466,32 +466,9 @@ export function AccessGate({
           )}
         </section>
 
-        <section className="relative hidden min-h-[40rem] overflow-hidden rounded-[2rem] bg-[var(--brand-indigo)] shadow-[0_28px_90px_rgba(15,45,74,0.22)] lg:block">
-          <div
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage:
-                "linear-gradient(135deg, rgba(124,140,255,0.34) 1px, transparent 1px), linear-gradient(45deg, rgba(126,217,87,0.22) 1px, transparent 1px)",
-              backgroundSize: "112px 112px, 72px 72px",
-            }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute -right-16 top-16 h-44 w-44 rotate-45 rounded-[2rem] border border-[#7ED957]/45 bg-[#7ED957]/20"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute -bottom-20 right-20 h-56 w-56 rounded-full border border-[#FFD166]/60 bg-[#FFD166]/20"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute left-10 top-10 h-40 w-40 rounded-full border border-[#7C8CFF]/40 bg-[#7C8CFF]/15"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute -left-20 bottom-16 h-44 w-80 -rotate-45 rounded-[2rem] border border-[#7C8CFF]/45"
-            aria-hidden="true"
-          />
+        <section className="scaffold-geometric-accent relative hidden min-h-[40rem] rounded-[2rem] shadow-[0_28px_90px_rgba(15,45,74,0.22)] lg:block">
+          <div className="scaffold-geometric-grid" aria-hidden="true" />
+          <div className="scaffold-geometric-spark" aria-hidden="true" />
 
           <div className="relative flex h-full min-h-[40rem] items-center justify-center p-10">
             <div className="w-full max-w-lg rounded-[1.5rem] bg-white/95 p-7 shadow-[0_24px_60px_rgba(7,16,35,0.22)] backdrop-blur-sm">

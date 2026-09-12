@@ -19,7 +19,9 @@ import {
 import { DEMO_CODE, useAccessCode } from "@/hooks/use-access-code";
 import { HelpCircle, KeyRound } from "lucide-react";
 
-const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+const queryClient = new QueryClient({
+  defaultOptions: { mutations: { retry: false } },
+});
 const ACCESS_GATE_ENABLED =
   import.meta.env.VITE_ACCESS_GATE_ENABLED !== "false";
 
@@ -198,15 +200,26 @@ function Router() {
   const isSampleMode = !ACCESS_GATE_ENABLED || isDemo;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background/40">
+    <div className="relative min-h-screen flex flex-col overflow-hidden bg-background/40">
+      <div className="scaffold-workspace-accent" aria-hidden="true" />
       <NavBar
         isDemo={isSampleMode}
         onLogout={logout}
         showAccessControl={ACCESS_GATE_ENABLED}
         onOpenOnboarding={() => setOnboardingOpen(true)}
       />
-      {isAdmin && <div role="status" className="mx-auto mt-3 w-full max-w-4xl rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm print:hidden"><strong>Admin Mode</strong> · Unlimited testing access<span className="block text-xs text-muted-foreground">Emergency usage limits still apply.</span></div>}
-      <div className="flex-1">
+      {isAdmin && (
+        <div
+          role="status"
+          className="mx-auto mt-3 w-full max-w-4xl rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm print:hidden"
+        >
+          <strong>Admin Mode</strong> · Unlimited testing access
+          <span className="block text-xs text-muted-foreground">
+            Emergency usage limits still apply.
+          </span>
+        </div>
+      )}
+      <div className="relative z-10 flex-1">
         <Switch>
           <Route
             path="/"
