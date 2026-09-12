@@ -214,7 +214,7 @@ export function AccessGate({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-6">
+      <header className="mx-auto flex w-full max-w-[76rem] items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
         <div className="flex items-center gap-2.5 text-primary">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-[0_8px_20px_rgba(15,45,74,0.10)] ring-1 ring-[var(--brand-blue)]/15">
             <ScaffoldMark />
@@ -224,7 +224,7 @@ export function AccessGate({
           </span>
         </div>
 
-        <div className="hidden items-center gap-7 text-sm font-medium text-[var(--brand-indigo)]/80 md:flex">
+        <div className="hidden items-center gap-6 text-sm font-medium text-[var(--brand-indigo)]/80 md:flex">
           <span>Lesson Planner</span>
           <span>Classroom Copilot</span>
           {!adminOnly && (
@@ -233,20 +233,20 @@ export function AccessGate({
               onClick={onDemo}
               className="transition-colors hover:text-[var(--brand-indigo)]"
             >
-              Explore sample
+              Sample plan
             </button>
           )}
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center gap-8 px-5 pb-10 pt-3 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:pb-16">
-        <section className="space-y-8">
+      <main className="mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-[88rem] items-center gap-8 px-5 pb-10 pt-3 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14 lg:px-10 lg:pb-16">
+        <section className="space-y-8 lg:py-10">
           <div className="space-y-5">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--brand-teal-strong)]">
               Practical support for multilingual learners
             </p>
             <div className="space-y-4">
-              <h1 className="max-w-2xl text-4xl font-semibold leading-[1.05] tracking-tight text-[var(--brand-indigo)] sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight text-[var(--brand-indigo)] sm:text-5xl lg:text-6xl">
                 Same lesson.
                 <br />
                 More learners.
@@ -417,7 +417,7 @@ export function AccessGate({
           </div>
         </section>
 
-        <section className="relative hidden min-h-[34rem] overflow-hidden rounded-[1.75rem] bg-[var(--brand-indigo)] shadow-[0_28px_90px_rgba(15,45,74,0.22)] lg:block">
+        <section className="relative hidden min-h-[40rem] overflow-hidden rounded-[2rem] bg-[var(--brand-indigo)] shadow-[0_28px_90px_rgba(15,45,74,0.22)] lg:block">
           <div
             className="absolute inset-0 opacity-25"
             style={{
@@ -444,8 +444,8 @@ export function AccessGate({
             aria-hidden="true"
           />
 
-          <div className="relative flex h-full min-h-[34rem] items-center justify-center p-8">
-            <div className="w-full max-w-md rounded-[1.35rem] bg-white/95 p-6 shadow-[0_24px_60px_rgba(7,16,35,0.22)] backdrop-blur-sm">
+          <div className="relative flex h-full min-h-[40rem] items-center justify-center p-10">
+            <div className="w-full max-w-lg rounded-[1.5rem] bg-white/95 p-7 shadow-[0_24px_60px_rgba(7,16,35,0.22)] backdrop-blur-sm">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-lg font-semibold tracking-tight text-foreground">
