@@ -39,6 +39,8 @@ import {
   Pencil,
   MoreHorizontal,
   Files,
+  Share2,
+  UserRoundPlus,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -83,6 +85,10 @@ import {
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
 import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
 import { RichText } from "@/components/RichText";
+import {
+  decodeSharedPlan,
+  encodeSharedPlan,
+} from "@/lib/shared-plan";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -567,6 +573,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [renamingLesson, setRenamingLesson] = useState<SavedLesson | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [deletingLesson, setDeletingLesson] = useState<SavedLesson | null>(null);
+  const [isSharedPlan, setIsSharedPlan] = useState(false);
+  const [shareError, setShareError] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
   const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -575,6 +584,33 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   // Cooldown state
   const [cooldownSecs, setCooldownSecs] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const encoded = new URL(window.location.href).searchParams.get("share");
+    if (!encoded) return;
+
+    let cancelled = false;
+    decodeSharedPlan(encoded).then((shared) => {
+      if (cancelled) return;
+      if (!shared) {
+        setShareError(true);
+        return;
+      }
+      setDisplayed(shared);
+      setSavedId(null);
+      setIsEditing(false);
+      setIsSharedPlan(true);
+      window.setTimeout(() => {
+        document
+          .querySelector('[data-testid="section-results"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function startCooldown(secs: number) {
     setCooldownSecs(secs);
@@ -590,8 +626,22 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     }, 1000);
   }
 
+  function clearSharedPlanFromUrl(clearHash = false) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("share");
+    if (clearHash) url.hash = "";
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsEditing(false);
+    setIsSharedPlan(false);
+    setShareError(false);
+    clearSharedPlanFromUrl(true);
     if (isDemo) {
       const hasPilotUnit =
         values.unitProfile ===
@@ -659,6 +709,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
   function viewSavedLesson(entry: SavedLesson) {
     setIsEditing(false);
+    setIsSharedPlan(false);
+    setShareError(false);
+    clearSharedPlanFromUrl(true);
     setSavedId(entry.id);
     setDisplayed({
       lesson: entry.lesson,
@@ -679,6 +732,29 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     } catch {
       setCopiedSection(null);
     }
+  }
+
+  async function shareCurrentPlan() {
+    if (!displayed) return;
+    const encoded = await encodeSharedPlan(displayed);
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("share", encoded);
+    url.hash = "";
+    setShareUrl(url.toString());
+  }
+
+  function saveSharedCopy() {
+    if (!displayed) return;
+    const id = save(displayed.lesson, {
+      gradeLevel: displayed.gradeLevel,
+      widaBand: displayed.widaBand,
+      topic: displayed.topic,
+      unitProfile: displayed.unitProfile,
+    });
+    setSavedId(id);
+    setIsSharedPlan(false);
+    clearSharedPlanFromUrl(true);
   }
 
   function updateLesson(changes: Partial<LessonPlan>) {
@@ -740,11 +816,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     setDisplayed(null);
     setSavedId(null);
     setIsEditing(false);
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${window.location.search}`,
-    );
+    setIsSharedPlan(false);
+    setShareError(false);
+    clearSharedPlanFromUrl(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
     window.setTimeout(() => {
       document
@@ -800,7 +874,23 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
         </div>
 
-        {isDemo && (
+        {shareError && (
+          <div
+            className="flex items-start gap-3 rounded-2xl border border-destructive/25 bg-destructive/5 px-4 py-3.5 text-sm leading-relaxed text-destructive"
+            role="alert"
+          >
+            <AlertTriangle
+              className="mt-0.5 h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
+            <p>
+              This shared-plan link is incomplete or no longer valid. Ask the
+              sender to create a new link.
+            </p>
+          </div>
+        )}
+
+        {isDemo && !isSharedPlan && (
           <div className="flex items-start gap-3 rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm leading-relaxed text-amber-900">
             <FlaskConical
               className="mt-0.5 h-4 w-4 shrink-0"
@@ -1217,11 +1307,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               />
               <div>
                 <p className="text-sm font-semibold">
-                  Your lesson plan is ready
+                  {isSharedPlan
+                    ? "A lesson plan was shared with you"
+                    : "Your lesson plan is ready"}
                 </p>
                 <p className="mt-0.5 text-sm leading-relaxed">
-                  Review the supports below, adapt them for your learners, and
-                  print when you’re ready.
+                  {isSharedPlan
+                    ? "Review the plan, then save your own copy before making changes."
+                    : "Review the supports below, adapt them for your learners, and print when you’re ready."}
                 </p>
               </div>
             </div>
@@ -1256,7 +1349,15 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       {displayed.unitProfile}
                     </Badge>
                   )}
-                  {isDemo && (
+                  {isSharedPlan && (
+                    <Badge
+                      variant="outline"
+                      className="border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 text-xs font-medium text-[var(--brand-blue-strong)]"
+                    >
+                      Shared
+                    </Badge>
+                  )}
+                  {isDemo && !isSharedPlan && (
                     <Badge
                       variant="outline"
                       className="text-xs font-medium text-amber-700 border-amber-200 bg-amber-50"
@@ -1273,20 +1374,33 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </div>
               </div>
               <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
-                <Button
-                  type="button"
-                  variant={isEditing ? "default" : "outline"}
-                  size="sm"
-                  className="min-h-10 flex-1 gap-1.5 font-medium sm:flex-none"
-                  onClick={toggleEditing}
-                >
-                  {isEditing ? (
-                    <Check className="h-3.5 w-3.5" />
-                  ) : (
-                    <Pencil className="h-3.5 w-3.5" />
-                  )}
-                  {isEditing ? "Done" : "Edit"}
-                </Button>
+                {isSharedPlan && !savedId && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="min-h-10 flex-1 gap-1.5 font-medium sm:flex-none"
+                    onClick={saveSharedCopy}
+                  >
+                    <UserRoundPlus className="h-3.5 w-3.5" />
+                    Save my copy
+                  </Button>
+                )}
+                {(!isSharedPlan || savedId) && (
+                  <Button
+                    type="button"
+                    variant={isEditing ? "default" : "outline"}
+                    size="sm"
+                    className="min-h-10 flex-1 gap-1.5 font-medium sm:flex-none"
+                    onClick={toggleEditing}
+                  >
+                    {isEditing ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <Pencil className="h-3.5 w-3.5" />
+                    )}
+                    {isEditing ? "Done" : "Edit"}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -1302,6 +1416,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     <Copy className="h-3.5 w-3.5" />
                   )}
                   {copiedSection === "full-plan" ? "Copied" : "Copy plan"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-10 flex-1 gap-1.5 font-medium sm:flex-none"
+                  onClick={shareCurrentPlan}
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  Share
                 </Button>
                 <Button
                   type="button"
@@ -1951,6 +2075,63 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             </div>
           </section>
         )}
+
+        <Dialog
+          open={Boolean(shareUrl)}
+          onOpenChange={(open) => {
+            if (!open) setShareUrl(null);
+          }}
+        >
+          <DialogContent className="w-[calc(100%-2rem)] rounded-2xl border-border/80 bg-card sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Share2
+                  className="h-5 w-5 text-[var(--brand-teal-strong)]"
+                  aria-hidden="true"
+                />
+                Share this plan
+              </DialogTitle>
+              <DialogDescription className="leading-relaxed">
+                This link contains a snapshot of the lesson. Your coworker will
+                open it through Scaffold and save an independent copy.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Input
+                value={shareUrl ?? ""}
+                readOnly
+                aria-label="Share link"
+                className="h-12 bg-muted/40 text-xs"
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Anyone with this link and a valid school access code can view
+                the snapshot. Don’t include student names or private details.
+              </p>
+            </div>
+            <DialogFooter className="gap-2 sm:space-x-0">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShareUrl(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className="gap-2"
+                onClick={() => copySection("share-link", shareUrl ?? "")}
+              >
+                {copiedSection === "share-link" ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                {copiedSection === "share-link" ? "Link copied" : "Copy link"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Dialog
           open={Boolean(renamingLesson)}
