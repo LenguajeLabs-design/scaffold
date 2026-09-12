@@ -77,15 +77,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-} from "@/components/ui/collapsible";
+import {} from "@/components/ui/collapsible";
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
 import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
 import { RichText } from "@/components/RichText";
-import {
-  decodeSharedPlan,
-  encodeSharedPlan,
-} from "@/lib/shared-plan";
+import { decodeSharedPlan, encodeSharedPlan } from "@/lib/shared-plan";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,6 +94,22 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const MAX_NOTES_CHARS = 2000;
+
+const generationSteps = [
+  "Reading your lesson notes",
+  "Connecting the goal to likely language demands",
+  "Preparing vocabulary, sentence frames, and activities",
+  "Adding review points for your teacher judgment",
+];
+
+const widaBandDescriptions: Record<string, string> = {
+  "WIDA 1-2": "Beginning to develop classroom English",
+  "WIDA 1–2": "Beginning to develop classroom English",
+  "WIDA 2-3": "Developing classroom English",
+  "WIDA 2–3": "Developing classroom English",
+  "WIDA 3-4": "More independent classroom English use",
+  "WIDA 3–4": "More independent classroom English use",
+};
 
 const formSchema = z.object({
   topic: z.string().min(1, "Topic is required"),
@@ -567,9 +579,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [displayed, setDisplayed] = useState<DisplayedLesson | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [renamingLesson, setRenamingLesson] = useState<SavedLesson | null>(null);
+  const [renamingLesson, setRenamingLesson] = useState<SavedLesson | null>(
+    null,
+  );
   const [renameValue, setRenameValue] = useState("");
-  const [deletingLesson, setDeletingLesson] = useState<SavedLesson | null>(null);
+  const [deletingLesson, setDeletingLesson] = useState<SavedLesson | null>(
+    null,
+  );
   const [isSharedPlan, setIsSharedPlan] = useState(false);
   const [shareError, setShareError] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -864,8 +880,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               Lesson Planner
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Build a ready-to-teach lesson for multilingual learners from your
-              topic and planning notes.
+              Turn the lesson you are already planning into a guided draft with
+              language supports for multilingual learners.
             </p>
           </div>
         </div>
@@ -893,9 +909,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               aria-hidden="true"
             />
             <p>
-              <strong>Sample preview.</strong> Create a plan to see a prepared
-              example. Your entries stay in this browser and won’t change the
-              example lesson.
+              <strong>Sample preview.</strong> Explore a prepared plan before
+              using your beta access. Your entries stay in this browser and
+              won’t change the example lesson.
             </p>
           </div>
         )}
@@ -927,8 +943,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         Set the learner context
                       </h2>
                       <p className="mt-0.5 text-sm text-muted-foreground">
-                        Choose the grade and approximate English-language
-                        proficiency.
+                        Start with who the lesson needs to support.
                       </p>
                     </div>
                   </div>
@@ -1006,22 +1021,29 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                                   value={value}
                                   className="text-sm"
                                 >
-                                  {value}
+                                  <span className="flex flex-col">
+                                    <span>{value}</span>
+                                    {widaBandDescriptions[value] && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {widaBandDescriptions[value]}
+                                      </span>
+                                    )}
+                                  </span>
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           <p className="text-xs leading-relaxed text-muted-foreground">
                             Not sure? Choose the range that best matches how
-                            independently students understand and use English.
-                            Lower ranges add more support.
+                            independently students understand and use English in
+                            class. You can still adapt the plan after it is
+                            generated.
                           </p>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-
                 </section>
 
                 <div className="h-px bg-border/80" aria-hidden="true" />
@@ -1042,7 +1064,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         Add the lesson details
                       </h2>
                       <p className="mt-0.5 text-sm text-muted-foreground">
-                        Rough notes are enough—Scaffold will organize them.
+                        Add whatever you already know. A goal, task, and rough
+                        notes are enough to begin.
                       </p>
                     </div>
                   </div>
@@ -1053,11 +1076,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium">
-                          Topic or Subject
+                          Lesson focus
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="For example: Fractions or Photosynthesis"
+                            placeholder="For example: Comparing fractions with visual models"
                             data-testid="input-topic"
                             className="text-sm"
                             {...field}
@@ -1075,7 +1098,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       <FormItem>
                         <div className="flex items-baseline justify-between gap-2">
                           <FormLabel className="text-sm font-medium">
-                            Planning Notes
+                            What will students do?
                           </FormLabel>
                           <span
                             className={`text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}
@@ -1085,7 +1108,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         </div>
                         <FormControl>
                           <Textarea
-                            placeholder="For example: Students are comparing fractions with visual models. Include partner talk, key vocabulary, and a quick exit ticket."
+                            placeholder="For example: Students compare fractions using visual models, explain their thinking to a partner, and complete a quick exit ticket. Key words: numerator, denominator, equivalent."
                             className="min-h-[180px] resize-y text-sm leading-relaxed"
                             data-testid="input-notes"
                             maxLength={MAX_NOTES_CHARS}
@@ -1093,8 +1116,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           />
                         </FormControl>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Don’t include student names or private student
-                          information.
+                          Describe the lesson, not the student. Leave out names
+                          and identifying information.
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -1141,12 +1164,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         {isGenerating ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating lesson plan...
+                            Building guided draft...
                           </>
                         ) : cooldownSecs > 0 ? (
                           `Wait ${cooldownSecs}s`
                         ) : (
-                          "Create lesson plan"
+                          "Build guided draft"
                         )}
                       </Button>
                       {isDemo && cooldownSecs === 0 && !isGenerating && (
@@ -1173,7 +1196,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             >
               Ready when you are.
             </h2>
-            <p>Your lesson plan will appear below.</p>
+            <p>Your guided draft will appear below.</p>
           </section>
         )}
 
@@ -1195,12 +1218,25 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 id="generating-lesson-heading"
                 className="mt-4 font-semibold text-foreground"
               >
-                Building your lesson plan
+                Building your guided draft
               </h2>
               <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Organizing objectives, language supports, activities, and
-                assessment ideas. This may take a moment.
+                Scaffold is organizing your lesson into supports you can review,
+                adjust, and teach from.
               </p>
+              <ol className="mx-auto mt-6 max-w-sm space-y-2 text-left">
+                {generationSteps.map((step, index) => (
+                  <li
+                    key={step}
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                  >
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
           </section>
         )}
@@ -1223,12 +1259,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 <p className="text-sm font-semibold">
                   {isSharedPlan
                     ? "A lesson plan was shared with you"
-                    : "Your lesson plan is ready"}
+                    : "Your guided draft is ready"}
                 </p>
                 <p className="mt-0.5 text-sm leading-relaxed">
                   {isSharedPlan
                     ? "Review the plan, then save your own copy before making changes."
-                    : "Review the supports below, adapt them for your learners, and print when you’re ready."}
+                    : "Review the suggestions below and adjust anything that does not fit your learners, lesson, or teaching judgment."}
                 </p>
               </div>
             </div>
@@ -1429,10 +1465,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </Card>
             )}
 
-            <Card
-              id="plan-overview"
-              className="lesson-card scroll-mt-24"
-            >
+            <Card id="plan-overview" className="lesson-card scroll-mt-24">
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-5 pb-4 pt-5">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
@@ -1443,7 +1476,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     At a glance
                   </CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    The learning and language goals for this lesson.
+                    The content goal and the language students may need to show
+                    that thinking.
                   </p>
                 </div>
                 <CopyAction
@@ -1462,7 +1496,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   <div className="rounded-2xl border border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/10 p-4">
                     <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
                       <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
-                      Content objective
+                      What students are learning
                     </p>
                     {isEditing ? (
                       <Textarea
@@ -1482,13 +1516,15 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
                     <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
                       <Languages className="h-4 w-4" aria-hidden="true" />
-                      Language objective
+                      Language students may need
                     </p>
                     {isEditing ? (
                       <Textarea
                         value={displayed.lesson.languageObjective}
                         onChange={(event) =>
-                          updateLesson({ languageObjective: event.target.value })
+                          updateLesson({
+                            languageObjective: event.target.value,
+                          })
                         }
                         aria-label="Edit language objective"
                         className="min-h-28 resize-y border-[var(--brand-purple)]/30 bg-background/80 text-sm leading-relaxed"
@@ -1585,7 +1621,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     className="h-4 w-4 text-[var(--brand-blue-strong)]"
                     aria-hidden="true"
                   />
-                  Key Vocabulary
+                  Words students may need
                 </CardTitle>
                 <CopyAction
                   copied={copiedSection === "vocabulary"}
@@ -1636,7 +1672,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4 [&_button]:text-primary-foreground/75 [&_button:hover]:bg-white/10 [&_button:hover]:text-primary-foreground">
                 <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
                   <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
-                  Sentence Frames
+                  Language students can use
                 </CardTitle>
                 <CopyAction
                   copied={copiedSection === "sentence-frames"}
@@ -1691,7 +1727,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   className="h-4 w-4 text-[var(--brand-teal-strong)]"
                   aria-hidden="true"
                 />
-                Lesson Flow
+                Lesson flow
               </h3>
               {[
                 {
@@ -1702,24 +1738,27 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 },
                 {
                   step: "2",
-                  label: "Main Activity",
+                  label: "Main activity",
                   field: "mainActivity" as const,
                   content: displayed.lesson.mainActivity,
                 },
                 {
                   step: "3",
-                  label: "Speaking Activity",
+                  label: "Partner talk",
                   field: "speakingActivity" as const,
                   content: displayed.lesson.speakingActivity,
                 },
                 {
                   step: "4",
-                  label: "Exit Ticket",
+                  label: "Exit ticket",
                   field: "exitTicket" as const,
                   content: displayed.lesson.exitTicket,
                 },
               ].map(({ step, label, field, content }) => (
-                <Card key={step} className={`lesson-card ${Number(step) % 2 === 0 ? "lesson-card--blue" : ""}`}>
+                <Card
+                  key={step}
+                  className={`lesson-card ${Number(step) % 2 === 0 ? "lesson-card--blue" : ""}`}
+                >
                   <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <span className="w-5 h-5 rounded bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
@@ -1731,7 +1770,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       copied={copiedSection === `lesson-step-${step}`}
                       label={label}
                       onClick={() =>
-                        copySection(`lesson-step-${step}`, `${label}\n${content}`)
+                        copySection(
+                          `lesson-step-${step}`,
+                          `${label}\n${content}`,
+                        )
                       }
                     />
                   </CardHeader>
@@ -1762,7 +1804,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   <span className="lesson-icon bg-[var(--brand-purple)]/12 text-[var(--brand-purple-strong)]">
                     <StickyNote className="h-4 w-4" aria-hidden="true" />
                   </span>
-                  Teacher Notes
+                  Teacher notes
                 </CardTitle>
                 <CopyAction
                   copied={copiedSection === "teacher-notes"}
@@ -1802,8 +1844,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     Support, fade, and check
                   </CardTitle>
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    Open one section when you need it. Each gives you a clear
-                    next move.
+                    Use these as professional prompts while students work.
                   </p>
                 </CardHeader>
                 <CardContent className="border-t border-border/70 p-0">
@@ -1821,14 +1862,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       )
                     }
                     isEditing={isEditing}
-                    onChange={(value) =>
-                      updateLesson({ scaffoldPlan: value })
-                    }
+                    onChange={(value) => updateLesson({ scaffoldPlan: value })}
                   />
                   <GuidanceDetails
                     icon={TrendingUp}
-                    title="Fade toward independence"
-                    description="When and how to reduce support"
+                    title="When to fade support"
+                    description="Evidence that students are ready for less support"
                     content={displayed.lesson.scaffoldFadingPlan}
                     tone="bg-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]"
                     copied={copiedSection === "scaffold-fading"}
@@ -1845,7 +1884,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   />
                   <GuidanceDetails
                     icon={ClipboardCheck}
-                    title="Check for understanding"
+                    title="What to watch for"
                     description="Evidence to collect while students work"
                     content={displayed.lesson.formativeAssessment}
                     tone="bg-[var(--brand-blue)]/20 text-[var(--brand-blue-strong)]"
@@ -1867,12 +1906,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             {displayed.lesson.sourcesUsed?.length > 0 && (
               <div className="flex items-center gap-2 px-1 text-xs leading-relaxed text-muted-foreground">
-                <LibraryBig className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <LibraryBig
+                  className="h-3.5 w-3.5 shrink-0"
+                  aria-hidden="true"
+                />
                 <span>
-                  {`Planning basis: WIDA-aligned guidance${
-                    displayed.unitProfile
-                      ? ` and ${displayed.unitProfile}`
-                      : ""
+                  {`Planning basis: grade, WIDA range, lesson notes, and WIDA-aligned guidance${
+                    displayed.unitProfile ? ` and ${displayed.unitProfile}` : ""
                   }.`}
                 </span>
               </div>
@@ -1958,7 +1998,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-44 rounded-xl p-1.5"
+                      >
                         <DropdownMenuItem
                           className="min-h-10 rounded-lg"
                           onSelect={() => beginRename(entry)}
