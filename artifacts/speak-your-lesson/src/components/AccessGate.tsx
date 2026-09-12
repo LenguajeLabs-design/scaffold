@@ -181,7 +181,7 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
               Plan stronger EAL lessons
             </h1>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              Sign in with Google and enter your beta code, or explore a prepared sample.
+              Join the private beta in two quick steps, or explore a prepared sample.
             </p>
           </div>
         </div>
@@ -189,14 +189,16 @@ export function AccessGate({ onUnlock, onDemo }: AccessGateProps) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">1. Sign in</p>
             <div ref={googleButton} aria-label="Sign in with Google" />
             {credential && <p className="text-sm text-muted-foreground">Google sign-in ready. Continue below.</p>}
-            {dailyLimit !== null && <p className="text-xs text-muted-foreground">Beta access includes {dailyLimit} generations per day across both tools. Admins may leave the code blank.</p>}
+            {dailyLimit !== null && <p className="text-xs text-muted-foreground">Beta teachers get {dailyLimit} lesson generations per day across both tools.</p>}
+            <p className="pt-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">2. Enter your code</p>
             <label
               htmlFor="access-code"
               className="text-sm font-medium text-foreground"
             >
-              Access Code
+              Beta Access Code
             </label>
             <Input
               id="access-code"
