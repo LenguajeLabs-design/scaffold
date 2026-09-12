@@ -7,10 +7,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
+  BookOpenCheck,
   CheckCircle2,
   ClipboardCheck,
   FlaskConical,
+  Languages,
   Loader2,
+  MessageSquareQuote,
+  Route,
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -180,6 +184,33 @@ export function AccessGate({
       setChecking(false);
     }
   }
+
+  const previewRows = [
+    {
+      icon: BookOpenCheck,
+      title: "Learning goal",
+      description: "Keep the lesson's thinking at the center",
+      badge: "bg-[#7C8CFF]/18 text-[#5062E8]",
+    },
+    {
+      icon: Languages,
+      title: "Language objective",
+      description: "Name the language students need to show understanding",
+      badge: "bg-[#7ED957]/20 text-[#2F8F3D]",
+    },
+    {
+      icon: MessageSquareQuote,
+      title: "Sentence frames",
+      description: "Give students words they can actually use",
+      badge: "bg-[#FFD166]/28 text-[#A46E00]",
+    },
+    {
+      icon: Route,
+      title: "Teacher moves",
+      description: "Know what to try, watch for, and fade",
+      badge: "bg-[#7C8CFF]/18 text-[#5062E8]",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -396,46 +427,80 @@ export function AccessGate({
             }}
             aria-hidden="true"
           />
-          <div className="absolute -right-16 top-16 h-44 w-44 rounded-[2rem] border border-[#7ED957]/45 bg-[#7ED957]/20 rotate-45" />
-          <div className="absolute -bottom-20 right-20 h-56 w-56 rounded-full border border-[#FFD166]/60 bg-[#FFD166]/20" />
-          <div className="absolute left-10 top-10 h-40 w-40 rounded-full border border-[#7C8CFF]/40 bg-[#7C8CFF]/15" />
+          <div
+            className="absolute -right-16 top-16 h-44 w-44 rotate-45 rounded-[2rem] border border-[#7ED957]/45 bg-[#7ED957]/20"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute -bottom-20 right-20 h-56 w-56 rounded-full border border-[#FFD166]/60 bg-[#FFD166]/20"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute left-10 top-10 h-40 w-40 rounded-full border border-[#7C8CFF]/40 bg-[#7C8CFF]/15"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute -left-20 bottom-16 h-44 w-80 -rotate-45 rounded-[2rem] border border-[#7C8CFF]/45"
+            aria-hidden="true"
+          />
 
           <div className="relative flex h-full min-h-[34rem] items-center justify-center p-8">
-            <div className="w-full max-w-md rounded-[1.35rem] bg-white/96 p-6 shadow-[0_24px_60px_rgba(7,16,35,0.22)]">
+            <div className="w-full max-w-md rounded-[1.35rem] bg-white/95 p-6 shadow-[0_24px_60px_rgba(7,16,35,0.22)] backdrop-blur-sm">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">
+                  <p className="text-lg font-semibold tracking-tight text-foreground">
                     Scaffold prepares
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     A guided draft built from your lesson notes.
                   </p>
                 </div>
-                <span className="rounded-full bg-[var(--brand-teal)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--brand-teal-strong)]">
-                  Guided
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-teal)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--brand-teal-strong)]">
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Reviewable
                 </span>
               </div>
 
-              <div className="mt-5 space-y-3">
-                {[
-                  "Learning goal",
-                  "Language objective",
-                  "Sentence frames",
-                  "Teacher moves",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/70 p-3"
-                  >
-                    <span className="text-sm font-medium text-foreground">
-                      {item}
-                    </span>
-                    <CheckCircle2
-                      className="h-5 w-5 text-[var(--brand-teal-strong)]"
-                      aria-hidden="true"
-                    />
-                  </div>
-                ))}
+              <div className="mt-6 space-y-3">
+                {previewRows.map(
+                  ({ icon: Icon, title, description, badge }) => (
+                    <div
+                      key={title}
+                      className="flex items-center gap-3 rounded-xl border border-border/70 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,45,74,0.045)]"
+                    >
+                      <span
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${badge}`}
+                      >
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-foreground">
+                          {title}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                          {description}
+                        </span>
+                      </span>
+                      <span
+                        className="flex h-6 w-11 shrink-0 items-center rounded-full bg-[var(--brand-teal)] px-1 shadow-inner"
+                        aria-hidden="true"
+                      >
+                        <span className="ml-auto flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white text-[var(--brand-teal-strong)] shadow-sm">
+                          <CheckCircle2 className="h-3 w-3" />
+                        </span>
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+
+              <div className="mt-5 rounded-xl border border-[#FFD166]/35 bg-[#FFD166]/12 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#A46E00]">
+                  Planning basis
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Grade, WIDA range, lesson notes, and teacher review.
+                </p>
               </div>
             </div>
           </div>
