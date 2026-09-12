@@ -31,6 +31,11 @@ import {
   TrendingUp,
   ClipboardCheck,
   LibraryBig,
+  Copy,
+  Check,
+  Plus,
+  ListTree,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -360,8 +365,12 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
       )}
       {lesson.sourcesUsed?.length > 0 && (
         <div style={{ ...s.box, marginTop: "8px" }}>
-          <div style={s.sectionLabel}>Sources Used</div>
-          <p style={s.sectionBody}>{lesson.sourcesUsed.join("\n")}</p>
+          <div style={s.sectionLabel}>Planning Basis</div>
+          <p style={s.sectionBody}>
+            {`WIDA-aligned planning guidance${
+              unitProfile ? ` and ${unitProfile}` : ""
+            }.`}
+          </p>
         </div>
       )}
     </div>
@@ -377,12 +386,16 @@ function GuidanceDetails({
   description,
   content,
   tone,
+  copied,
+  onCopy,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   content?: string;
   tone: string;
+  copied: boolean;
+  onCopy: () => void;
 }) {
   if (!content) return null;
 
@@ -409,9 +422,90 @@ function GuidanceDetails({
         />
       </summary>
       <div className="px-5 pb-5 pl-[4.25rem] text-sm leading-relaxed text-muted-foreground">
+        <div className="mb-2 flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 min-h-9 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+            onClick={onCopy}
+            aria-label={`Copy ${title}`}
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-[var(--brand-teal-strong)]" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        </div>
         <RichText text={content} />
       </div>
     </details>
+  );
+}
+
+function formatLessonForCopy(displayed: DisplayedLesson): string {
+  const lesson = displayed.lesson;
+
+  return [
+    lesson.title,
+    `${displayed.gradeLevel} · ${displayed.widaBand}`,
+    lesson.integratedUnitGoal
+      ? `INTEGRATED UNIT GOAL\n${lesson.integratedUnitGoal}`
+      : null,
+    `CONTENT OBJECTIVE\n${lesson.contentObjective}`,
+    `LANGUAGE OBJECTIVE\n${lesson.languageObjective}`,
+    lesson.languageFunctionObjective
+      ? `LANGUAGE FUNCTION\n${lesson.languageFunctionObjective}`
+      : null,
+    lesson.languageFeatureObjective
+      ? `LANGUAGE FEATURE\n${lesson.languageFeatureObjective}`
+      : null,
+    `KEY VOCABULARY\n${lesson.keyVocabulary.join(", ")}`,
+    `SENTENCE FRAMES\n${lesson.sentenceFrames.map((frame, index) => `${index + 1}. ${frame}`).join("\n")}`,
+    `WARM-UP\n${lesson.warmUp}`,
+    `MAIN ACTIVITY\n${lesson.mainActivity}`,
+    `SPEAKING ACTIVITY\n${lesson.speakingActivity}`,
+    `EXIT TICKET\n${lesson.exitTicket}`,
+    `TEACHER NOTES\n${lesson.teacherNotes}`,
+    lesson.scaffoldPlan ? `SCAFFOLD PLAN\n${lesson.scaffoldPlan}` : null,
+    lesson.scaffoldFadingPlan
+      ? `FADE TOWARD INDEPENDENCE\n${lesson.scaffoldFadingPlan}`
+      : null,
+    lesson.formativeAssessment
+      ? `FORMATIVE ASSESSMENT\n${lesson.formativeAssessment}`
+      : null,
+  ]
+    .filter((section): section is string => Boolean(section))
+    .join("\n\n");
+}
+
+function CopyAction({
+  copied,
+  label,
+  onClick,
+}: {
+  copied: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="h-9 min-h-9 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+      onClick={onClick}
+      aria-label={`Copy ${label}`}
+    >
+      {copied ? (
+        <Check className="h-3.5 w-3.5 text-[var(--brand-teal-strong)]" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
+      {copied ? "Copied" : "Copy"}
+    </Button>
   );
 }
 
@@ -442,6 +536,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
   const [curriculumOpen, setCurriculumOpen] = useState(false);
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cooldown state
   const [cooldownSecs, setCooldownSecs] = useState(0);
@@ -537,6 +633,41 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       unitProfile: entry.unitProfile,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function copySection(section: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSection(section);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedSection(null), 1800);
+    } catch {
+      setCopiedSection(null);
+    }
+  }
+
+  function startNewPlan() {
+    const current = form.getValues();
+    form.reset({
+      gradeLevel: current.gradeLevel,
+      widaBand: current.widaBand,
+      unitProfile: current.unitProfile,
+      topic: "",
+      notes: "",
+    });
+    setDisplayed(null);
+    setSavedId(null);
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLInputElement>('[data-testid="input-topic"]')
+        ?.focus();
+    }, 350);
   }
 
   function formatDate(iso: string) {
@@ -1011,8 +1142,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </p>
               </div>
             </div>
-            <div className="pb-4 border-b border-border flex items-start justify-between gap-4">
-              <div>
+            <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
                 <h2 className="text-lg font-semibold text-foreground">
                   {displayed.lesson.title}
                 </h2>
@@ -1047,16 +1178,69 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   )}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1.5 font-medium"
-                onClick={() => window.print()}
-              >
-                <Download className="w-3.5 h-3.5" />
-                Print / Save PDF
-              </Button>
+              <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-10 flex-1 gap-1.5 font-medium sm:flex-none"
+                  onClick={() =>
+                    copySection("full-plan", formatLessonForCopy(displayed))
+                  }
+                >
+                  {copiedSection === "full-plan" ? (
+                    <Check className="h-3.5 w-3.5 text-[var(--brand-teal-strong)]" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                  {copiedSection === "full-plan" ? "Copied" : "Copy plan"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-10 flex-1 gap-1.5 font-medium sm:flex-none"
+                  onClick={() => window.print()}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Print
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="min-h-10 flex-1 gap-1.5 font-medium text-muted-foreground sm:flex-none"
+                  onClick={startNewPlan}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  New plan
+                </Button>
+              </div>
             </div>
+
+            <nav
+              aria-label="Lesson plan sections"
+              className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1"
+            >
+              <span className="flex shrink-0 items-center px-2 text-xs font-medium text-muted-foreground">
+                <ListTree className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                Jump to
+              </span>
+              {[
+                ["#plan-overview", "Overview"],
+                ["#plan-supports", "Language supports"],
+                ["#lesson-flow", "Lesson flow"],
+                ["#plan-assessment", "Next steps"],
+              ].map(([href, label]) => (
+                <a
+                  key={href}
+                  href={href}
+                  className="shrink-0 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
 
             {displayed.lesson.integratedUnitGoal && (
               <Card className="border border-primary/20 bg-primary/[0.035] shadow-none">
@@ -1072,36 +1256,68 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </Card>
             )}
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <Card className="border border-border shadow-none">
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Card
+              id="plan-overview"
+              className="scroll-mt-24 overflow-hidden border border-border bg-card shadow-none"
+            >
+              <CardHeader className="flex flex-row items-start justify-between gap-3 px-5 pb-4 pt-5">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                     <BookOpenCheck
                       className="h-4 w-4 text-[var(--brand-teal-strong)]"
                       aria-hidden="true"
                     />
-                    Content Objective
+                    At a glance
                   </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 text-sm leading-relaxed">
-                  {displayed.lesson.contentObjective}
-                </CardContent>
-              </Card>
-              <Card className="border border-border shadow-none">
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <Languages
-                      className="h-4 w-4 text-[var(--brand-purple-strong)]"
-                      aria-hidden="true"
-                    />
-                    Language Objective
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 text-sm leading-relaxed">
-                  {displayed.lesson.languageObjective}
-                </CardContent>
-              </Card>
-            </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    The learning and language goals for this lesson.
+                  </p>
+                </div>
+                <CopyAction
+                  copied={copiedSection === "overview"}
+                  label="lesson overview"
+                  onClick={() =>
+                    copySection(
+                      "overview",
+                      `Content objective\n${displayed.lesson.contentObjective}\n\nLanguage objective\n${displayed.lesson.languageObjective}`,
+                    )
+                  }
+                />
+              </CardHeader>
+              <CardContent className="space-y-4 px-5 pb-5">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
+                      <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
+                      Content objective
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {displayed.lesson.contentObjective}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
+                      <Languages className="h-4 w-4" aria-hidden="true" />
+                      Language objective
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {displayed.lesson.languageObjective}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full bg-muted px-3 py-1.5">
+                    4 lesson stages
+                  </span>
+                  <span className="rounded-full bg-muted px-3 py-1.5">
+                    {displayed.lesson.keyVocabulary.length} vocabulary words
+                  </span>
+                  <span className="rounded-full bg-muted px-3 py-1.5">
+                    {displayed.lesson.sentenceFrames.length} sentence frames
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
 
             {(displayed.lesson.languageFunctionObjective ||
               displayed.lesson.languageFeatureObjective) && (
@@ -1137,8 +1353,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </div>
             )}
 
-            <Card className="border border-border shadow-none">
-              <CardHeader className="pb-2 pt-4 px-4">
+            <Card
+              id="plan-supports"
+              className="scroll-mt-24 border border-border shadow-none"
+            >
+              <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                 <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <Tags
                     className="h-4 w-4 text-[var(--brand-blue-strong)]"
@@ -1146,6 +1365,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   />
                   Key Vocabulary
                 </CardTitle>
+                <CopyAction
+                  copied={copiedSection === "vocabulary"}
+                  label="key vocabulary"
+                  onClick={() =>
+                    copySection(
+                      "vocabulary",
+                      displayed.lesson.keyVocabulary.join(", "),
+                    )
+                  }
+                />
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <div className="flex flex-wrap gap-1.5">
@@ -1163,12 +1392,24 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </CardContent>
             </Card>
 
-            <Card className="border border-border shadow-none bg-primary text-primary-foreground">
-              <CardHeader className="pb-2 pt-4 px-4">
+            <Card className="border border-border bg-primary text-primary-foreground shadow-none">
+              <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4 [&_button]:text-primary-foreground/75 [&_button:hover]:bg-white/10 [&_button:hover]:text-primary-foreground">
                 <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
                   <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
                   Sentence Frames
                 </CardTitle>
+                <CopyAction
+                  copied={copiedSection === "sentence-frames"}
+                  label="sentence frames"
+                  onClick={() =>
+                    copySection(
+                      "sentence-frames",
+                      displayed.lesson.sentenceFrames
+                        .map((frame, index) => `${index + 1}. ${frame}`)
+                        .join("\n"),
+                    )
+                  }
+                />
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <ul className="space-y-2.5">
@@ -1186,7 +1427,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </CardContent>
             </Card>
 
-            <div className="space-y-3">
+            <div id="lesson-flow" className="scroll-mt-24 space-y-3">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Route
                   className="h-4 w-4 text-[var(--brand-teal-strong)]"
@@ -1217,13 +1458,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 },
               ].map(({ step, label, content }) => (
                 <Card key={step} className="border border-border shadow-none">
-                  <CardHeader className="pb-2 pt-4 px-4">
+                  <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <span className="w-5 h-5 rounded bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
                         {step}
                       </span>
                       {label}
                     </CardTitle>
+                    <CopyAction
+                      copied={copiedSection === `lesson-step-${step}`}
+                      label={label}
+                      onClick={() =>
+                        copySection(`lesson-step-${step}`, `${label}\n${content}`)
+                      }
+                    />
                   </CardHeader>
                   <CardContent className="px-4 pb-4 text-muted-foreground">
                     <RichText text={content} />
@@ -1232,8 +1480,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               ))}
             </div>
 
-            <Card className="border border-border shadow-none bg-muted/40">
-              <CardHeader className="pb-2 pt-4 px-4">
+            <Card
+              id="plan-assessment"
+              className="scroll-mt-24 border border-border bg-muted/40 shadow-none"
+            >
+              <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                 <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <StickyNote
                     className="h-4 w-4 text-[var(--brand-purple-strong)]"
@@ -1241,6 +1492,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   />
                   Teacher Notes
                 </CardTitle>
+                <CopyAction
+                  copied={copiedSection === "teacher-notes"}
+                  label="teacher notes"
+                  onClick={() =>
+                    copySection("teacher-notes", displayed.lesson.teacherNotes)
+                  }
+                />
               </CardHeader>
               <CardContent className="px-4 pb-4 text-muted-foreground">
                 <RichText text={displayed.lesson.teacherNotes} />
@@ -1271,6 +1529,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     description="Practical scaffolds for this lesson"
                     content={displayed.lesson.scaffoldPlan}
                     tone="bg-[var(--brand-teal)]/20 text-[var(--brand-teal-strong)]"
+                    copied={copiedSection === "scaffold-plan"}
+                    onCopy={() =>
+                      copySection(
+                        "scaffold-plan",
+                        displayed.lesson.scaffoldPlan ?? "",
+                      )
+                    }
                   />
                   <GuidanceDetails
                     icon={TrendingUp}
@@ -1278,6 +1543,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     description="When and how to reduce support"
                     content={displayed.lesson.scaffoldFadingPlan}
                     tone="bg-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]"
+                    copied={copiedSection === "scaffold-fading"}
+                    onCopy={() =>
+                      copySection(
+                        "scaffold-fading",
+                        displayed.lesson.scaffoldFadingPlan ?? "",
+                      )
+                    }
                   />
                   <GuidanceDetails
                     icon={ClipboardCheck}
@@ -1285,27 +1557,29 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     description="Evidence to collect while students work"
                     content={displayed.lesson.formativeAssessment}
                     tone="bg-[var(--brand-blue)]/20 text-[var(--brand-blue-strong)]"
+                    copied={copiedSection === "formative-assessment"}
+                    onCopy={() =>
+                      copySection(
+                        "formative-assessment",
+                        displayed.lesson.formativeAssessment ?? "",
+                      )
+                    }
                   />
                 </CardContent>
               </Card>
             )}
 
             {displayed.lesson.sourcesUsed?.length > 0 && (
-              <Card className="border border-border shadow-none bg-muted/25">
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <LibraryBig className="h-4 w-4" aria-hidden="true" />
-                    Sources Used
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <ul className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                    {displayed.lesson.sourcesUsed.map((source, index) => (
-                      <li key={index}>• {source}</li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              <div className="flex items-center gap-2 px-1 text-xs leading-relaxed text-muted-foreground">
+                <LibraryBig className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>
+                  {`Planning basis: WIDA-aligned guidance${
+                    displayed.unitProfile
+                      ? ` and ${displayed.unitProfile}`
+                      : ""
+                  }.`}
+                </span>
+              </div>
             )}
           </section>
         )}
@@ -1313,13 +1587,18 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         {lessons.length > 0 && (
           <section className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <BookMarked className="w-4 h-4 text-muted-foreground" />
-                Lesson Library
-                <span className="text-xs font-medium text-muted-foreground">
-                  ({lessons.length})
-                </span>
-              </h2>
+              <div>
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <BookMarked className="h-4 w-4 text-muted-foreground" />
+                  Saved plans
+                  <span className="text-xs font-medium text-muted-foreground">
+                    ({lessons.length})
+                  </span>
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Stored in this browser
+                </p>
+              </div>
             </div>
             <div className="grid gap-2">
               {lessons.map((entry) => {
@@ -1327,37 +1606,57 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 return (
                   <div
                     key={entry.id}
-                    className={`group flex items-start gap-3 px-4 py-3 rounded-lg border transition-colors cursor-pointer ${
+                    className={`group flex items-center gap-1 rounded-xl border pr-2 transition-colors ${
                       isActive
                         ? "border-primary/30 bg-primary/5"
                         : "border-border bg-card hover:bg-muted/40"
                     }`}
-                    onClick={() => viewSavedLesson(entry)}
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {entry.topic || entry.lesson.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-xs text-muted-foreground">
-                          {entry.gradeLevel}
-                        </span>
-                        <span className="text-xs text-muted-foreground">·</span>
-                        <span className="text-xs text-muted-foreground">
-                          {entry.widaBand}
-                        </span>
-                        <span className="text-xs text-muted-foreground">·</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(entry.savedAt)}
-                        </span>
+                    <button
+                      type="button"
+                      className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                      onClick={() => viewSavedLesson(entry)}
+                      aria-label={`Open ${entry.lesson.title}`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {entry.lesson.title}
+                          </p>
+                          {isActive && (
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 border-[var(--brand-teal)]/40 bg-[var(--brand-teal)]/10 text-[10px] text-[var(--brand-teal-strong)]"
+                            >
+                              Current
+                            </Badge>
+                          )}
+                        </div>
+                        {entry.topic && entry.topic !== entry.lesson.title && (
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                            Topic: {entry.topic}
+                          </p>
+                        )}
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <span>{entry.gradeLevel}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>{entry.widaBand}</span>
+                          <span aria-hidden="true">·</span>
+                          <time dateTime={entry.savedAt}>
+                            {formatDate(entry.savedAt)}
+                          </time>
+                        </div>
                       </div>
-                    </div>
+                      <ChevronRight
+                        className="h-4 w-4 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    </button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <button
-                          onClick={(event) => event.stopPropagation()}
                           className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground opacity-100 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-                          aria-label={`Delete ${entry.topic || entry.lesson.title}`}
+                          aria-label={`Delete ${entry.lesson.title}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1368,8 +1667,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                             Delete this lesson?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            “{entry.topic || entry.lesson.title}” will be
-                            removed from this browser. This can’t be undone.
+                            “{entry.lesson.title}” will be removed from this
+                            browser. This can’t be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
