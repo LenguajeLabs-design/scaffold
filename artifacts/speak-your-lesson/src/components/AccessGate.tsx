@@ -197,37 +197,33 @@ export function AccessGate({
     {
       icon: BookOpenCheck,
       title: "Learning goal",
-      description: "Keep the lesson's thinking at the center",
       badge: "bg-[#7C8CFF]/18 text-[#5062E8]",
     },
     {
       icon: Languages,
       title: "Language objective",
-      description: "Name the language students need to show understanding",
       badge: "bg-[#7ED957]/20 text-[#2F8F3D]",
     },
     {
       icon: MessageSquareQuote,
       title: "Sentence frames",
-      description: "Give students words they can actually use",
       badge: "bg-[#FFD166]/28 text-[#A46E00]",
     },
     {
       icon: Route,
       title: "Teacher moves",
-      description: "Know what to try, watch for, and fade",
       badge: "bg-[#7C8CFF]/18 text-[#5062E8]",
     },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto flex w-full max-w-[76rem] items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
+      <header className="mx-auto flex w-full max-w-[96rem] items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
         <div className="flex items-center gap-2.5 text-primary">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-[0_8px_20px_rgba(15,45,74,0.10)] ring-1 ring-[var(--brand-blue)]/15">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-[0_8px_20px_rgba(15,45,74,0.10)] ring-1 ring-[var(--brand-blue)]/15">
             <ScaffoldMark />
           </span>
-          <span className="text-xl font-semibold tracking-tight text-[var(--brand-indigo)]">
+          <span className="text-2xl font-semibold tracking-tight text-[var(--brand-indigo)]">
             Scaffold
           </span>
         </div>
@@ -261,14 +257,14 @@ export function AccessGate({
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-[88rem] items-center gap-8 px-5 pb-10 pt-3 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14 lg:px-10 lg:pb-16">
-        <section className="space-y-8 lg:py-10">
+      <main className="mx-auto grid min-h-[calc(100vh-5.25rem)] w-full max-w-[96rem] items-center gap-8 px-5 pb-10 pt-3 sm:px-8 lg:grid-cols-[minmax(0,0.96fr)_minmax(34rem,1.04fr)] lg:items-stretch lg:gap-12 lg:px-12 lg:pb-0">
+        <section className="space-y-8 lg:flex lg:flex-col lg:justify-center lg:py-12">
           <div className="space-y-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--brand-teal-strong)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--brand-teal-strong)]">
               Practical support for multilingual learners
             </p>
             <div className="space-y-4">
-              <h1 className="max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight text-[var(--brand-indigo)] sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.055em] text-[var(--brand-indigo)] sm:text-5xl lg:text-[4.9rem] xl:text-[5.45rem]">
                 Same lesson.
                 <br />
                 More learners.
@@ -281,7 +277,7 @@ export function AccessGate({
                   />
                 </span>
               </h1>
-              <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:text-xl">
                 {adminOnly
                   ? "Sign in with your allowlisted Google account to test Scaffold."
                   : "Turn rough lesson notes into practical language supports teachers can review, adapt, and trust."}
@@ -466,67 +462,37 @@ export function AccessGate({
           )}
         </section>
 
-        <section className="scaffold-geometric-accent relative hidden min-h-[40rem] rounded-[2rem] shadow-[0_28px_90px_rgba(15,45,74,0.22)] lg:block">
+        <section className="scaffold-geometric-accent relative hidden min-h-[40rem] rounded-tl-[2rem] shadow-[0_28px_90px_rgba(15,45,74,0.22)] lg:block">
           <div className="scaffold-geometric-grid" aria-hidden="true" />
           <div className="scaffold-geometric-spark" aria-hidden="true" />
 
-          <div className="relative flex h-full min-h-[40rem] items-center justify-center p-10">
-            <div className="w-full max-w-lg rounded-[1.5rem] bg-white/95 p-7 shadow-[0_24px_60px_rgba(7,16,35,0.22)] backdrop-blur-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-lg font-semibold tracking-tight text-foreground">
-                    Scaffold prepares
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    A guided draft built from your lesson notes.
-                  </p>
-                </div>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-teal)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--brand-teal-strong)]">
-                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Reviewable
-                </span>
-              </div>
+          <div className="relative flex h-full min-h-[40rem] items-center justify-center p-12 xl:p-16">
+            <div className="w-full max-w-xl rounded-[1.35rem] bg-white/95 p-9 shadow-[0_24px_60px_rgba(7,16,35,0.24)] backdrop-blur-sm xl:p-12">
+              <p className="text-2xl font-semibold tracking-tight text-foreground">
+                Scaffold prepares
+              </p>
 
-              <div className="mt-6 space-y-3">
-                {previewRows.map(
-                  ({ icon: Icon, title, description, badge }) => (
-                    <div
-                      key={title}
-                      className="flex items-center gap-3 rounded-xl border border-border/70 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,45,74,0.045)]"
+              <div className="mt-7 divide-y divide-border/70">
+                {previewRows.map(({ icon: Icon, title, badge }) => (
+                  <div key={title} className="flex items-center gap-5 py-4">
+                    <span
+                      className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${badge}`}
                     >
-                      <span
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${badge}`}
-                      >
-                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      <Icon className="h-7 w-7" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1 text-xl font-medium text-[var(--brand-indigo)]">
+                      {title}
+                    </span>
+                    <span
+                      className="flex h-8 w-14 shrink-0 items-center rounded-full bg-[var(--brand-teal)] px-1 shadow-inner"
+                      aria-hidden="true"
+                    >
+                      <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-white text-[var(--brand-teal-strong)] shadow-sm">
+                        <CheckCircle2 className="h-4 w-4" />
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium text-foreground">
-                          {title}
-                        </span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                          {description}
-                        </span>
-                      </span>
-                      <span
-                        className="flex h-6 w-11 shrink-0 items-center rounded-full bg-[var(--brand-teal)] px-1 shadow-inner"
-                        aria-hidden="true"
-                      >
-                        <span className="ml-auto flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white text-[var(--brand-teal-strong)] shadow-sm">
-                          <CheckCircle2 className="h-3 w-3" />
-                        </span>
-                      </span>
-                    </div>
-                  ),
-                )}
-              </div>
-
-              <div className="mt-5 rounded-xl border border-[#FFD166]/35 bg-[#FFD166]/12 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#A46E00]">
-                  Planning basis
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Grade, WIDA range, lesson notes, and teacher review.
-                </p>
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
