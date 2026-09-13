@@ -6,14 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GenerateLessonPlanBodyGradeLevel } from "./generateLessonPlanBodyGradeLevel";
+import type { GenerateLessonPlanBodyLanguageSupportLevel } from "./generateLessonPlanBodyLanguageSupportLevel";
 import type { GenerateLessonPlanBodyUnitProfile } from "./generateLessonPlanBodyUnitProfile";
-import type { GenerateLessonPlanBodyWidaBand } from "./generateLessonPlanBodyWidaBand";
 
 export interface GenerateLessonPlanBody {
   /** Rough planning notes from the teacher */
   notes: string;
   gradeLevel: GenerateLessonPlanBodyGradeLevel;
-  widaBand: GenerateLessonPlanBodyWidaBand;
+  languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel;
   /** Topic or subject for the lesson */
   topic: string;
   /** Optional canonical curriculum unit used to ground the lesson */

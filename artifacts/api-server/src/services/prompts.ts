@@ -18,7 +18,7 @@ import {
 
 export interface LessonPlanPromptArgs {
   gradeLevel: string;
-  widaBand: string;
+  languageSupportLevel: string;
   topic: string;
   notes: string;
   unitProfile?: string;
@@ -26,7 +26,7 @@ export interface LessonPlanPromptArgs {
 
 export interface ClassroomSupportPromptArgs {
   gradeLevel: string;
-  widaLevel: string;
+  languageSupportLevel: string;
   need: string;
 }
 
@@ -40,7 +40,7 @@ const LESSON_PLANNING_REQUIREMENTS = [
   "Keep the content objective and language objective clearly distinct.",
   "Choose key vocabulary that is essential to the lesson, not a long list.",
   "Make sentence frames useful and teachable, not generic filler.",
-  "Use an independently developed support appropriate for the selected language proficiency reference and the actual task demand.",
+  "Use Scaffold's original Language Support Level framework and the actual task demand.",
   "Keep activities coherent from warm-up through exit ticket.",
   "Use teacherNotes for actionable guidance, not vague reminders.",
 ].join(" ");
@@ -73,7 +73,7 @@ const LESSON_PLAN_JSON_SCHEMA = `{
   "keyVocabulary": ["word1", "word2", "word3", "word4", "word5"],
   "sentenceFrames": ["frame1 ____.", "frame2 ____.", "frame3 ____."],
   "warmUp": "Setup sentence.\n\n1. First step for the teacher.\n2. Second step.\n3. Third step.\n\nDebrief: One closing note.",
-  "mainActivity": "Overview sentence.\n\nDirections:\n1. Step one.\n2. Step two.\n3. Step three.\n\nDifferentiation: Note for WIDA levels.",
+  "mainActivity": "Overview sentence.\n\nDirections:\n1. Step one.\n2. Step two.\n3. Step three.\n\nDifferentiation: Note for Language Support Levels.",
   "speakingActivity": "Overview sentence.\n\nSetup:\n• What students do.\n• Partner structure.\n\nSample prompts:\n• Example one.\n• Example two.\n\nDebrief: Closing move.",
   "exitTicket": "One sentence framing the exit ticket.\n\n• Option A: Quick written prompt.\n• Option B: Draw and label.\n\nTeacher tip: How to collect and sort responses.",
   "teacherNotes": "• Practical implementation note.\n• Content accuracy note.\n• What to watch for.",
@@ -95,14 +95,14 @@ const CLASSROOM_SUPPORT_JSON_SCHEMA = `{
 export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
   const canonicalContext = getCanonicalLessonContext(
     args.gradeLevel,
-    args.widaBand,
+    args.languageSupportLevel,
     args.topic,
     args.notes,
     args.unitProfile,
   );
   const systemPrompt =
     "You are an expert elementary EAL curriculum designer and instructional coach. " +
-    "You create practical, structured instructional suggestions for multilingual learners, informed in part by publicly available WIDA proficiency references but not official WIDA guidance. " +
+    "You create practical, structured instructional suggestions using Scaffold's original Language Support Level framework. Do not cite or reproduce any external proficiency framework. " +
     getCanonicalPlannerRulesText() +
     " " +
     LESSON_PLANNING_REQUIREMENTS +
@@ -116,7 +116,7 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
     "Turn these rough teacher planning notes into a clear, low-prep, high-impact lesson plan " +
     "for an elementary multilingual learner classroom.\n\n" +
     `Grade Level: ${args.gradeLevel}\n` +
-    `Language Proficiency Reference: ${args.widaBand}\n` +
+    `Language Support Level: ${args.languageSupportLevel}\n` +
     `Topic/Subject: ${args.topic}\n\n` +
     `Selected Unit: ${args.unitProfile ?? "General lesson planning"}\n\n` +
     `Canonical guide context:\n${canonicalContext}\n\n` +
@@ -152,7 +152,7 @@ export function buildClassroomSupportPrompt(
 ): PromptPair {
   const canonicalContext = getCanonicalCopilotContext(
     args.gradeLevel,
-    args.widaLevel,
+    args.languageSupportLevel,
   );
   const systemPrompt =
     "You are an expert elementary EAL teacher and live classroom coach. " +
@@ -167,7 +167,7 @@ export function buildClassroomSupportPrompt(
   const userPrompt =
     "A teacher needs immediate EAL classroom support.\n\n" +
     `Grade Level: ${args.gradeLevel}\n` +
-    `Language Proficiency Reference: ${args.widaLevel}\n` +
+    `Language Support Level: ${args.languageSupportLevel}\n` +
     `Student Need: ${args.need}\n\n` +
     `Canonical guide context:\n${canonicalContext}\n\n` +
     "Support instructions:\n" +

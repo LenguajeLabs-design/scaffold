@@ -23,7 +23,7 @@ const steps = [
     icon: ClipboardPenLine,
     title: "Start with the lesson",
     label: "You bring",
-    description: "Grade, WIDA band, goal, task, and rough notes.",
+    description: "Grade, Language Support Level, goal, task, and rough notes.",
   },
   {
     icon: WandSparkles,

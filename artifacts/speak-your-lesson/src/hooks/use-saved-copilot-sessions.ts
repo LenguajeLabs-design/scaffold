@@ -15,7 +15,7 @@ export interface SavedCopilotSession {
   /** First 80 chars of the teacher's question — used as a display label. */
   preview: string;
   gradeLevel: string;
-  widaLevel: string;
+  languageSupportLevel: string;
   need: string;
   support: ClassroomSupport;
 }
@@ -43,14 +43,14 @@ export function useSavedCopilotSessions() {
   const save = useCallback(
     (
       support: ClassroomSupport,
-      meta: { gradeLevel: string; widaLevel: string; need: string }
+      meta: { gradeLevel: string; languageSupportLevel: string; need: string }
     ): string => {
       const entry: SavedCopilotSession = {
         id: crypto.randomUUID(),
         savedAt: new Date().toISOString(),
         preview: meta.need.trim().slice(0, 80),
         gradeLevel: meta.gradeLevel,
-        widaLevel: meta.widaLevel,
+        languageSupportLevel: meta.languageSupportLevel,
         need: meta.need,
         support,
       };

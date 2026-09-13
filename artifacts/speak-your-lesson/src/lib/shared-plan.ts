@@ -6,7 +6,7 @@ const MAX_ENCODED_LENGTH = 100_000;
 export interface SharedPlanSnapshot {
   lesson: LessonPlan;
   gradeLevel: string;
-  widaBand: string;
+  languageSupportLevel: string;
   topic: string;
   unitProfile?: string;
 }
@@ -101,7 +101,7 @@ function isSharedPlanSnapshot(value: unknown): value is SharedPlanSnapshot {
   return (
     isLessonPlan(plan.lesson) &&
     typeof plan.gradeLevel === "string" &&
-    typeof plan.widaBand === "string" &&
+    (typeof plan.languageSupportLevel === "string" || typeof (plan as Record<string, unknown>).widaBand === "string") &&
     typeof plan.topic === "string" &&
     (plan.unitProfile === undefined || typeof plan.unitProfile === "string")
   );

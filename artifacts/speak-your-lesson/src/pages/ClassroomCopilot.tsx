@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useGenerateClassroomSupport,
   GenerateClassroomSupportBodyGradeLevel,
-  GenerateClassroomSupportBodyWidaLevel,
+  GenerateClassroomSupportBodyLanguageSupportLevel,
   type ClassroomSupport,
 } from "@workspace/api-client-react";
 import {
@@ -59,13 +59,13 @@ const supportGenerationSteps = [
   "Adding a teacher move you can try now",
 ];
 
-const widaLevelDescriptions: Record<string, string> = {
-  "WIDA 1-2": "Beginning to develop classroom English",
-  "WIDA 1–2": "Beginning to develop classroom English",
-  "WIDA 2-3": "Developing classroom English",
-  "WIDA 2–3": "Developing classroom English",
-  "WIDA 3-4": "More independent classroom English use",
-  "WIDA 3–4": "More independent classroom English use",
+const languageSupportDescriptions: Record<string, string> = {
+  "1": "Intensive support with visible models and supported responses",
+  "2": "High support with chunked directions and guided rehearsal",
+  "3": "Moderate support with reusable language tools",
+  "4": "Targeted support for a specific language move",
+  "5": "Light support with optional references",
+  "6": "Independent access with student-selected resources",
 };
 
 const formSchema = z.object({
@@ -77,13 +77,13 @@ const formSchema = z.object({
       `Description must be ${MAX_NEED_CHARS} characters or fewer`,
     ),
   gradeLevel: z.nativeEnum(GenerateClassroomSupportBodyGradeLevel),
-  widaLevel: z.nativeEnum(GenerateClassroomSupportBodyWidaLevel),
+  languageSupportLevel: z.nativeEnum(GenerateClassroomSupportBodyLanguageSupportLevel),
 });
 
 interface DisplayedSession {
   support: ClassroomSupport;
   gradeLevel: string;
-  widaLevel: string;
+  languageSupportLevel: string;
   need: string;
 }
 
@@ -162,7 +162,7 @@ export default function ClassroomCopilot({
     defaultValues: {
       need: "",
       gradeLevel: GenerateClassroomSupportBodyGradeLevel.Grade_3,
-      widaLevel: GenerateClassroomSupportBodyWidaLevel["WIDA_1-2"],
+      languageSupportLevel: GenerateClassroomSupportBodyLanguageSupportLevel.NUMBER_1,
     },
   });
 
@@ -190,14 +190,14 @@ export default function ClassroomCopilot({
       setSavedId(null);
       const id = save(support, {
         gradeLevel: values.gradeLevel,
-        widaLevel: values.widaLevel,
+        languageSupportLevel: values.languageSupportLevel,
         need: sampleNeed,
       });
       setSavedId(id);
       setDisplayed({
         support,
         gradeLevel: values.gradeLevel,
-        widaLevel: values.widaLevel,
+        languageSupportLevel: values.languageSupportLevel,
         need: sampleNeed,
       });
       return;
@@ -210,19 +210,19 @@ export default function ClassroomCopilot({
     if (!result) return;
     const vals = form.getValues() as {
       gradeLevel: string;
-      widaLevel: string;
+      languageSupportLevel: string;
       need: string;
     };
     const id = save(result, {
       gradeLevel: vals.gradeLevel,
-      widaLevel: vals.widaLevel,
+      languageSupportLevel: vals.languageSupportLevel,
       need: vals.need,
     });
     setSavedId(id);
     setDisplayed({
       support: result,
       gradeLevel: vals.gradeLevel,
-      widaLevel: vals.widaLevel,
+      languageSupportLevel: vals.languageSupportLevel,
       need: vals.need,
     });
   }, [result]);
@@ -243,7 +243,7 @@ export default function ClassroomCopilot({
     setDisplayed({
       support: entry.support,
       gradeLevel: entry.gradeLevel,
-      widaLevel: entry.widaLevel,
+      languageSupportLevel: entry.languageSupportLevel,
       need: entry.need,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -394,11 +394,11 @@ export default function ClassroomCopilot({
 
                   <FormField
                     control={form.control}
-                    name="widaLevel"
+                    name="languageSupportLevel"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium">
-                          Language Proficiency Reference
+                          Language Support Level
                         </FormLabel>
                         <Select
                           onValueChange={field.onChange}
@@ -406,7 +406,7 @@ export default function ClassroomCopilot({
                         >
                           <FormControl>
                             <SelectTrigger
-                              data-testid="select-wida-level"
+                              data-testid="select-language-support-level"
                               className="text-sm"
                             >
                               <SelectValue placeholder="Select a proficiency range" />
@@ -415,55 +415,50 @@ export default function ClassroomCopilot({
                           <SelectContent>
                             <SelectItem
                               value={
-                                GenerateClassroomSupportBodyWidaLevel[
-                                  "WIDA_1-2"
-                                ]
+                                GenerateClassroomSupportBodyLanguageSupportLevel.NUMBER_1
                               }
                               className="text-sm"
                             >
                               <span className="flex flex-col">
-                                <span>WIDA 1–2</span>
+                                <span>Level 1 · Intensive language support</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {widaLevelDescriptions["WIDA 1–2"]}
+                                  {languageSupportDescriptions["1"]}
+                                </span>
+                              </span>
+                            </SelectItem>
+                            <SelectItem value={GenerateClassroomSupportBodyLanguageSupportLevel.NUMBER_4} className="text-sm"><span className="flex flex-col"><span>Level 4 · Targeted language support</span><span className="text-xs text-muted-foreground">{languageSupportDescriptions["4"]}</span></span></SelectItem>
+                            <SelectItem value={GenerateClassroomSupportBodyLanguageSupportLevel.NUMBER_5} className="text-sm"><span className="flex flex-col"><span>Level 5 · Light language support</span><span className="text-xs text-muted-foreground">{languageSupportDescriptions["5"]}</span></span></SelectItem>
+                            <SelectItem value={GenerateClassroomSupportBodyLanguageSupportLevel.NUMBER_6} className="text-sm"><span className="flex flex-col"><span>Level 6 · Independent access</span><span className="text-xs text-muted-foreground">{languageSupportDescriptions["6"]}</span></span></SelectItem>
+                            <SelectItem
+                              value={
+                                GenerateClassroomSupportBodyLanguageSupportLevel.NUMBER_2
+                              }
+                              className="text-sm"
+                            >
+                              <span className="flex flex-col">
+                                <span>Level 2 · High language support</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {languageSupportDescriptions["2"]}
                                 </span>
                               </span>
                             </SelectItem>
                             <SelectItem
                               value={
-                                GenerateClassroomSupportBodyWidaLevel[
-                                  "WIDA_2-3"
-                                ]
+                                GenerateClassroomSupportBodyLanguageSupportLevel.NUMBER_3
                               }
                               className="text-sm"
                             >
                               <span className="flex flex-col">
-                                <span>WIDA 2–3</span>
+                                <span>Level 3 · Moderate language support</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {widaLevelDescriptions["WIDA 2–3"]}
-                                </span>
-                              </span>
-                            </SelectItem>
-                            <SelectItem
-                              value={
-                                GenerateClassroomSupportBodyWidaLevel[
-                                  "WIDA_3-4"
-                                ]
-                              }
-                              className="text-sm"
-                            >
-                              <span className="flex flex-col">
-                                <span>WIDA 3–4</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {widaLevelDescriptions["WIDA 3–4"]}
+                                  {languageSupportDescriptions["3"]}
                                 </span>
                               </span>
                             </SelectItem>
                           </SelectContent>
                         </Select>
                         <p className="text-xs leading-relaxed text-muted-foreground">
-                          Uses the six-level WIDA proficiency scale as an instructional reference. Scaffold is not a WIDA product. Not sure? Choose the range that best matches how
-                          independently students understand and use English in
-                          class. You can adapt the support before using it.
+                          Choose how much language support this learner needs for this task. Levels describe instructional support, not assessment or placement. You can adapt the support before using it.
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -614,7 +609,7 @@ export default function ClassroomCopilot({
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   Review and adapt before using · {displayed.gradeLevel} ·{" "}
-                  {displayed.widaLevel} · {displayed.need.slice(0, 60)}
+                  Support Level {displayed.languageSupportLevel} · {displayed.need.slice(0, 60)}
                   {displayed.need.length > 60 ? "…" : ""}
                 </p>
               </div>
@@ -760,7 +755,7 @@ export default function ClassroomCopilot({
                         </span>
                         <span className="text-xs text-muted-foreground">·</span>
                         <span className="text-xs text-muted-foreground">
-                          {entry.widaLevel}
+                          Support Level {entry.languageSupportLevel}
                         </span>
                         <span className="text-xs text-muted-foreground">·</span>
                         <span className="text-xs text-muted-foreground">

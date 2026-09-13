@@ -32,6 +32,6 @@ export const DEMO_COPILOT_SESSIONS: ClassroomSupport[] = [
     extensionQuestion:
       "Where does the water in your drinking glass come from — and where will it go after you drink it? Trace its full journey through as many steps of the water cycle as you can.",
     teacherMove:
-      "Draw the cycle on the board as you explain each step — students copy it and add arrows. For WIDA 1–2 students, provide a pre-drawn diagram with blanks for the vocabulary words.",
+      "Draw the cycle on the board as you explain each step — students copy it and add arrows. For learners needing intensive support, provide a pre-drawn diagram with blanks for the vocabulary words.",
   },
 ];

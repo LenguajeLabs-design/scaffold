@@ -6,7 +6,7 @@ import {
   useGenerateLessonPlan,
   GenerateLessonPlanBodyGradeLevel,
   GenerateLessonPlanBodyUnitProfile,
-  GenerateLessonPlanBodyWidaBand,
+  GenerateLessonPlanBodyLanguageSupportLevel,
   type LessonPlan,
 } from "@workspace/api-client-react";
 import {
@@ -101,11 +101,19 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const MAX_NOTES_CHARS = 2000;
+const supportLevelLabels: Record<string, string> = {
+  "1": "Intensive language support",
+  "2": "High language support",
+  "3": "Moderate language support",
+  "4": "Targeted language support",
+  "5": "Light language support",
+  "6": "Independent access",
+};
 
 const formSchema = z.object({
   topic: z.string().min(1, "Topic is required"),
   gradeLevel: z.nativeEnum(GenerateLessonPlanBodyGradeLevel),
-  widaBand: z.nativeEnum(GenerateLessonPlanBodyWidaBand),
+  languageSupportLevel: z.nativeEnum(GenerateLessonPlanBodyLanguageSupportLevel),
   unitProfile: z.nativeEnum(GenerateLessonPlanBodyUnitProfile).optional(),
   notes: z
     .string()
@@ -119,7 +127,7 @@ const formSchema = z.object({
 interface DisplayedLesson {
   lesson: LessonPlan;
   gradeLevel: string;
-  widaBand: string;
+  languageSupportLevel: string;
   topic: string;
   unitProfile?: string;
 }
@@ -133,7 +141,7 @@ interface HomeProps {
 // Print-only view
 // ---------------------------------------------------------------------------
 function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
-  const { lesson, gradeLevel, widaBand, topic, unitProfile } = displayed;
+  const { lesson, gradeLevel, languageSupportLevel, topic, unitProfile } = displayed;
   const printDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -291,7 +299,7 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
       <h1 style={s.title}>{lesson.title}</h1>
       <div style={s.meta}>
         <span style={s.metaPill}>{gradeLevel}</span>
-        <span style={s.metaPill}>{widaBand}</span>
+        <span style={s.metaPill}>Support Level {languageSupportLevel}</span>
         {topic && <span style={s.metaPill}>{topic}</span>}
         {unitProfile && <span style={s.metaPill}>{unitProfile}</span>}
       </div>
@@ -389,7 +397,7 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
         <div style={{ ...s.box, marginTop: "8px" }}>
           <div style={s.sectionLabel}>Planning Basis</div>
           <p style={s.sectionBody}>
-            {`WIDA-informed instructional guidance${
+            {`Scaffold instructional guidance at Language Support Level ${languageSupportLevel}${
               unitProfile ? ` and ${unitProfile}` : ""
             }.`}
           </p>
@@ -485,7 +493,7 @@ function formatLessonForCopy(displayed: DisplayedLesson): string {
 
   return [
     lesson.title,
-    `${displayed.gradeLevel} · ${displayed.widaBand}`,
+    `${displayed.gradeLevel} · Support Level ${displayed.languageSupportLevel}`,
     lesson.integratedUnitGoal
       ? `INTEGRATED UNIT GOAL\n${lesson.integratedUnitGoal}`
       : null,
@@ -550,7 +558,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     defaultValues: {
       topic: "",
       gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_3,
-      widaBand: GenerateLessonPlanBodyWidaBand["WIDA_1-2"],
+      languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_1,
       unitProfile: undefined,
       notes: "",
     },
@@ -653,7 +661,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       setSavedId(null);
       const id = save(plan, {
         gradeLevel: values.gradeLevel,
-        widaBand: values.widaBand,
+        languageSupportLevel: values.languageSupportLevel,
         topic: plan.title,
         unitProfile: values.unitProfile,
       });
@@ -661,7 +669,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       setDisplayed({
         lesson: plan,
         gradeLevel: values.gradeLevel,
-        widaBand: values.widaBand,
+        languageSupportLevel: values.languageSupportLevel,
         topic: plan.title,
         unitProfile: values.unitProfile,
       });
@@ -675,14 +683,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     if (!result) return;
     const vals = form.getValues() as {
       gradeLevel: string;
-      widaBand: string;
+      languageSupportLevel: string;
       topic: string;
       notes: string;
       unitProfile?: string;
     };
     const id = save(result, {
       gradeLevel: vals.gradeLevel,
-      widaBand: vals.widaBand,
+      languageSupportLevel: vals.languageSupportLevel,
       topic: vals.topic,
       unitProfile: vals.unitProfile,
     });
@@ -690,7 +698,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     setDisplayed({
       lesson: result,
       gradeLevel: vals.gradeLevel,
-      widaBand: vals.widaBand,
+      languageSupportLevel: vals.languageSupportLevel,
       topic: vals.topic,
       unitProfile: vals.unitProfile,
     });
@@ -716,7 +724,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     setDisplayed({
       lesson: entry.lesson,
       gradeLevel: entry.gradeLevel,
-      widaBand: entry.widaBand,
+      languageSupportLevel: entry.languageSupportLevel,
       topic: entry.topic,
       unitProfile: entry.unitProfile,
     });
@@ -748,7 +756,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     if (!displayed) return;
     const id = save(displayed.lesson, {
       gradeLevel: displayed.gradeLevel,
-      widaBand: displayed.widaBand,
+      languageSupportLevel: displayed.languageSupportLevel,
       topic: displayed.topic,
       unitProfile: displayed.unitProfile,
     });
@@ -808,7 +816,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     const current = form.getValues();
     form.reset({
       gradeLevel: current.gradeLevel,
-      widaBand: current.widaBand,
+      languageSupportLevel: current.languageSupportLevel,
       unitProfile: current.unitProfile,
       topic: "",
       notes: "",
@@ -981,7 +989,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
                     <FormField
                       control={form.control}
-                      name="widaBand"
+                      name="languageSupportLevel"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium">
@@ -993,7 +1001,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           >
                             <FormControl>
                               <SelectTrigger
-                                data-testid="select-wida-band"
+                                data-testid="select-language-support-level"
                                 className="text-sm"
                               >
                                 <SelectValue placeholder="Select a proficiency range" />
@@ -1002,7 +1010,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                             <SelectContent>
                               {(
                                 Object.entries(
-                                  GenerateLessonPlanBodyWidaBand,
+                                  GenerateLessonPlanBodyLanguageSupportLevel,
                                 ) as [string, string][]
                               ).map(([, value]) => (
                                 <SelectItem
@@ -1010,15 +1018,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                                   value={value}
                                   className="text-sm"
                                 >
-                                  {value}
+                                  Level {value} · {supportLevelLabels[value]}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           <p className="text-xs leading-relaxed text-muted-foreground">
-                            Uses the six-level WIDA proficiency scale as an instructional reference. Scaffold is not a WIDA product. Not sure? Choose the range that best matches how
-                            independently students understand and use English.
-                            Lower ranges add more support.
+                            Choose how much language support this learner needs for this task. Levels describe instructional support, not assessment or placement.
                           </p>
                           <FormMessage />
                         </FormItem>
@@ -1339,7 +1345,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     {displayed.gradeLevel}
                   </Badge>
                   <Badge variant="outline" className="text-xs font-medium">
-                    {displayed.widaBand}
+                    Support Level {displayed.languageSupportLevel}
                   </Badge>
                   {displayed.unitProfile && (
                     <Badge
@@ -1955,7 +1961,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               <div className="flex items-center gap-2 px-1 text-xs leading-relaxed text-muted-foreground">
                 <LibraryBig className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>
-                  {`Planning basis: WIDA-informed instructional guidance${
+                  {`Planning basis: Scaffold instructional guidance at Support Level ${displayed.languageSupportLevel}${
                     displayed.unitProfile
                       ? ` and ${displayed.unitProfile}`
                       : ""
@@ -2025,7 +2031,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <span>{entry.gradeLevel}</span>
                           <span aria-hidden="true">·</span>
-                          <span>{entry.widaBand}</span>
+                          <span>Support Level {entry.languageSupportLevel}</span>
                           <span aria-hidden="true">·</span>
                           <time dateTime={entry.savedAt}>
                             {formatDate(entry.savedAt)}

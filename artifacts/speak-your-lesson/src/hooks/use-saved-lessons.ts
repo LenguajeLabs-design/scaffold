@@ -14,7 +14,7 @@ export interface SavedLesson {
   savedAt: string;
   title: string;
   gradeLevel: string;
-  widaBand: string;
+  languageSupportLevel: string;
   topic: string;
   unitProfile?: string;
   lesson: LessonPlan;
@@ -45,7 +45,7 @@ export function useSavedLessons() {
       lesson: LessonPlan,
       meta: {
         gradeLevel: string;
-        widaBand: string;
+        languageSupportLevel: string;
         topic: string;
         unitProfile?: string;
       },
@@ -55,7 +55,7 @@ export function useSavedLessons() {
         savedAt: new Date().toISOString(),
         title: lesson.title,
         gradeLevel: meta.gradeLevel,
-        widaBand: meta.widaBand,
+        languageSupportLevel: meta.languageSupportLevel,
         topic: meta.topic,
         unitProfile: meta.unitProfile,
         lesson,

@@ -143,9 +143,9 @@ components:
         gradeLevel:
           type: string
           enum: ["Grade 3", "Grade 4", "Grade 5"]
-        widaBand:
+        languageSupportLevel:
           type: string
-          enum: ["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]
+          enum: ["1", "2", "3", "4", "5", "6"]
         topic:
           type: string
           description: Topic or subject for the lesson
@@ -159,7 +159,7 @@ components:
       required:
         - notes
         - gradeLevel
-        - widaBand
+        - languageSupportLevel
         - topic
         - accessCode
     LessonPlan:
@@ -232,16 +232,16 @@ components:
         gradeLevel:
           type: string
           enum: ["Grade 2", "Grade 3", "Grade 4", "Grade 5"]
-        widaLevel:
+        languageSupportLevel:
           type: string
-          enum: ["WIDA 1-2", "WIDA 2-3", "WIDA 3-4"]
+          enum: ["1", "2", "3", "4", "5", "6"]
         accessCode:
           type: string
           description: School access code for authorization
       required:
         - need
         - gradeLevel
-        - widaLevel
+        - languageSupportLevel
         - accessCode
     ClassroomSupport:
       type: object

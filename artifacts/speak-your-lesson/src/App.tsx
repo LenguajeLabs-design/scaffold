@@ -163,7 +163,7 @@ function Footer() {
               Designed for educators supporting multilingual learners. Uses language proficiency levels as an instructional reference.
             </p>
             <p className="max-w-md text-[11px] leading-relaxed text-muted-foreground">
-              Scaffold is independently developed and is not affiliated with, endorsed by, sponsored by, or officially connected with WIDA. <Link href="/about" className="text-primary hover:underline">Learn more</Link>
+              Scaffold is independently developed. <Link href="/about" className="text-primary hover:underline">Learn more</Link>
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
               <Link href="/about#about" className="hover:text-primary hover:underline">About &amp; methodology</Link>

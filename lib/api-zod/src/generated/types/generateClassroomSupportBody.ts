@@ -6,13 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GenerateClassroomSupportBodyGradeLevel } from "./generateClassroomSupportBodyGradeLevel";
-import type { GenerateClassroomSupportBodyWidaLevel } from "./generateClassroomSupportBodyWidaLevel";
+import type { GenerateClassroomSupportBodyLanguageSupportLevel } from "./generateClassroomSupportBodyLanguageSupportLevel";
 
 export interface GenerateClassroomSupportBody {
   /** What the students need help with right now */
   need: string;
   gradeLevel: GenerateClassroomSupportBodyGradeLevel;
-  widaLevel: GenerateClassroomSupportBodyWidaLevel;
+  languageSupportLevel: GenerateClassroomSupportBodyLanguageSupportLevel;
   /** School access code for authorization */
   accessCode: string;
 }

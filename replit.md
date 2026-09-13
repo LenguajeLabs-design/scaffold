@@ -49,7 +49,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 #### Lesson Planner (`/`)
 - **Features**:
-  - Topic/Subject input, Grade Level dropdown (Grade 3–5), WIDA Band dropdown (WIDA 1-2, 2-3, 3-4)
+  - Topic/Subject input, Grade Level dropdown (Grade 3–5), Language Support Level dropdown (Levels 1–6)
   - Planning notes textarea with 2000-char limit + live counter
   - Privacy reminder: "Please do not include student names or private student information"
   - AI-generated lesson plan with 10 structured sections in card layout
@@ -60,7 +60,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 #### Classroom Copilot (`/classroom-copilot`)
 - **Purpose**: Instant EAL classroom support for live teaching moments
 - **Features**:
-  - Grade Level dropdown (Grade 2–5), WIDA Level dropdown
+  - Grade Level dropdown (Grade 2–5), Language Support Level dropdown (Levels 1–6)
   - Text area: "What do your students need help with right now?" — 2000-char limit + live counter
   - Privacy reminder near input
   - 6 output cards: Simple Explanation, Key Vocabulary, Sentence Frames, Quick Activity, Extension Question, Teacher Move

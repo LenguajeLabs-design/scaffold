@@ -18,13 +18,16 @@ export const GenerateLessonPlanBodyGradeLevel = {
   Grade_5: "Grade 5",
 } as const;
 
-export type GenerateLessonPlanBodyWidaBand =
-  (typeof GenerateLessonPlanBodyWidaBand)[keyof typeof GenerateLessonPlanBodyWidaBand];
+export type GenerateLessonPlanBodyLanguageSupportLevel =
+  (typeof GenerateLessonPlanBodyLanguageSupportLevel)[keyof typeof GenerateLessonPlanBodyLanguageSupportLevel];
 
-export const GenerateLessonPlanBodyWidaBand = {
-  "WIDA_1-2": "WIDA 1-2",
-  "WIDA_2-3": "WIDA 2-3",
-  "WIDA_3-4": "WIDA 3-4",
+export const GenerateLessonPlanBodyLanguageSupportLevel = {
+  NUMBER_1: "1",
+  NUMBER_2: "2",
+  NUMBER_3: "3",
+  NUMBER_4: "4",
+  NUMBER_5: "5",
+  NUMBER_6: "6",
 } as const;
 
 /**
@@ -41,7 +44,7 @@ export interface GenerateLessonPlanBody {
   /** Rough planning notes from the teacher */
   notes: string;
   gradeLevel: GenerateLessonPlanBodyGradeLevel;
-  widaBand: GenerateLessonPlanBodyWidaBand;
+  languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel;
   /** Topic or subject for the lesson */
   topic: string;
   /** Optional canonical curriculum unit used to ground the lesson */
@@ -80,20 +83,23 @@ export const GenerateClassroomSupportBodyGradeLevel = {
   Grade_5: "Grade 5",
 } as const;
 
-export type GenerateClassroomSupportBodyWidaLevel =
-  (typeof GenerateClassroomSupportBodyWidaLevel)[keyof typeof GenerateClassroomSupportBodyWidaLevel];
+export type GenerateClassroomSupportBodyLanguageSupportLevel =
+  (typeof GenerateClassroomSupportBodyLanguageSupportLevel)[keyof typeof GenerateClassroomSupportBodyLanguageSupportLevel];
 
-export const GenerateClassroomSupportBodyWidaLevel = {
-  "WIDA_1-2": "WIDA 1-2",
-  "WIDA_2-3": "WIDA 2-3",
-  "WIDA_3-4": "WIDA 3-4",
+export const GenerateClassroomSupportBodyLanguageSupportLevel = {
+  NUMBER_1: "1",
+  NUMBER_2: "2",
+  NUMBER_3: "3",
+  NUMBER_4: "4",
+  NUMBER_5: "5",
+  NUMBER_6: "6",
 } as const;
 
 export interface GenerateClassroomSupportBody {
   /** What the students need help with right now */
   need: string;
   gradeLevel: GenerateClassroomSupportBodyGradeLevel;
-  widaLevel: GenerateClassroomSupportBodyWidaLevel;
+  languageSupportLevel: GenerateClassroomSupportBodyLanguageSupportLevel;
   /** School access code for authorization */
   accessCode: string;
 }
