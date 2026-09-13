@@ -40,7 +40,7 @@ const LESSON_PLANNING_REQUIREMENTS = [
   "Keep the content objective and language objective clearly distinct.",
   "Choose key vocabulary that is essential to the lesson, not a long list.",
   "Make sentence frames useful and teachable, not generic filler.",
-  "Use scaffolds that clearly fit the WIDA band and the actual task demand.",
+  "Use an independently developed support appropriate for the selected language proficiency reference and the actual task demand.",
   "Keep activities coherent from warm-up through exit ticket.",
   "Use teacherNotes for actionable guidance, not vague reminders.",
 ].join(" ");
@@ -77,7 +77,7 @@ const LESSON_PLAN_JSON_SCHEMA = `{
   "speakingActivity": "Overview sentence.\n\nSetup:\n• What students do.\n• Partner structure.\n\nSample prompts:\n• Example one.\n• Example two.\n\nDebrief: Closing move.",
   "exitTicket": "One sentence framing the exit ticket.\n\n• Option A: Quick written prompt.\n• Option B: Draw and label.\n\nTeacher tip: How to collect and sort responses.",
   "teacherNotes": "• Practical implementation note.\n• Content accuracy note.\n• What to watch for.",
-  "scaffoldPlan": "• WIDA-band support tied to the task.\n• Oral rehearsal or visual support.\n• One high-value teacher move.",
+  "scaffoldPlan": "• Support tied to the selected language proficiency range and task.\n• Oral rehearsal or visual support.\n• One high-value teacher move.",
   "scaffoldFadingPlan": "1. Support to use first.\n2. Evidence students are ready for less support.\n3. Support to remove or reduce next.",
   "formativeAssessment": "What students will produce, what content and language evidence the teacher will examine, and how scaffold dependence will be recorded.",
   "sourcesUsed": ["specific canonical source 1", "specific canonical source 2"]
@@ -102,7 +102,7 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
   );
   const systemPrompt =
     "You are an expert elementary EAL curriculum designer and instructional coach. " +
-    "You create practical, structured, WIDA-aligned lesson plans for multilingual learners. " +
+    "You create practical, structured instructional suggestions for multilingual learners, informed in part by publicly available WIDA proficiency references but not official WIDA guidance. " +
     getCanonicalPlannerRulesText() +
     " " +
     LESSON_PLANNING_REQUIREMENTS +
@@ -116,7 +116,7 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
     "Turn these rough teacher planning notes into a clear, low-prep, high-impact lesson plan " +
     "for an elementary multilingual learner classroom.\n\n" +
     `Grade Level: ${args.gradeLevel}\n` +
-    `WIDA Band: ${args.widaBand}\n` +
+    `Language Proficiency Reference: ${args.widaBand}\n` +
     `Topic/Subject: ${args.topic}\n\n` +
     `Selected Unit: ${args.unitProfile ?? "General lesson planning"}\n\n` +
     `Canonical guide context:\n${canonicalContext}\n\n` +
@@ -167,7 +167,7 @@ export function buildClassroomSupportPrompt(
   const userPrompt =
     "A teacher needs immediate EAL classroom support.\n\n" +
     `Grade Level: ${args.gradeLevel}\n` +
-    `WIDA Level: ${args.widaLevel}\n` +
+    `Language Proficiency Reference: ${args.widaLevel}\n` +
     `Student Need: ${args.need}\n\n` +
     `Canonical guide context:\n${canonicalContext}\n\n` +
     "Support instructions:\n" +

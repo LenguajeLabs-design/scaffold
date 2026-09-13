@@ -24,7 +24,7 @@ Purpose:
 
 Source priority:
 1. Canonical planning guides
-2. WIDA standards and language charts
+2. Publicly available WIDA resources, used only as an instructional reference
 3. EAL program and grade-level unit documents
 4. Writers Workshop, UFLI, scaffolding, and vocabulary support materials
 5. Research articles for rationale and validation
@@ -243,7 +243,7 @@ export function getCanonicalLessonContext(
   return [
     "Canonical source material:",
     `- Planner rules source: ${CANONICAL_GUIDE_SOURCES.plannerRules}`,
-    `- WIDA guide source: ${CANONICAL_GUIDE_SOURCES.widaCore}`,
+    `- Public WIDA reference source (not official Scaffold guidance): ${CANONICAL_GUIDE_SOURCES.widaCore}`,
     `- Scaffold guide source: ${CANONICAL_GUIDE_SOURCES.scaffolds}`,
     gradeGuide
       ? `- Grade guide source: ${gradeLevel === "Grade 4" ? CANONICAL_GUIDE_SOURCES.grade4 : CANONICAL_GUIDE_SOURCES.grade5}`
@@ -273,7 +273,7 @@ export function getCanonicalCopilotContext(
   return [
     "Canonical source material:",
     `- Planner rules source: ${CANONICAL_GUIDE_SOURCES.plannerRules}`,
-    `- WIDA guide source: ${CANONICAL_GUIDE_SOURCES.widaCore}`,
+    `- Public WIDA reference source (not official Scaffold guidance): ${CANONICAL_GUIDE_SOURCES.widaCore}`,
     `- Scaffold guide source: ${CANONICAL_GUIDE_SOURCES.scaffolds}`,
     gradeGuide
       ? `- Grade guide source: ${gradeLevel === "Grade 4" ? CANONICAL_GUIDE_SOURCES.grade4 : CANONICAL_GUIDE_SOURCES.grade5}`

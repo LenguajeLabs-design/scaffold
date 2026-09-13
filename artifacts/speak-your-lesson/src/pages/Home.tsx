@@ -389,7 +389,7 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
         <div style={{ ...s.box, marginTop: "8px" }}>
           <div style={s.sectionLabel}>Planning Basis</div>
           <p style={s.sectionBody}>
-            {`WIDA-aligned planning guidance${
+            {`WIDA-informed instructional guidance${
               unitProfile ? ` and ${unitProfile}` : ""
             }.`}
           </p>
@@ -985,7 +985,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium">
-                            WIDA Band
+                            Language Proficiency Reference
                           </FormLabel>
                           <Select
                             onValueChange={field.onChange}
@@ -996,7 +996,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                                 data-testid="select-wida-band"
                                 className="text-sm"
                               >
-                                <SelectValue placeholder="Select WIDA band" />
+                                <SelectValue placeholder="Select a proficiency range" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -1016,7 +1016,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                             </SelectContent>
                           </Select>
                           <p className="text-xs leading-relaxed text-muted-foreground">
-                            Not sure? Choose the range that best matches how
+                            Uses the six-level WIDA proficiency scale as an instructional reference. Scaffold is not a WIDA product. Not sure? Choose the range that best matches how
                             independently students understand and use English.
                             Lower ranges add more support.
                           </p>
@@ -1955,7 +1955,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               <div className="flex items-center gap-2 px-1 text-xs leading-relaxed text-muted-foreground">
                 <LibraryBig className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>
-                  {`Planning basis: WIDA-aligned guidance${
+                  {`Planning basis: WIDA-informed instructional guidance${
                     displayed.unitProfile
                       ? ` and ${displayed.unitProfile}`
                       : ""
@@ -1963,6 +1963,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </span>
               </div>
             )}
+            <p className="rounded-xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+              Teacher review required: Scaffold generates instructional suggestions, not official proficiency determinations or individualized educational recommendations. Adapt this plan to your students, curriculum, school policies, and professional judgment.
+            </p>
           </section>
         )}
 

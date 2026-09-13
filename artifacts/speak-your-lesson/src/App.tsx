@@ -11,6 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ClassroomCopilot from "@/pages/ClassroomCopilot";
+import Legal from "@/pages/Legal";
 import { AccessGate } from "@/components/AccessGate";
 import {
   OnboardingDialog,
@@ -159,9 +160,17 @@ function Footer() {
               </a>
             </p>
             <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-              Built using the WIDA framework to support multilingual learners,
-              families, and educators.
+              Designed for educators supporting multilingual learners. Uses language proficiency levels as an instructional reference.
             </p>
+            <p className="max-w-md text-[11px] leading-relaxed text-muted-foreground">
+              Scaffold is independently developed and is not affiliated with, endorsed by, sponsored by, or officially connected with WIDA. <Link href="/about" className="text-primary hover:underline">Learn more</Link>
+            </p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+              <Link href="/about#about" className="hover:text-primary hover:underline">About &amp; methodology</Link>
+              <Link href="/about#disclaimer" className="hover:text-primary hover:underline">Disclaimer</Link>
+              <Link href="/about#terms" className="hover:text-primary hover:underline">Terms</Link>
+              <Link href="/about#privacy" className="hover:text-primary hover:underline">Privacy</Link>
+            </div>
           </div>
 
           <p className="text-xs text-muted-foreground shrink-0 sm:text-right">
@@ -236,6 +245,7 @@ function Router() {
               />
             )}
           />
+          <Route path="/about" component={Legal} />
           <Route component={NotFound} />
         </Switch>
       </div>

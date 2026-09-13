@@ -398,7 +398,7 @@ export default function ClassroomCopilot({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium">
-                          WIDA Level
+                          Language Proficiency Reference
                         </FormLabel>
                         <Select
                           onValueChange={field.onChange}
@@ -409,7 +409,7 @@ export default function ClassroomCopilot({
                               data-testid="select-wida-level"
                               className="text-sm"
                             >
-                              <SelectValue placeholder="Select WIDA level" />
+                              <SelectValue placeholder="Select a proficiency range" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -461,7 +461,7 @@ export default function ClassroomCopilot({
                           </SelectContent>
                         </Select>
                         <p className="text-xs leading-relaxed text-muted-foreground">
-                          Not sure? Choose the range that best matches how
+                          Uses the six-level WIDA proficiency scale as an instructional reference. Scaffold is not a WIDA product. Not sure? Choose the range that best matches how
                           independently students understand and use English in
                           class. You can adapt the support before using it.
                         </p>
@@ -653,6 +653,9 @@ export default function ClassroomCopilot({
               tone="teal"
             >
               <RichText text={displayed.support.simpleExplanation} />
+              <p className="mt-4 rounded-xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+                Teacher review required: Scaffold generates instructional suggestions, not official proficiency determinations or individualized educational recommendations. Adapt this support to your students, curriculum, school policies, and professional judgment.
+              </p>
             </SupportCard>
 
             <SupportCard

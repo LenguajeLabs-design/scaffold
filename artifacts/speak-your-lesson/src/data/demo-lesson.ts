@@ -44,7 +44,7 @@ export const DEMO_LESSON_PLANS: LessonPlan[] = [
     formativeAssessment:
       "Review the exit ticket for accurate equal-part reasoning, correct fraction language, and whether the student completed the explanation independently or relied on the frame.",
     sourcesUsed: [
-      "Scaffold canonical WIDA core guide",
+      "Publicly available WIDA resources used as an instructional reference (not official guidance)",
       "Scaffold canonical planner rules",
     ],
   },
@@ -93,9 +93,9 @@ export const DEMO_LESSON_PLANS: LessonPlan[] = [
     sourcesUsed: [
       "EALDesk Elementary: Grade 4 Discipline-Based Writing unit",
       "WIDA ELD Standards Framework 2020 Edition, Grades 4–5",
-      "WIDA Can Do Key Uses, Grades 4–5",
-      "WIDA Language Charts",
-      "WIDA Teaching-Learning Cycle scaffolding guide",
+      "Publicly available WIDA language-proficiency resources (reference only)",
+      "Publicly available language charts (reference only)",
+      "Independent teaching-and-learning-cycle scaffolding guidance",
     ],
   },
 ];
