@@ -31,7 +31,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const GenerateLessonPlanBody = zod.object({
   notes: zod.string().describe("Rough planning notes from the teacher"),
-  gradeLevel: zod.enum(["Grade 3", "Grade 4", "Grade 5"]),
+  gradeLevel: zod.enum(["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
   languageSupportLevel: zod.enum(["1", "2", "3", "4", "5", "6"]),
   topic: zod.string().describe("Topic or subject for the lesson"),
   unitProfile: zod
@@ -66,7 +66,7 @@ export const GenerateLessonPlanResponse = zod.object({
  */
 export const GenerateClassroomSupportBody = zod.object({
   need: zod.string().describe("What the students need help with right now"),
-  gradeLevel: zod.enum(["Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
+  gradeLevel: zod.enum(["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
   languageSupportLevel: zod.enum(["1", "2", "3", "4", "5", "6"]),
   accessCode: zod.string().describe("School access code for authorization"),
 });

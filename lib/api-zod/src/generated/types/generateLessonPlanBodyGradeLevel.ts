@@ -10,6 +10,8 @@ export type GenerateLessonPlanBodyGradeLevel =
   (typeof GenerateLessonPlanBodyGradeLevel)[keyof typeof GenerateLessonPlanBodyGradeLevel];
 
 export const GenerateLessonPlanBodyGradeLevel = {
+  Grade_1: "Grade 1",
+  Grade_2: "Grade 2",
   Grade_3: "Grade 3",
   Grade_4: "Grade 4",
   Grade_5: "Grade 5",

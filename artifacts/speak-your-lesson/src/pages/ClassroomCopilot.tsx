@@ -355,6 +355,14 @@ export default function ClassroomCopilot({
                           <SelectContent>
                             <SelectItem
                               value={
+                                GenerateClassroomSupportBodyGradeLevel.Grade_1
+                              }
+                              className="text-sm"
+                            >
+                              Grade 1
+                            </SelectItem>
+                            <SelectItem
+                              value={
                                 GenerateClassroomSupportBodyGradeLevel.Grade_2
                               }
                               className="text-sm"

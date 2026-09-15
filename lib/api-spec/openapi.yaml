@@ -142,7 +142,7 @@ components:
           description: Rough planning notes from the teacher
         gradeLevel:
           type: string
-          enum: ["Grade 3", "Grade 4", "Grade 5"]
+          enum: ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]
         languageSupportLevel:
           type: string
           enum: ["1", "2", "3", "4", "5", "6"]
@@ -231,7 +231,7 @@ components:
           description: What the students need help with right now
         gradeLevel:
           type: string
-          enum: ["Grade 2", "Grade 3", "Grade 4", "Grade 5"]
+          enum: ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]
         languageSupportLevel:
           type: string
           enum: ["1", "2", "3", "4", "5", "6"]
