@@ -102,7 +102,7 @@ CORS configuration. Code validation does not consume generation allowance.
 2. Under `Build and deployment`, choose `GitHub Actions` as the source.
 3. Open the `Actions` tab and run `Deploy frontend to GitHub Pages`, or push a new commit to `main`.
 
-The workflow builds with the correct `/scaffold/` base path and publishes
+The workflow builds with the correct `/` base path and publishes
 `artifacts/speak-your-lesson/dist/public` automatically.
 
 ## 5. Local production build
