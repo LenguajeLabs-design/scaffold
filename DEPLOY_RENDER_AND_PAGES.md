@@ -1,4 +1,4 @@
-# Deploy Scaffold with Render + GitHub Pages
+# Deploy Scaffold with Render + GitHub Pages at scaffolded.app
 
 This is the lowest-friction path for the current codebase:
 
@@ -23,7 +23,7 @@ This is the lowest-friction path for the current codebase:
 | `DATABASE_URL` | PostgreSQL connection string used for durable quotas and usage records |
 | `GENERATION_ENABLED` | Set `true` to permit generation; set `false` to stop all paid calls immediately |
 | `TRUST_PROXY` | Set `1` on Render so connection-level abuse protection sees the original client IP |
-| `CORS_ALLOWED_ORIGINS` | Your GitHub Pages origin, for example `https://lenguajelabs-design.github.io` |
+| `CORS_ALLOWED_ORIGINS` | `https://scaffolded.app` |
 
 ### Notes
 
@@ -110,7 +110,7 @@ The workflow builds with the correct `/scaffold/` base path and publishes
 To test the same frontend build locally:
 
 ```bash
-BASE_PATH=/scaffold/ VITE_API_BASE_URL=https://scaffold-api.onrender.com pnpm --filter @workspace/speak-your-lesson run build
+BASE_PATH=/ VITE_API_BASE_URL=https://api.scaffolded.app pnpm --filter @workspace/speak-your-lesson run build
 ```
 
 The built frontend will be written to:
@@ -119,12 +119,22 @@ The built frontend will be written to:
 artifacts/speak-your-lesson/dist/public
 ```
 
-## 6. Expected production URLs
+## 6. Connect scaffolded.app in Porkbun
 
-- Frontend: `https://lenguajelabs-design.github.io/scaffold/`
-- Backend: `https://<your-render-service>.onrender.com`
+After GitHub Pages and Render are deployed, add these DNS records in Porkbun:
 
-## 7. Normal update workflow
+- Apex/root `A` records for `@` to GitHub Pages: `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, and `185.199.111.153`.
+- `CNAME` record for `www` to `lenguajelabs-design.github.io`.
+- `CNAME` record for `api` to the Render hostname for the `scaffold-api` service.
+
+In GitHub, set the Pages custom domain to `scaffolded.app` and enable HTTPS after DNS verification. Update the Render `CORS_ALLOWED_ORIGINS` value to `https://scaffolded.app`.
+
+## 7. Expected production URLs
+
+- Frontend: `https://scaffolded.app`
+- Backend: `https://api.scaffolded.app` (or the Render hostname before the API custom domain is configured)
+
+## 8. Normal update workflow
 
 After migration, updates no longer require Replit Agent:
 

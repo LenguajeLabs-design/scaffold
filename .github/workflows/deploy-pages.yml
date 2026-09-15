@@ -62,7 +62,7 @@ jobs:
 
       - name: Build frontend
         env:
-          BASE_PATH: /scaffold/
+          BASE_PATH: /
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_ACCESS_GATE_ENABLED: ${{ vars.VITE_ACCESS_GATE_ENABLED || 'true' }}
         run: pnpm --filter @workspace/speak-your-lesson run build
