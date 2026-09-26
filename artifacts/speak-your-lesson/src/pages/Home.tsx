@@ -133,6 +133,18 @@ function topicFromBrief(brief: string): string {
   return firstThought.slice(0, 90) || "Lesson support";
 }
 
+function compactLessonText(value: string, maxLength = 180): string {
+  const compact = value
+    .split(/\n+/)
+    .map((line) => line.trim().replace(/^(?:[•*\-]|\d+\.)\s+/, ""))
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (compact.length <= maxLength) return compact;
+  return `${compact.slice(0, maxLength).trimEnd()}…`;
+}
+
 interface DisplayedLesson {
   lesson: LessonPlan;
   gradeLevel: string;
@@ -1425,45 +1437,68 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </p>
               </div>
             </div>
-            <Card className="lesson-card lesson-card--blue border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.035]">
-              <CardHeader className="px-5 pb-2 pt-5">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-                  <Sparkles className="h-4 w-4 text-[var(--brand-blue-strong)]" aria-hidden="true" />
-                  Try this first
-                </CardTitle>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  One starting move to use before you build out the rest of the lesson.
-                </p>
-              </CardHeader>
-              <CardContent className="px-5 pb-5 text-sm leading-relaxed text-foreground">
-                <RichText
-                  text={displayed.lesson.scaffoldPlan || displayed.lesson.warmUp}
-                />
-              </CardContent>
-            </Card>
             {!isSharedPlan && (
-              <Card className="border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/[0.045] shadow-none">
-                <CardContent className="p-5 sm:p-6">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-teal)]/15 text-[var(--brand-teal-strong)]">
-                      <Mail className="h-5 w-5" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-teal-strong)]">
-                        Help shape the next release
-                      </p>
-                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                        If you try this with a real class, send one line about
-                        what helped or got in the way. Please leave out student
-                        names and private student information.
-                      </p>
-                      <a
-                        href="mailto:forozc1@gmail.com?subject=Scaffold%20beta%20feedback&body=What%20I%20tried%3A%20%0A%0AWhat%20helped%3A%20%0A%0AWhat%20got%20in%20the%20way%3A%20"
-                        className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-[var(--brand-teal-strong)] px-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        Send quick feedback
-                      </a>
+              <Card
+                className="border-[var(--brand-blue)]/20 bg-card shadow-none"
+                data-testid="plan-at-a-glance"
+              >
+                <CardHeader className="px-5 pb-3 pt-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-blue-strong)]">
+                    Your plan at a glance
+                  </p>
+                  <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <CardTitle className="text-xl font-semibold text-foreground">
+                      {displayed.lesson.title}
+                    </CardTitle>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Badge variant="secondary" className="text-xs font-medium">
+                        {displayed.gradeLevel}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs font-medium">
+                        Support Level {displayed.languageSupportLevel}
+                      </Badge>
                     </div>
+                  </div>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    A quick read before you decide whether to save it.
+                  </p>
+                </CardHeader>
+                <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
+                      <Target className="h-4 w-4" aria-hidden="true" />
+                      Content objective
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {compactLessonText(displayed.lesson.contentObjective)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
+                      <Languages className="h-4 w-4" aria-hidden="true" />
+                      Language objective
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {compactLessonText(displayed.lesson.languageObjective)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-[var(--brand-blue)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+                      <Sparkles className="h-4 w-4" aria-hidden="true" />
+                      First classroom move
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {compactLessonText(displayed.lesson.warmUp)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+                      <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+                      Quick check
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {compactLessonText(displayed.lesson.formativeAssessment)}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -1477,14 +1512,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     </span>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-purple-strong)]">
-                        Keep your work
+                        Save for later
                       </p>
                       <h2 className="mt-1 text-base font-semibold text-foreground">
-                        Want to keep this lesson for later?
+                        Save this plan for later
                       </h2>
                       <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                        Sign in with Google to save this lesson to your account
-                        and open it later from another device.
+                        Sign in with Google to access it from another device.
                       </p>
                     </div>
                   </div>
@@ -1527,6 +1561,22 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </CardContent>
               </Card>
             )}
+            <Card className="lesson-card lesson-card--blue border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.035]">
+              <CardHeader className="px-5 pb-2 pt-5">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Sparkles className="h-4 w-4 text-[var(--brand-blue-strong)]" aria-hidden="true" />
+                  Try this first
+                </CardTitle>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  One starting move to use before you build out the rest of the lesson.
+                </p>
+              </CardHeader>
+              <CardContent className="px-5 pb-5 text-sm leading-relaxed text-foreground">
+                <RichText
+                  text={displayed.lesson.scaffoldPlan || displayed.lesson.warmUp}
+                />
+              </CardContent>
+            </Card>
             <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 {isEditing ? (
@@ -2175,6 +2225,33 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             <p className="rounded-xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
               Teacher review required: Scaffold generates instructional suggestions, not official proficiency determinations or individualized educational recommendations. Adapt this plan to your students, curriculum, school policies, and professional judgment.
             </p>
+            {!isSharedPlan && (
+              <Card className="border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/[0.045] shadow-none">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-teal)]/15 text-[var(--brand-teal-strong)]">
+                      <Mail className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-teal-strong)]">
+                        Help shape the next release
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        If you try this with a real class, send one line about
+                        what helped or got in the way. Please leave out student
+                        names and private student information.
+                      </p>
+                      <a
+                        href="mailto:forozc1@gmail.com?subject=Scaffold%20beta%20feedback&body=What%20I%20tried%3A%20%0A%0AWhat%20helped%3A%20%0A%0AWhat%20got%20in%20the%20way%3A%20"
+                        className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-[var(--brand-teal-strong)] px-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        Send quick feedback
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </section>
         )}
 
