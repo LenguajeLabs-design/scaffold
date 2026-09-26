@@ -1,9 +1,11 @@
 /**
- * Persists the teacher's access code in sessionStorage so they don't have
- * to re-enter it on every page load within the same browser session.
+ * Persists the teacher's access credential in sessionStorage so they don't
+ * have to re-enter the access step on every page load within the same browser
+ * session.
  *
- * The special value "demo" means the user chose to explore without a code.
- * It is handled purely client-side — no demo code is ever sent to the API.
+ * The special value "demo" means the user chose to explore without an account.
+ * Public account access uses the local "account" marker; the server still
+ * authenticates every live request with the Google credential.
  */
 
 import { useState, useCallback, useEffect } from "react";
@@ -12,6 +14,15 @@ import { clearCredential, getCredential } from "@/lib/auth-session";
 
 const STORAGE_KEY = "scaffold-access-code";
 export const DEMO_CODE = "demo";
+
+export function getStoredAccessCode(): string | null {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    return stored && stored !== DEMO_CODE && stored !== "ACCOUNT" ? stored : null;
+  } catch {
+    return null;
+  }
+}
 
 function readStored(): string | null {
   try {
@@ -59,7 +70,7 @@ export function useAccessCode(): UseAccessCode {
 
   const unlock = useCallback((code: string, admin = false) => {
     setAdmin(admin);
-    const upper = code.trim().toUpperCase();
+    const upper = code.trim().toUpperCase() || "ACCOUNT";
     writeStored(upper);
     setAccessCode(upper);
   }, []);

@@ -13,6 +13,6 @@ export interface GenerateClassroomSupportBody {
   need: string;
   gradeLevel: GenerateClassroomSupportBodyGradeLevel;
   languageSupportLevel: GenerateClassroomSupportBodyLanguageSupportLevel;
-  /** School access code for authorization */
-  accessCode: string;
+  /** Optional school access code for private-beta authorization */
+  accessCode?: string;
 }

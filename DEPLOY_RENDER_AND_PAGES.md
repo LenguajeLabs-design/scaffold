@@ -16,11 +16,12 @@ This is the lowest-friction path for the current codebase:
 | Variable | Value |
 |---|---|
 | `OPENAI_API_KEY` | Your OpenAI API key |
-| `VALID_ACCESS_CODES` | School access codes, separated by commas |
+| `VALID_ACCESS_CODES` | School access codes, separated by commas; used when private-beta access is enabled |
+| `REQUIRE_ACCESS_CODE` | Set `true` for a closed school pilot; leave `false` for lower-friction public access |
 | `GOOGLE_CLIENT_ID` | Web OAuth client ID from Google Cloud; this identifier is public, not a secret |
 | `ADMIN_EMAILS` | Comma-separated Google account emails allowed to test without the public daily limit |
 | `USAGE_HASH_SECRET` | A random 32+-character server secret for irreversible usage identifiers |
-| `DATABASE_URL` | PostgreSQL connection string used for durable quotas and usage records |
+| `DATABASE_URL` | PostgreSQL connection string used for durable quotas, account records, and saved lessons |
 | `GENERATION_ENABLED` | Set `true` to permit generation; set `false` to stop all paid calls immediately |
 | `TRUST_PROXY` | Set `1` on Render so connection-level abuse protection sees the original client IP |
 | `CORS_ALLOWED_ORIGINS` | `https://scaffolded.app` |
@@ -52,18 +53,23 @@ After Render gives you the backend URL:
 
 This URL is public configuration, not a secret. The OpenAI API key stays only on Render.
 
-### Access-code sign-in
+### Account sign-in
 
-Production opens with school access-code sign-in by default. The Pages workflow
-passes `VITE_ACCESS_GATE_ENABLED` into the frontend build, defaulting to `true`.
-Teachers can still choose sample lessons without signing in.
+Production opens directly into the planning experience with no account or
+school access code. Teachers can generate a useful plan first, then choose
+“Continue with Google” to save it across devices. Anonymous usage is still
+bounded by connection-level limits; verified Google accounts can retrieve
+their saved lesson library later.
 
-Only set `VITE_ACCESS_GATE_ENABLED=false` for an intentionally sample-only site.
-Set `VALID_ACCESS_CODES=SUZHOU` on the Render API. Teachers sign in with Google
-and use that code; their four daily generations are recorded server-side across
-both tools. Set `ADMIN_EMAILS` only in Render, never in a Pages variable or
-source file. Codes, the admin allowlist, database URL, hash secret, and OpenAI
-key must never be placed in frontend build variables. Replit secrets do not
+For a closed school pilot, set `REQUIRE_ACCESS_CODE=true` and provide
+`VALID_ACCESS_CODES=SUZHOU` on the Render API. The frontend will then show the
+access-code field after Google sign-in. `VITE_ACCESS_GATE_ENABLED=false` remains
+reserved for an intentionally sample-only site; it does not enable public live
+generation.
+
+Set `ADMIN_EMAILS` only in Render, never in a Pages variable or source file.
+Codes, the admin allowlist, database URL, hash secret, and OpenAI key must
+never be placed in frontend build variables. Replit secrets do not
 automatically transfer to Render.
 
 Create a Google OAuth **Web application** client and add both the production
@@ -91,7 +97,9 @@ event type, hashed account/connection IDs, beta/admin traffic type, model, and
 provider usage tokens when returned; they never contain lesson text, email,
 student data, access codes, or API keys.
 
-Deploy the API before the frontend when introducing `/api/access/validate`.
+Deploy the API before the frontend when introducing `/api/access/validate` or
+the account save endpoints. The API creates the `scaffold_accounts` and
+`scaffold_saved_lessons` tables on startup if they do not already exist.
 Confirm the API health endpoint, invalid-code rejection, and valid-code sign-in;
 then generate a fictional lesson from the production frontend to verify AI and
 CORS configuration. Code validation does not consume generation allowance.

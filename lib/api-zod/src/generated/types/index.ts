@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./accountLesson";
+export * from "./accountLessonsResponse";
+export * from "./accountProfile";
 export * from "./classroomSupport";
 export * from "./errorResponse";
 export * from "./generateClassroomSupportBody";
@@ -17,5 +20,7 @@ export * from "./generateLessonPlanBodyLanguageSupportLevel";
 export * from "./generateLessonPlanBodyUnitProfile";
 export * from "./healthStatus";
 export * from "./lessonPlan";
+export * from "./saveAccountLessonBody";
+export * from "./saveAccountLessonResponse";
 export * from "./validateAccessCode200";
 export * from "./validateAccessCodeBody";

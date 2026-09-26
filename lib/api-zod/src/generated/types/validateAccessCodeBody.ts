@@ -7,5 +7,6 @@
  */
 
 export type ValidateAccessCodeBody = {
-  accessCode: string;
+  /** Optional school access code when private-beta access is enabled */
+  accessCode?: string;
 };

@@ -1,8 +1,9 @@
 /**
- * Full-screen access code gate.
- * Shown when the user hasn't entered a code yet for this session.
- * Validates against the API; on success, calls onUnlock(code).
- * "Try the demo" skips to local sample data without hitting the API.
+ * Full-screen account gate.
+ * Shown when the user hasn't started a live session yet.
+ * Validates a verified Google account against the API and optionally checks
+ * a private-beta access code; on success, calls onUnlock(code).
+ * "Explore a sample plan" skips to local sample data without hitting the API.
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -36,7 +37,12 @@ declare global {
           }): void;
           renderButton(
             element: HTMLElement,
-            options: { theme: string; size: string },
+            options: {
+              theme: string;
+              size: string;
+              text?: string;
+              width?: string;
+            },
           ): void;
         };
       };
@@ -72,6 +78,7 @@ export function AccessGate({
 
   const [credential, setGoogleCredential] = useState<string | null>(null);
   const [dailyLimit, setDailyLimit] = useState<number | null>(null);
+  const [requireAccessCode, setRequireAccessCode] = useState(false);
   const googleButton = useRef<HTMLDivElement>(null);
   const accessCodeInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -87,8 +94,14 @@ export function AccessGate({
         if (!config.googleClientId) throw new Error();
         if (cancelled) return;
         setDailyLimit(config.dailyLimit);
+        setRequireAccessCode(Boolean(config.requireAccessCode));
         const render = () => {
-          if (cancelled || !googleButton.current) return;
+          if (
+            cancelled ||
+            (!showAccessForm && !adminOnly) ||
+            !googleButton.current
+          )
+            return;
           window.google?.accounts.id.initialize({
             client_id: config.googleClientId,
             auto_select: false,
@@ -128,7 +141,7 @@ export function AccessGate({
       cancelled = true;
       script?.remove();
     };
-  }, []);
+  }, [adminOnly, showAccessForm]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -143,14 +156,17 @@ export function AccessGate({
           "Content-Type": "application/json",
           ...(credential ? { Authorization: `Bearer ${credential}` } : {}),
         },
-        body: JSON.stringify({ accessCode: trimmed }),
+        body: JSON.stringify(requireAccessCode ? { accessCode: trimmed } : {}),
         signal: AbortSignal.timeout(90_000),
       });
 
       if (res.status === 401) {
         const details = await res.json();
         setError(
-          details.error ?? "Please sign in again and check your beta code.",
+          details.error ??
+            (requireAccessCode
+              ? "Please sign in again and check your beta code."
+              : "Please sign in again."),
         );
         return;
       }
@@ -180,7 +196,10 @@ export function AccessGate({
         return;
       }
       if (credential) setCredential(credential);
-      onUnlock(trimmed || "admin", "admin" in result && result.admin === true);
+      onUnlock(
+        trimmed || (adminOnly ? "admin" : ""),
+        "admin" in result && result.admin === true,
+      );
     } catch {
       setError("Couldn't reach the server. Please check your connection.");
     } finally {
@@ -190,7 +209,9 @@ export function AccessGate({
 
   function revealAccessForm() {
     setShowAccessForm(true);
-    window.setTimeout(() => accessCodeInput.current?.focus(), 80);
+    if (adminOnly || requireAccessCode) {
+      window.setTimeout(() => accessCodeInput.current?.focus(), 80);
+    }
   }
 
   const previewRows = [
@@ -289,22 +310,29 @@ export function AccessGate({
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button
                 type="button"
-                onClick={revealAccessForm}
+                onClick={onDemo}
                 className="h-14 gap-2 px-7 text-base font-semibold shadow-[0_14px_30px_rgba(15,45,74,0.18)] sm:w-auto"
+                data-testid="button-demo"
               >
-                Start planning
+                Explore sample plan
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                onClick={onDemo}
+                onClick={revealAccessForm}
                 className="h-14 border-border/80 bg-white px-7 text-base font-semibold text-[var(--brand-indigo)] shadow-sm hover:bg-white"
-                data-testid="button-demo"
               >
-                Explore sample plan
+                Start with your lesson
               </Button>
             </div>
+          )}
+
+          {!showAccessForm && !adminOnly && (
+            <p className="max-w-xl text-xs leading-relaxed text-muted-foreground">
+              See a prepared example without signing in, or start the live
+              planner with your verified account.
+            </p>
           )}
 
           {!adminOnly && (
@@ -330,61 +358,75 @@ export function AccessGate({
 
           {showAccessForm && (
             <div className="max-w-xl rounded-[1.35rem] border border-white/85 bg-white/90 p-4 shadow-[0_22px_70px_rgba(15,45,74,0.12)] backdrop-blur-xl sm:p-5">
-              <form
-                onSubmit={handleSubmit}
-                className="grid gap-3 sm:grid-cols-[1fr_auto]"
-              >
+              {!adminOnly && !requireAccessCode && (
                 <div className="space-y-2">
-                  <label
-                    htmlFor="access-code"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    {adminOnly ? "Admin access" : "Beta access code"}
-                  </label>
-                  <Input
-                    ref={accessCodeInput}
-                    id="access-code"
-                    type="text"
-                    placeholder={adminOnly ? "No code needed" : "e.g. SUZHOU"}
-                    value={code}
-                    onChange={(e) => {
-                      setCode(e.target.value);
-                      if (error) setError(null);
-                    }}
-                    autoFocus
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    spellCheck={false}
-                    className="h-12 text-sm tracking-wider uppercase placeholder:uppercase placeholder:tracking-normal"
-                    data-testid="input-access-code"
-                    disabled={checking}
-                  />
+                  <p className="text-sm font-semibold text-foreground">
+                    Start with your verified Google account
+                  </p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    No access code needed. Sign in so Scaffold can protect the
+                    service and apply fair daily limits while you plan.
+                  </p>
                 </div>
+              )}
 
-                <div className="flex items-end">
-                  <Button
-                    type="submit"
-                    className="h-12 w-full px-6 text-sm font-semibold shadow-[0_12px_28px_rgba(15,45,74,0.18)] sm:w-auto"
-                    disabled={
-                      checking ||
-                      (adminOnly && !credential) ||
-                      (!adminOnly && !code.trim())
-                    }
-                    data-testid="button-unlock"
-                  >
-                    {checking ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Connecting...
-                      </>
-                    ) : adminOnly ? (
-                      "Enter Admin Mode"
-                    ) : (
-                      "Start planning"
-                    )}
-                  </Button>
-                </div>
-              </form>
+              {(adminOnly || requireAccessCode) && (
+                <form
+                  onSubmit={handleSubmit}
+                  className="grid gap-3 sm:grid-cols-[1fr_auto]"
+                >
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="access-code"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      {adminOnly ? "Admin access" : "Beta access code"}
+                    </label>
+                    <Input
+                      ref={accessCodeInput}
+                      id="access-code"
+                      type="text"
+                      placeholder={adminOnly ? "No code needed" : "e.g. SUZHOU"}
+                      value={code}
+                      onChange={(e) => {
+                        setCode(e.target.value);
+                        if (error) setError(null);
+                      }}
+                      autoFocus
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                      className="h-12 text-sm tracking-wider uppercase placeholder:uppercase placeholder:tracking-normal"
+                      data-testid="input-access-code"
+                      disabled={checking}
+                    />
+                  </div>
+
+                  <div className="flex items-end">
+                    <Button
+                      type="submit"
+                      className="h-12 w-full px-6 text-sm font-semibold shadow-[0_12px_28px_rgba(15,45,74,0.18)] sm:w-auto"
+                      disabled={
+                        checking ||
+                        !credential ||
+                        (!adminOnly && requireAccessCode && !code.trim())
+                      }
+                      data-testid="button-unlock"
+                    >
+                      {checking ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Connecting...
+                        </>
+                      ) : adminOnly ? (
+                        "Enter Admin Mode"
+                      ) : (
+                        "Start planning"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
 
               {error && (
                 <p
@@ -395,12 +437,55 @@ export function AccessGate({
                 </p>
               )}
 
+              {!adminOnly && (
+                <div className="mt-4 space-y-2 border-t border-border/60 pt-4">
+                  <p className="text-xs font-medium text-foreground">
+                    {requireAccessCode
+                      ? "Verified email required for private beta use"
+                      : "Verified email required for live use"}
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Sign in with Google so we can keep your usage tied to your
+                    account. Your email is used for account access, not placed
+                    in lesson prompts or student records.
+                  </p>
+                  <div
+                    ref={googleButton}
+                    aria-label="Sign in with Google to start planning"
+                  />
+                  {credential && (
+                    <p className="text-xs text-[var(--brand-teal-strong)]">
+                      Verified account connected.
+                    </p>
+                  )}
+                  {!requireAccessCode && (
+                    <form onSubmit={handleSubmit} className="pt-1">
+                      <Button
+                        type="submit"
+                        className="h-12 w-full px-6 text-sm font-semibold shadow-[0_12px_28px_rgba(15,45,74,0.18)] sm:w-auto"
+                        disabled={checking || !credential}
+                        data-testid="button-unlock"
+                      >
+                        {checking ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Connecting...
+                          </>
+                        ) : (
+                          "Start planning"
+                        )}
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              )}
+
               <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-xs leading-relaxed text-muted-foreground">
                   {!adminOnly && dailyLimit !== null && (
                     <p>
                       {dailyLimit} guided generations per day across both tools.
-                      No sign-in required.
+                      Demo access remains available without sign-in.
                     </p>
                   )}
                   {adminOnly && (
@@ -409,7 +494,7 @@ export function AccessGate({
                       safety ceilings still apply.
                     </p>
                   )}
-                  {!adminOnly && (
+                  {!adminOnly && requireAccessCode && (
                     <p>
                       Need a code?{" "}
                       <a

@@ -180,7 +180,7 @@ export function OnboardingDialog({
             onClick={onStart}
             data-testid="button-start-first-lesson"
           >
-            Plan a lesson with Scaffold
+            {isSampleMode ? "Try the sample plan" : "Plan a lesson with Scaffold"}
           </Button>
           <p className="mt-1.5 text-center text-[11px] leading-relaxed text-muted-foreground">
             {isSampleMode ? "Sample mode. " : ""}No student names. Every

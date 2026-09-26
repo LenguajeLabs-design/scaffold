@@ -18,6 +18,6 @@ export interface GenerateLessonPlanBody {
   topic: string;
   /** Optional canonical curriculum unit used to ground the lesson */
   unitProfile?: GenerateLessonPlanBodyUnitProfile;
-  /** School access code for authorization */
-  accessCode: string;
+  /** Optional school access code for private-beta authorization */
+  accessCode?: string;
 }

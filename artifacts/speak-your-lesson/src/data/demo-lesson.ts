@@ -2,7 +2,7 @@ import type { LessonPlan } from "@workspace/api-client-react";
 
 export const DEMO_LESSON_PLANS: LessonPlan[] = [
   {
-    title: "Fractions as Fair Shares — Grade 3 · Support Level 2",
+    title: "Fractions as Fair Shares",
     integratedUnitGoal:
       "Students will build conceptual understanding of equal parts while using precise language to identify and compare fractions.",
     contentObjective:
@@ -36,7 +36,7 @@ export const DEMO_LESSON_PLANS: LessonPlan[] = [
     exitTicket:
       "Show a rectangle divided into 3 unequal parts on the board.\n\n• Students draw the shape on a mini whiteboard.\n• Write: 'This is / is not a fraction because ___.' using at least one vocabulary word.\n\nTeacher tip: Collect and sort into three piles — got it / almost / needs support — to plan the next day's grouping.",
     teacherNotes:
-      "• Level 2 support: allow pointing, drawing, or gestures alongside speech.\n• Provide labeled fraction manipulatives and bilingual vocabulary cards where available.\n• For early finishers: ask 'Which is larger — 1/2 or 1/4? How do you know?'\n• During the gallery walk, give students a visual anchor card with the sentence frames printed on it.",
+      "• For learners needing more support: allow pointing, drawing, or gestures alongside speech.\n• Provide labeled fraction manipulatives and bilingual vocabulary cards where available.\n• For early finishers: ask 'Which is larger — 1/2 or 1/4? How do you know?'\n• During the gallery walk, give students a visual anchor card with the sentence frames printed on it.",
     scaffoldPlan:
       "• Pair fraction strips with labeled visuals.\n• Rehearse each comparison orally before writing.\n• Keep one comparison frame visible during partner work.",
     scaffoldFadingPlan:
@@ -83,7 +83,7 @@ export const DEMO_LESSON_PLANS: LessonPlan[] = [
     exitTicket:
       "Students write 2 sentences independently:\n\n• Sentence 1: Name one adaptation.\n• Sentence 2: Explain how it helps the animal survive (use a cause-and-effect connector).\n\nQuick score: 2 pts for correct cause/effect language, 1 pt for content accuracy.",
     teacherNotes:
-      "• Pre-teach 'adaptation' vs. 'behavior' — students often confuse structural and behavioral adaptations.\n• Bilingual glossary cards in Spanish, Mandarin, and Korean are in the resource cabinet.\n• For Level 2 support: provide the graphic organizer with one example row pre-filled.\n• For Level 3 support: challenge students to compare two animals' adaptations for the same survival challenge.",
+      "• Pre-teach 'adaptation' vs. 'behavior' — students often confuse structural and behavioral adaptations.\n• Bilingual glossary cards in Spanish, Mandarin, and Korean are in the resource cabinet.\n• For learners needing more support: provide the graphic organizer with one example row pre-filled.\n• For learners ready for more independence: challenge them to compare two animals' adaptations for the same survival challenge.",
     scaffoldPlan:
       "• Use animal photographs and a three-column adaptation organizer.\n• Rehearse the explanation with a partner before writing.\n• Offer one cause-and-effect frame matched to the task.",
     scaffoldFadingPlan:

@@ -14,21 +14,23 @@ tags:
     description: Lesson plan generation operations
   - name: classroomCopilot
     description: Classroom Copilot quick EAL support operations
+  - name: account
+    description: Verified account and saved lesson operations
 paths:
   /access/validate:
     post:
       operationId: validateAccessCode
-      summary: Validate a school access code without generating content
+      summary: Validate a verified account and, when enabled, a private-beta access code
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [accessCode]
               properties:
                 accessCode:
                   type: string
+                  description: Optional school access code when private-beta access is enabled
       responses:
         "200":
           description: Valid code; no generation quota consumed
@@ -48,6 +50,57 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "429":
           description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /account/lessons:
+    get:
+      operationId: listAccountLessons
+      tags: [account]
+      summary: List saved lessons for the verified account
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account profile and saved lessons
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountLessonsResponse"
+        "401":
+          description: Sign-in required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: saveAccountLesson
+      tags: [account]
+      summary: Save or update a lesson for the verified account
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveAccountLessonBody"
+      responses:
+        "200":
+          description: Saved lesson
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveAccountLessonResponse"
+        "400":
+          description: Invalid lesson
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Sign-in required
           content:
             application/json:
               schema:
@@ -126,6 +179,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     HealthStatus:
       type: object
@@ -134,6 +192,95 @@ components:
           type: string
       required:
         - status
+    AccountProfile:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        marketingOptIn:
+          type: boolean
+      required:
+        - email
+        - marketingOptIn
+    AccountLesson:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        savedAt:
+          type: string
+          format: date-time
+        title:
+          type: string
+        gradeLevel:
+          type: string
+        languageSupportLevel:
+          type: string
+        topic:
+          type: string
+        unitProfile:
+          type: string
+        lesson:
+          $ref: "#/components/schemas/LessonPlan"
+      required:
+        - id
+        - savedAt
+        - title
+        - gradeLevel
+        - languageSupportLevel
+        - topic
+        - lesson
+    AccountLessonsResponse:
+      type: object
+      properties:
+        account:
+          $ref: "#/components/schemas/AccountProfile"
+        lessons:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccountLesson"
+      required:
+        - account
+        - lessons
+    SaveAccountLessonBody:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        gradeLevel:
+          type: string
+        languageSupportLevel:
+          type: string
+        topic:
+          type: string
+        unitProfile:
+          type: string
+        lesson:
+          $ref: "#/components/schemas/LessonPlan"
+        marketingOptIn:
+          type: boolean
+      required:
+        - id
+        - title
+        - gradeLevel
+        - languageSupportLevel
+        - topic
+        - lesson
+    SaveAccountLessonResponse:
+      type: object
+      properties:
+        account:
+          $ref: "#/components/schemas/AccountProfile"
+        lesson:
+          $ref: "#/components/schemas/AccountLesson"
+      required:
+        - account
+        - lesson
     GenerateLessonPlanBody:
       type: object
       properties:
@@ -142,7 +289,7 @@ components:
           description: Rough planning notes from the teacher
         gradeLevel:
           type: string
-          enum: ["Grade 3", "Grade 4", "Grade 5"]
+          enum: ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]
         languageSupportLevel:
           type: string
           enum: ["1", "2", "3", "4", "5", "6"]
@@ -155,13 +302,12 @@ components:
           description: Optional canonical curriculum unit used to ground the lesson
         accessCode:
           type: string
-          description: School access code for authorization
+          description: Optional school access code for private-beta authorization
       required:
         - notes
         - gradeLevel
         - languageSupportLevel
         - topic
-        - accessCode
     LessonPlan:
       type: object
       properties:
@@ -231,18 +377,17 @@ components:
           description: What the students need help with right now
         gradeLevel:
           type: string
-          enum: ["Grade 2", "Grade 3", "Grade 4", "Grade 5"]
+          enum: ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]
         languageSupportLevel:
           type: string
           enum: ["1", "2", "3", "4", "5", "6"]
         accessCode:
           type: string
-          description: School access code for authorization
+          description: Optional school access code for private-beta authorization
       required:
         - need
         - gradeLevel
         - languageSupportLevel
-        - accessCode
     ClassroomSupport:
       type: object
       properties:

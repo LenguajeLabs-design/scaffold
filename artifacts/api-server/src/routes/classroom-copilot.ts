@@ -6,6 +6,7 @@ import { buildClassroomSupportPrompt } from "../services/prompts";
 import { authenticate, AccessError, type Actor } from "../lib/auth";
 import { UsageLimit } from "../lib/usage-store";
 import { logUsage } from "../lib/usage-logger";
+import { beta } from "../config/beta";
 
 const router: IRouter = Router();
 router.post("/classroom-copilot/generate", async (req, res) => {
@@ -13,7 +14,11 @@ router.post("/classroom-copilot/generate", async (req, res) => {
   let actor: Actor | undefined;
   try {
     actor = await authenticate(req);
-    const parsed = GenerateClassroomSupportBody.safeParse({ ...req.body, accessCode: actor.admin ? "admin" : req.body?.accessCode });
+    const parsed = GenerateClassroomSupportBody.safeParse({
+      ...req.body,
+      accessCode:
+        actor.admin || !beta.requireAccessCode ? "public" : req.body?.accessCode,
+    });
     const requestKey = req.get("Idempotency-Key") ?? "";
     if (!parsed.success || !/^[a-zA-Z0-9_-]{16,128}$/.test(requestKey)) {
       logUsage({ feature: "classroom-copilot", event: "blocked", reason: "validation" });

@@ -17,12 +17,15 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AccountLessonsResponse,
   ClassroomSupport,
   ErrorResponse,
   GenerateClassroomSupportBody,
   GenerateLessonPlanBody,
   HealthStatus,
   LessonPlan,
+  SaveAccountLessonBody,
+  SaveAccountLessonResponse,
   ValidateAccessCode200,
   ValidateAccessCodeBody,
 } from "./api.schemas";
@@ -37,7 +40,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary Validate a school access code without generating content
+ * @summary Validate a verified account and, when enabled, a private-beta access code
  */
 export const getValidateAccessCodeUrl = () => {
   return `/api/access/validate`;
@@ -100,7 +103,7 @@ export type ValidateAccessCodeMutationBody = BodyType<ValidateAccessCodeBody>;
 export type ValidateAccessCodeMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Validate a school access code without generating content
+ * @summary Validate a verified account and, when enabled, a private-beta access code
  */
 export const useValidateAccessCode = <
   TError = ErrorType<ErrorResponse>,
@@ -120,6 +123,167 @@ export const useValidateAccessCode = <
   TContext
 > => {
   return useMutation(getValidateAccessCodeMutationOptions(options));
+};
+
+/**
+ * @summary List saved lessons for the verified account
+ */
+export const getListAccountLessonsUrl = () => {
+  return `/api/account/lessons`;
+};
+
+export const listAccountLessons = async (
+  options?: RequestInit,
+): Promise<AccountLessonsResponse> => {
+  return customFetch<AccountLessonsResponse>(getListAccountLessonsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAccountLessonsQueryKey = () => {
+  return [`/api/account/lessons`] as const;
+};
+
+export const getListAccountLessonsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAccountLessons>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAccountLessons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAccountLessonsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAccountLessons>>
+  > = ({ signal }) => listAccountLessons({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAccountLessons>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAccountLessonsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAccountLessons>>
+>;
+export type ListAccountLessonsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List saved lessons for the verified account
+ */
+
+export function useListAccountLessons<
+  TData = Awaited<ReturnType<typeof listAccountLessons>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAccountLessons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAccountLessonsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Save or update a lesson for the verified account
+ */
+export const getSaveAccountLessonUrl = () => {
+  return `/api/account/lessons`;
+};
+
+export const saveAccountLesson = async (
+  saveAccountLessonBody: SaveAccountLessonBody,
+  options?: RequestInit,
+): Promise<SaveAccountLessonResponse> => {
+  return customFetch<SaveAccountLessonResponse>(getSaveAccountLessonUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveAccountLessonBody),
+  });
+};
+
+export const getSaveAccountLessonMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveAccountLesson>>,
+    TError,
+    { data: BodyType<SaveAccountLessonBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveAccountLesson>>,
+  TError,
+  { data: BodyType<SaveAccountLessonBody> },
+  TContext
+> => {
+  const mutationKey = ["saveAccountLesson"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveAccountLesson>>,
+    { data: BodyType<SaveAccountLessonBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return saveAccountLesson(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveAccountLessonMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveAccountLesson>>
+>;
+export type SaveAccountLessonMutationBody = BodyType<SaveAccountLessonBody>;
+export type SaveAccountLessonMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Save or update a lesson for the verified account
+ */
+export const useSaveAccountLesson = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveAccountLesson>>,
+    TError,
+    { data: BodyType<SaveAccountLessonBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveAccountLesson>>,
+  TError,
+  { data: BodyType<SaveAccountLessonBody> },
+  TContext
+> => {
+  return useMutation(getSaveAccountLessonMutationOptions(options));
 };
 
 /**

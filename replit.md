@@ -43,13 +43,14 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 #### Access Gate
 - Full-screen code entry shown to first-time visitors each browser session
 - Validates against `VALID_ACCESS_CODES` secret (comma-separated, e.g. `SUZHOU,BEIJING`)
-- "Explore sample lesson plans" link enters Demo Mode without a code
+- "Explore sample lesson plans" link enters Demo Mode without a code or sign-in
+- Public planning can begin without an account; verified Google sign-in is requested when an account-based save flow is used, and a valid access code is only required when private-beta mode is enabled
 - Session stored in `sessionStorage` — requires re-entry on new tab/session
 - "Change code" / "Demo mode" button in nav top-right lets users switch
 
 #### Lesson Planner (`/`)
 - **Features**:
-  - Topic/Subject input, Grade Level dropdown (Grade 3–5), Language Support Level dropdown (Levels 1–6)
+  - Topic/Subject input, Grade Level dropdown (Grade 1–5), Language Support Level dropdown (Levels 1–6)
   - Planning notes textarea with 2000-char limit + live counter
   - Privacy reminder: "Please do not include student names or private student information"
   - AI-generated lesson plan with 10 structured sections in card layout
@@ -60,7 +61,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 #### Classroom Copilot (`/classroom-copilot`)
 - **Purpose**: Instant EAL classroom support for live teaching moments
 - **Features**:
-  - Grade Level dropdown (Grade 2–5), Language Support Level dropdown (Levels 1–6)
+  - Grade Level dropdown (Grade 1–5), Language Support Level dropdown (Levels 1–6)
   - Text area: "What do your students need help with right now?" — 2000-char limit + live counter
   - Privacy reminder near input
   - 6 output cards: Simple Explanation, Key Vocabulary, Sentence Frames, Quick Activity, Extension Question, Teacher Move
@@ -114,7 +115,7 @@ artifacts/api-server/src/
 
 ### Security & Rate Limiting
 
-- Access code gate: all AI endpoints require a valid `accessCode` in the request body
+- Access code gate: private-beta deployments require a valid `accessCode`; public deployments allow bounded guest generation by connection IP and can verify Google accounts for account-based access
   - Codes stored in `VALID_ACCESS_CODES` secret (comma-separated), validated server-side
   - Invalid code → HTTP 401
 - Per-code limits (in-memory, resets at midnight UTC):
@@ -125,9 +126,9 @@ artifacts/api-server/src/
 - Input length capped at 2000 characters (frontend + backend validation)
 - Request body capped at 16 kb
 - Raw AI output is never exposed to clients — errors are logged server-side and a safe message is returned
-- Usage logging: timestamp, feature, access code (uppercased), input length, success/errorKind — no student data ever logged
+- Usage logging: timestamp, feature, privacy-safe account identifier, input length, success/errorKind — no raw email, lesson text, or student data logged
 
 ### Notes
 
 - CORS is open (no origin restrictions) — fine for MVP
-- `accessCode` is part of the OpenAPI spec and generated client types — add to request body alongside other fields
+- `accessCode` remains an optional OpenAPI field for private-beta deployments; public requests rely on verified Google sign-in

@@ -7,12 +7,16 @@ router.get("/access/config", (_req, res) => {
   res.set("Cache-Control", "no-store");
   // A Google OAuth client ID is intentionally public. It identifies the app,
   // while server-side ID-token verification enforces authentication.
-  res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID ?? null, dailyLimit: beta.dailyLimit });
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID ?? null,
+    dailyLimit: beta.dailyLimit,
+    requireAccessCode: beta.requireAccessCode,
+  });
 });
 router.post("/access/validate", async (req, res) => {
   res.set("Cache-Control", "no-store");
   try {
-    const actor = await authenticate(req);
+    const actor = await authenticate(req, { requireAccount: true });
     res.json({ valid: true, admin: actor.admin, dailyLimit: actor.admin ? null : beta.dailyLimit });
   } catch (error) {
     logUsage({ feature: "access", event: "blocked", reason: error instanceof AccessError ? "auth" : "configuration" });

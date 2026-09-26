@@ -8,6 +8,10 @@ export function integer(name: string, fallback: number, minimum = 1, maximum = 1
 }
 
 export const beta = {
+  // Public mode removes the school-code prompt while retaining verified
+  // account authentication and all server-side usage limits. Set this to
+  // true for a closed beta or private school pilot.
+  requireAccessCode: process.env.REQUIRE_ACCESS_CODE === "true",
   dailyLimit: integer("BETA_DAILY_LIMIT", 4),
   cooldownSeconds: integer("BETA_COOLDOWN_SECONDS", 30),
   adminCooldownSeconds: integer("ADMIN_COOLDOWN_SECONDS", 3),

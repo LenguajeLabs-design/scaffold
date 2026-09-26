@@ -5,6 +5,7 @@ import {
   Link,
   useLocation,
 } from "wouter";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,11 +14,17 @@ import Home from "@/pages/Home";
 import ClassroomCopilot from "@/pages/ClassroomCopilot";
 import Legal from "@/pages/Legal";
 import { AccessGate } from "@/components/AccessGate";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import {
+  AccountSessionProvider,
+  useAccountSession,
+} from "@/components/account-session";
 import {
   OnboardingDialog,
   useFirstVisitOnboarding,
 } from "@/components/OnboardingDialog";
 import { DEMO_CODE, useAccessCode } from "@/hooks/use-access-code";
+import { resolveApiUrl } from "@/lib/api-base-url";
 import { HelpCircle, KeyRound } from "lucide-react";
 
 const queryClient = new QueryClient({
@@ -38,12 +45,16 @@ function ScaffoldMark({ className }: { className?: string }) {
 
 function NavBar({
   isDemo,
+  isAccountSignedIn,
   onLogout,
+  onOpenAccount,
   showAccessControl,
   onOpenOnboarding,
 }: {
   isDemo: boolean;
+  isAccountSignedIn: boolean;
   onLogout: () => void;
+  onOpenAccount: () => void;
   showAccessControl: boolean;
   onOpenOnboarding: () => void;
 }) {
@@ -113,19 +124,81 @@ function NavBar({
 
         {showAccessControl && (
           <button
-            onClick={onLogout}
+            onClick={isDemo || isAccountSignedIn ? onLogout : onOpenAccount}
             className="shrink-0 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            title={isDemo ? "Use an access code" : "Sign out"}
-            aria-label={isDemo ? "Use an access code" : "Sign out"}
+            title={isDemo ? "Use an access code" : isAccountSignedIn ? "Sign out" : "Sign in"}
+            aria-label={isDemo ? "Use an access code" : isAccountSignedIn ? "Sign out" : "Sign in"}
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">
-              {isDemo ? "Use access code" : "Sign out"}
+              {isDemo ? "Use access code" : isAccountSignedIn ? "Sign out" : "Sign in"}
             </span>
           </button>
         )}
       </div>
     </nav>
+  );
+}
+
+function AccountAccessDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { signIn, error } = useAccountSession();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  async function handleCredential(credential: string) {
+    setIsSigningIn(true);
+    try {
+      await signIn(credential);
+      onOpenChange(false);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sign in to Scaffold"
+    >
+      <div className="w-full max-w-md rounded-2xl border border-border/80 bg-card p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
+              Your Scaffold account
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-foreground">
+              See your saved lessons anywhere
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Sign in with Google to open lessons you saved on another device.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="min-h-10 rounded-lg px-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            Close
+          </button>
+        </div>
+        <div className="mt-6 space-y-3">
+          <GoogleSignInButton onCredential={handleCredential} />
+          {isSigningIn && (
+            <p className="text-xs text-muted-foreground">Loading your saved lessons…</p>
+          )}
+          {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -189,23 +262,49 @@ function Router() {
     useAccessCode();
   const [, navigate] = useLocation();
   const { open: onboardingOpen, setOnboardingOpen } = useFirstVisitOnboarding();
+  const { account } = useAccountSession();
   const [location] = useLocation();
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const adminOnly = location === "/admin" || location.endsWith("/admin");
+  const [requireAccessCode, setRequireAccessCode] = useState(false);
 
-  if (ACCESS_GATE_ENABLED && !isUnlocked) {
+  useEffect(() => {
+    if (!ACCESS_GATE_ENABLED || adminOnly) return;
+    let cancelled = false;
+    void fetch(resolveApiUrl("/api/access/config"), {
+      signal: AbortSignal.timeout(10_000),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((config) => {
+        if (!cancelled) setRequireAccessCode(Boolean(config?.requireAccessCode));
+      })
+      .catch(() => {
+        // If the config endpoint is unavailable, keep the public path open.
+        // The API remains authoritative for private-beta enforcement.
+        if (!cancelled) setRequireAccessCode(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [adminOnly]);
+
+  if (adminOnly || (ACCESS_GATE_ENABLED && requireAccessCode && !isUnlocked)) {
     return (
       <AccessGate
         onUnlock={(code, admin) => {
           unlock(code, admin);
           if (admin) navigate("/");
         }}
-        onDemo={enterDemo}
+        onDemo={() => {
+          enterDemo();
+          setOnboardingOpen(false);
+        }}
         adminOnly={adminOnly}
       />
     );
   }
 
-  const activeAccessCode = accessCode ?? DEMO_CODE;
+  const activeAccessCode = accessCode ?? (isDemo ? DEMO_CODE : "public");
   const isSampleMode = !ACCESS_GATE_ENABLED || isDemo;
 
   return (
@@ -213,7 +312,9 @@ function Router() {
       <div className="scaffold-workspace-accent" aria-hidden="true" />
       <NavBar
         isDemo={isSampleMode}
+        isAccountSignedIn={Boolean(account)}
         onLogout={logout}
+        onOpenAccount={() => setAccountDialogOpen(true)}
         showAccessControl={ACCESS_GATE_ENABLED}
         onOpenOnboarding={() => setOnboardingOpen(true)}
       />
@@ -264,6 +365,10 @@ function Router() {
           }, 100);
         }}
       />
+      <AccountAccessDialog
+        open={accountDialogOpen}
+        onOpenChange={setAccountDialogOpen}
+      />
     </div>
   );
 }
@@ -271,12 +376,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <AccountSessionProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AccountSessionProvider>
     </QueryClientProvider>
   );
 }

@@ -41,6 +41,7 @@ import {
   Files,
   Share2,
   UserRoundPlus,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -78,6 +79,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSavedLessons, type SavedLesson } from "@/hooks/use-saved-lessons";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import {
+  useAccountSession,
+  type AccountLesson,
+} from "@/components/account-session";
 import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
 import { RichText } from "@/components/RichText";
 import {
@@ -118,6 +124,14 @@ const formSchema = z.object({
       `Planning notes must be ${MAX_NOTES_CHARS} characters or fewer`,
     ),
 });
+
+function topicFromBrief(brief: string): string {
+  const normalized = brief.trim().replace(/\s+/g, " ");
+  if (!normalized) return "Lesson support";
+
+  const firstThought = normalized.split(/[.!?]/)[0]?.trim() ?? normalized;
+  return firstThought.slice(0, 90) || "Lesson support";
+}
 
 interface DisplayedLesson {
   lesson: LessonPlan;
@@ -548,13 +562,28 @@ function CopyAction({
 }
 
 export default function Home({ accessCode, isDemo }: HomeProps) {
+  const { lessons, save, update, duplicate, remove, mergeRemote } = useSavedLessons();
+  const {
+    account,
+    lessons: accountLessons,
+    signIn,
+    saveLesson: saveAccountLesson,
+    error: accountError,
+  } = useAccountSession();
+  const rememberedPlan = lessons[0];
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: "",
-      gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_3,
-      languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_1,
-      unitProfile: undefined,
+      gradeLevel:
+        (rememberedPlan?.gradeLevel as GenerateLessonPlanBodyGradeLevel) ??
+        GenerateLessonPlanBodyGradeLevel.Grade_3,
+      languageSupportLevel:
+        (rememberedPlan?.languageSupportLevel as GenerateLessonPlanBodyLanguageSupportLevel) ??
+        GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_1,
+      unitProfile:
+        (rememberedPlan?.unitProfile as GenerateLessonPlanBodyUnitProfile) ??
+        undefined,
       notes: "",
     },
   });
@@ -569,7 +598,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     isError,
     error,
   } = useGenerateLessonPlan();
-  const { lessons, save, update, duplicate, remove } = useSavedLessons();
   const [displayed, setDisplayed] = useState<DisplayedLesson | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -581,11 +609,19 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [showPlanningContext, setShowPlanningContext] = useState(false);
+  const [captureMarketing, setCaptureMarketing] = useState(false);
+  const [captureNotice, setCaptureNotice] = useState<string | null>(null);
+  const [captureError, setCaptureError] = useState<string | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cooldown state
   const [cooldownSecs, setCooldownSecs] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (accountLessons.length > 0) mergeRemote(accountLessons as SavedLesson[]);
+  }, [accountLessons, mergeRemote]);
 
   useEffect(() => {
     const encoded = new URL(window.location.href).searchParams.get("share");
@@ -639,6 +675,60 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     );
   }
 
+  function applyQuickStart(brief: string) {
+    form.setValue("notes", brief, { shouldDirty: true, shouldValidate: true });
+    form.setValue("topic", topicFromBrief(brief), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLTextAreaElement>('[data-testid="input-notes"]')
+        ?.focus();
+    }, 0);
+  }
+
+  function buildAccountLesson(): AccountLesson | null {
+    if (!displayed || !savedId) return null;
+    return {
+      id: savedId,
+      savedAt: new Date().toISOString(),
+      title: displayed.lesson.title,
+      gradeLevel: displayed.gradeLevel,
+      languageSupportLevel: displayed.languageSupportLevel,
+      topic: displayed.topic,
+      unitProfile: displayed.unitProfile,
+      lesson: displayed.lesson,
+    };
+  }
+
+  async function handleAccountCredential(credential: string) {
+    const accountLesson = buildAccountLesson();
+    if (!accountLesson) return;
+    setCaptureError(null);
+    setCaptureNotice(null);
+    try {
+      await signIn(credential);
+      await saveAccountLesson({
+        lesson: accountLesson,
+        marketingOptIn: captureMarketing,
+      });
+      setCaptureNotice("Saved to your account. You can find this lesson on another device after signing in.");
+    } catch (caught) {
+      setCaptureError(
+        caught instanceof Error
+          ? caught.message
+          : "We couldn’t save this lesson. Please try again.",
+      );
+    }
+  }
+
+  function continueWithoutSaving() {
+    setCaptureNotice(
+      "You can keep working with this lesson here. In the live version, it would remain available only in this browser.",
+    );
+  }
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsEditing(false);
     setIsSharedPlan(false);
@@ -667,6 +757,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         topic: plan.title,
         unitProfile: values.unitProfile,
       });
+      window.setTimeout(() => {
+        document
+          .querySelector('[data-testid="section-results"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
       return;
     }
     setSavedId(null);
@@ -696,6 +791,30 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       topic: vals.topic,
       unitProfile: vals.unitProfile,
     });
+    if (account) {
+      void saveAccountLesson({
+        lesson: {
+          id,
+          savedAt: new Date().toISOString(),
+          title: result.title,
+          gradeLevel: vals.gradeLevel,
+          languageSupportLevel: vals.languageSupportLevel,
+          topic: vals.topic,
+          unitProfile: vals.unitProfile,
+          lesson: result,
+        },
+        marketingOptIn: captureMarketing,
+      })
+        .then(() => {
+          setCaptureNotice("Saved to your account. You can find this lesson on another device after signing in.");
+        })
+        .catch(() => undefined);
+    }
+    window.setTimeout(() => {
+      document
+        .querySelector('[data-testid="section-results"]')
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   }, [result]);
 
   // Parse cooldown from API error
@@ -824,7 +943,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     window.setTimeout(() => {
       document
-        .querySelector<HTMLInputElement>('[data-testid="input-topic"]')
+        .querySelector<HTMLTextAreaElement>('[data-testid="input-notes"]')
         ?.focus();
     }, 350);
   }
@@ -857,24 +976,33 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     <div className="bg-background text-foreground">
       {displayed && <PrintableLesson displayed={displayed} />}
 
-      <main className="max-w-5xl mx-auto px-4 py-9 sm:py-14 space-y-8 print:hidden">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--brand-blue-strong)] shadow-[0_10px_24px_rgba(15,45,74,0.08)] ring-1 ring-[var(--brand-blue)]/15">
-            <BookOpenText className="h-5 w-5" aria-hidden="true" />
+      <main className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:space-y-12 sm:py-14 print:hidden">
+        <section className="max-w-3xl" aria-labelledby="home-heading">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--brand-blue-strong)] shadow-[0_8px_20px_rgba(15,45,74,0.08)] ring-1 ring-[var(--brand-blue)]/15">
+              <BookOpenText className="h-4.5 w-4.5" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-blue-strong)]">
+                Your planning workspace
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Practical support for multilingual learners
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-blue-strong)]">
-              Plan and scaffold
-            </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
-              Lesson Planner
-            </h1>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Build a ready-to-teach lesson for multilingual learners from your
-              topic and planning notes.
-            </p>
-          </div>
-        </div>
+          <h1
+            id="home-heading"
+            className="max-w-2xl text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl"
+          >
+            What do you need help with today?
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Start with the classroom moment—not a configuration form. Tell
+            Scaffold what you’re trying to teach or solve, and it will shape a
+            reviewable lesson plan around it.
+          </p>
+        </section>
 
         {shareError && (
           <div
@@ -906,171 +1034,31 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
         )}
 
-        <Card className="overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm">
-          <div
-            className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-sun)]"
-            aria-hidden="true"
-          />
-          <CardContent className="pt-6 sm:p-7">
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
-                <section
-                  className="space-y-5"
-                  aria-labelledby="learner-context-heading"
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)]">
+          <Card className="order-2 overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm lg:order-1">
+            <div
+              className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-sun)]"
+              aria-hidden="true"
+            />
+            <CardContent className="p-5 sm:p-7">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
                 >
-                  <div className="flex gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-teal-strong)] text-sm font-semibold text-white shadow-sm">
-                      1
-                    </span>
-                    <div>
-                      <h2
-                        id="learner-context-heading"
-                        className="font-semibold text-foreground"
-                      >
-                        Set the learner context
-                      </h2>
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        Choose the grade and approximate English-language
-                        proficiency.
-                      </p>
-                    </div>
+                  <input type="hidden" {...form.register("topic")} />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
+                      Start with the classroom moment
+                    </p>
+                    <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+                      What are you trying to teach or solve?
+                    </h2>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                      Rough notes are enough. Scaffold will organize the next
+                      useful support.
+                    </p>
                   </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="gradeLevel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">
-                            Grade Level
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger
-                                data-testid="select-grade-level"
-                                className="text-sm"
-                              >
-                                <SelectValue placeholder="Select a grade" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(
-                                Object.values(
-                                  GenerateLessonPlanBodyGradeLevel,
-                                ) as string[]
-                              ).map((grade) => (
-                                <SelectItem
-                                  key={grade}
-                                  value={grade}
-                                  className="text-sm"
-                                >
-                                  {grade}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="languageSupportLevel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">
-                            Language Proficiency Reference
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger
-                                data-testid="select-language-support-level"
-                                className="text-sm"
-                              >
-                                <SelectValue placeholder="Select a proficiency range" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(
-                                Object.entries(
-                                  GenerateLessonPlanBodyLanguageSupportLevel,
-                                ) as [string, string][]
-                              ).map(([, value]) => (
-                                <SelectItem
-                                  key={value}
-                                  value={value}
-                                  className="text-sm"
-                                >
-                                  Level {value} · {supportLevelLabels[value]}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs leading-relaxed text-muted-foreground">
-                            Choose how much language support this learner needs for this task. Levels describe instructional support, not assessment or placement.
-                          </p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                </section>
-
-                <div className="h-px bg-border/80" aria-hidden="true" />
-
-                <section
-                  className="space-y-5"
-                  aria-labelledby="lesson-details-heading"
-                >
-                  <div className="flex gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-purple-strong)] text-sm font-semibold text-white shadow-sm">
-                      2
-                    </span>
-                    <div>
-                      <h2
-                        id="lesson-details-heading"
-                        className="font-semibold text-foreground"
-                      >
-                        Add the lesson details
-                      </h2>
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        Rough notes are enough—Scaffold will organize them.
-                      </p>
-                    </div>
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="topic"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          Topic or Subject
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="For example: Fractions or Photosynthesis"
-                            data-testid="input-topic"
-                            className="text-sm"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
                     control={form.control}
@@ -1078,93 +1066,294 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-baseline justify-between gap-2">
-                          <FormLabel className="text-sm font-medium">
-                            Planning Notes
+                          <FormLabel className="sr-only">
+                            Describe what you need help with
                           </FormLabel>
+                          <span className="text-xs text-muted-foreground">
+                            You can change the plan after it’s created.
+                          </span>
                           <span
-                            className={`text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "text-destructive font-medium" : "text-muted-foreground"}`}
+                            className={`text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "font-medium text-destructive" : "text-muted-foreground"}`}
                           >
                             {notesLength}/{MAX_NOTES_CHARS}
                           </span>
                         </div>
                         <FormControl>
                           <Textarea
-                            placeholder="For example: Students are comparing fractions with visual models. Include partner talk, key vocabulary, and a quick exit ticket."
-                            className="min-h-[180px] resize-y text-sm leading-relaxed"
+                            placeholder="For example: My Grade 4 students understand the science idea but cannot explain their thinking in writing."
+                            className="min-h-[165px] resize-y border-border/80 bg-background/80 text-base leading-relaxed shadow-none focus-visible:ring-[var(--brand-blue)]"
                             data-testid="input-notes"
                             maxLength={MAX_NOTES_CHARS}
                             {...field}
+                            onChange={(event) => {
+                              field.onChange(event);
+                              form.setValue(
+                                "topic",
+                                topicFromBrief(event.target.value),
+                                { shouldDirty: true, shouldValidate: true },
+                              );
+                            }}
                           />
                         </FormControl>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Don’t include student names or private student
-                          information.
-                        </p>
-                        <FormMessage />
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            Don’t include student names or private student
+                            information.
+                          </p>
+                          <FormMessage className="text-right" />
+                        </div>
                       </FormItem>
                     )}
                   />
 
-                  <div
-                    className={`flex flex-col gap-3 pt-1 sm:flex-row sm:items-start sm:justify-between ${
-                      notesLength > 0
-                        ? "sticky bottom-3 z-20 -mx-2 rounded-2xl border border-border/80 bg-card/95 p-2 shadow-lg backdrop-blur-xl sm:static sm:mx-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex-1">
-                      {errorMsg && (
-                        <div
-                          className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive"
-                          role="alert"
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      Quick starts
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {[
+                        [BookOpenText, "Adapt a lesson", "I need to adapt tomorrow’s lesson for multilingual learners."],
+                        [MessageSquareQuote, "Support writing", "My students have ideas but cannot get started with the writing."],
+                        [Tags, "Build vocabulary", "Help me teach the key vocabulary before this lesson."],
+                        [StickyNote, "Create sentence frames", "Create sentence frames for students to explain their thinking."],
+                      ].map(([Icon, label, brief]) => (
+                        <button
+                          key={label as string}
+                          type="button"
+                          className="flex min-h-12 items-center gap-2.5 rounded-xl border border-border/80 bg-background/60 px-3 text-left text-sm font-medium text-foreground transition-colors hover:border-[var(--brand-blue)]/40 hover:bg-[var(--brand-blue)]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          onClick={() => applyQuickStart(brief as string)}
                         >
-                          <AlertTriangle
-                            className="mt-0.5 h-4 w-4 shrink-0"
-                            aria-hidden="true"
-                          />
-                          <span>{errorMsg}</span>
-                        </div>
-                      )}
-                      {cooldownSecs > 0 && !errorMsg && (
-                        <div
-                          className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]"
-                          role="status"
-                        >
-                          You can create another plan in {cooldownSecs} seconds.
-                          Your current notes will stay in place.
-                        </div>
-                      )}
-                    </div>
-                    <div className="shrink-0 space-y-1.5 sm:min-w-52">
-                      <Button
-                        type="submit"
-                        disabled={!canSubmit}
-                        data-testid="button-generate"
-                        className="w-full text-sm font-semibold shadow-[0_10px_24px_rgba(30,27,75,0.18)]"
-                      >
-                        {isGenerating ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating lesson plan...
-                          </>
-                        ) : cooldownSecs > 0 ? (
-                          `Wait ${cooldownSecs}s`
-                        ) : (
-                          "Create lesson plan"
-                        )}
-                      </Button>
-                      {isDemo && cooldownSecs === 0 && !isGenerating && (
-                        <p className="text-center text-xs text-muted-foreground">
-                          Shows a prepared example without using AI.
-                        </p>
-                      )}
+                          {React.createElement(Icon as LucideIcon, {
+                            className: "h-4 w-4 shrink-0 text-[var(--brand-blue-strong)]",
+                            "aria-hidden": true,
+                          })}
+                          <span>{label as string}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                </section>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+
+                  <div className="rounded-2xl border border-border/70 bg-muted/25">
+                    <button
+                      type="button"
+                      className="flex min-h-14 w-full items-center justify-between gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                      aria-expanded={showPlanningContext}
+                      onClick={() => setShowPlanningContext((current) => !current)}
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-foreground">
+                          Planning context
+                        </span>
+                        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                          {form.watch("gradeLevel")} · Student support reference: Level {form.watch("languageSupportLevel")}
+                          {rememberedPlan ? " · remembered from your last plan" : ""}
+                        </span>
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${showPlanningContext ? "rotate-180" : ""}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    {showPlanningContext && (
+                      <div className="grid gap-4 border-t border-border/70 p-4 sm:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="gradeLevel"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">
+                                Grade level
+                              </FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-grade-level" className="text-sm">
+                                    <SelectValue placeholder="Select a grade" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {(Object.values(GenerateLessonPlanBodyGradeLevel) as string[]).map((grade) => (
+                                    <SelectItem key={grade} value={grade} className="text-sm">
+                                      {grade}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="languageSupportLevel"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">
+                                Student support reference
+                              </FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-language-support-level" className="text-sm">
+                                    <SelectValue placeholder="Select support" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {(Object.entries(GenerateLessonPlanBodyLanguageSupportLevel) as [string, string][]).map(([, value]) => (
+                                    <SelectItem key={value} value={value} className="text-sm">
+                                      Level {value} · {supportLevelLabels[value]}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs leading-relaxed text-muted-foreground">
+                                An instructional reference, not an assessment or placement.
+                              </p>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="unitProfile"
+                          render={({ field }) => (
+                            <FormItem className="sm:col-span-2">
+                              <FormLabel className="text-sm font-medium">
+                                Curriculum focus <span className="font-normal text-muted-foreground">(optional)</span>
+                              </FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger className="text-sm">
+                                    <SelectValue placeholder="Use the general planner" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value={GenerateLessonPlanBodyUnitProfile["Grade_4_Discipline-Based_Writing"]} className="text-sm">
+                                    Grade 4 · Discipline-based writing
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3 pt-1">
+                    {errorMsg && (
+                      <div className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive" role="alert">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{errorMsg}</span>
+                      </div>
+                    )}
+                    {cooldownSecs > 0 && !errorMsg && (
+                      <div className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]" role="status">
+                        You can create another plan in {cooldownSecs} seconds. Your current notes will stay in place.
+                      </div>
+                    )}
+                    <Button
+                      type="submit"
+                      disabled={!canSubmit}
+                      data-testid="button-generate"
+                      className="min-h-12 w-full text-sm font-semibold shadow-[0_10px_24px_rgba(30,27,75,0.18)]"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Building your support...
+                        </>
+                      ) : cooldownSecs > 0 ? (
+                        `Wait ${cooldownSecs}s`
+                      ) : (
+                        "Get support"
+                      )}
+                    </Button>
+                    <p className="text-center text-xs leading-relaxed text-muted-foreground">
+                      {isDemo
+                        ? "Sample mode shows a prepared example without using AI."
+                        : "You’ll get a reviewable starting point, not a final prescription."}
+                    </p>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          <aside className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-24" aria-label="Your Scaffold workspace">
+            {lessons.length > 0 ? (
+              <Card className="border-white/90 bg-card/90 shadow-[0_18px_50px_rgba(15,45,74,0.06)]">
+                <CardHeader className="px-5 pb-2 pt-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                        <BookMarked className="h-4 w-4 text-[var(--brand-teal-strong)]" aria-hidden="true" />
+                        Continue your work
+                      </CardTitle>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        Your recent plans are saved in this browser.
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                      {lessons.length} {lessons.length === 1 ? "plan" : "plans"}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2 px-4 pb-4">
+                  {lessons.slice(0, 3).map((entry) => (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      className="group flex min-h-16 w-full items-center gap-3 rounded-xl border border-border/70 bg-background/60 px-3.5 py-3 text-left transition-colors hover:border-[var(--brand-blue)]/35 hover:bg-[var(--brand-blue)]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => viewSavedLesson(entry)}
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-blue)]/10 text-[var(--brand-blue-strong)]">
+                        <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-foreground">
+                          {entry.lesson.title}
+                        </span>
+                        <span className="mt-1 block truncate text-xs text-muted-foreground">
+                          {entry.gradeLevel} · {entry.languageSupportLevel ? `Level ${entry.languageSupportLevel}` : "Support reference not recorded"} · {formatDate(entry.savedAt)}
+                        </span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                    </button>
+                  ))}
+                  <p className="px-1 pt-2 text-xs leading-relaxed text-muted-foreground">
+                    Open a plan to edit, duplicate, share, or print it.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-white/90 bg-card/75 shadow-[0_18px_50px_rgba(15,45,74,0.04)]">
+                <CardHeader className="px-5 pb-2 pt-5">
+                  <CardTitle className="text-base font-semibold">A useful place to start</CardTitle>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Describe the lesson or classroom moment in your own words. You can refine the details later.
+                  </p>
+                </CardHeader>
+                <CardContent className="px-5 pb-5">
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    {["Your instructional goal", "The language barrier you’re noticing", "What students should be able to do next"].map((item) => (
+                      <div key={item} className="flex items-start gap-2.5">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-teal-strong)]" aria-hidden="true" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+              Teacher review stays central. Scaffold suggests options you can adapt to your students, curriculum, and professional judgment.
+            </p>
+          </aside>
+        </div>
 
         {!displayed && !isGenerating && (
           <section
@@ -1175,9 +1364,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               id="lesson-preview-heading"
               className="font-medium text-foreground"
             >
-              Ready when you are.
+              Start with one classroom moment.
             </h2>
-            <p>Your lesson plan will appear below.</p>
+            <p>Your first useful support will appear below.</p>
           </section>
         )}
 
@@ -1236,6 +1425,108 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </p>
               </div>
             </div>
+            <Card className="lesson-card lesson-card--blue border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.035]">
+              <CardHeader className="px-5 pb-2 pt-5">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Sparkles className="h-4 w-4 text-[var(--brand-blue-strong)]" aria-hidden="true" />
+                  Try this first
+                </CardTitle>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  One starting move to use before you build out the rest of the lesson.
+                </p>
+              </CardHeader>
+              <CardContent className="px-5 pb-5 text-sm leading-relaxed text-foreground">
+                <RichText
+                  text={displayed.lesson.scaffoldPlan || displayed.lesson.warmUp}
+                />
+              </CardContent>
+            </Card>
+            {!isSharedPlan && (
+              <Card className="border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/[0.045] shadow-none">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-teal)]/15 text-[var(--brand-teal-strong)]">
+                      <Mail className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-teal-strong)]">
+                        Help shape the next release
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        If you try this with a real class, send one line about
+                        what helped or got in the way. Please leave out student
+                        names and private student information.
+                      </p>
+                      <a
+                        href="mailto:forozc1@gmail.com?subject=Scaffold%20beta%20feedback&body=What%20I%20tried%3A%20%0A%0AWhat%20helped%3A%20%0A%0AWhat%20got%20in%20the%20way%3A%20"
+                        className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-[var(--brand-teal-strong)] px-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        Send quick feedback
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {!isSharedPlan && (
+              <Card className="border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/[0.045] shadow-none">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-purple)]/15 text-[var(--brand-purple-strong)]">
+                      <UserRoundPlus className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-purple-strong)]">
+                        Keep your work
+                      </p>
+                      <h2 className="mt-1 text-base font-semibold text-foreground">
+                        Want to keep this lesson for later?
+                      </h2>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        Sign in with Google to save this lesson to your account
+                        and open it later from another device.
+                      </p>
+                    </div>
+                  </div>
+
+                  {captureNotice ? (
+                    <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/10 px-3.5 py-3 text-sm leading-relaxed text-[var(--brand-teal-strong)]" role="status">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>{captureNotice}</span>
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-3">
+                      <GoogleSignInButton onCredential={handleAccountCredential} />
+                      <label className="flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={captureMarketing}
+                          onChange={(event) => setCaptureMarketing(event.target.checked)}
+                          className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-[var(--brand-blue-strong)]"
+                        />
+                        <span>Send me occasional Scaffold updates and short feedback requests.</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={continueWithoutSaving}
+                        className="min-h-10 text-left text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        Continue without saving
+                      </button>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        Your Google email is used to identify your account. It is
+                        not added to lesson prompts or student records.
+                      </p>
+                      {(captureError || accountError) && (
+                        <p className="text-xs leading-relaxed text-destructive" role="alert">
+                          {captureError || accountError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
             <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 {isEditing ? (
@@ -1257,7 +1548,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     {displayed.gradeLevel}
                   </Badge>
                   <Badge variant="outline" className="text-xs font-medium">
-                    Support Level {displayed.languageSupportLevel}
+                    Student support: Level {displayed.languageSupportLevel}
                   </Badge>
                   {displayed.unitProfile && (
                     <Badge
@@ -1887,7 +2178,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </section>
         )}
 
-        {lessons.length > 0 && (
+        {lessons.length > 0 && displayed && (
           <section className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div>
@@ -1943,7 +2234,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <span>{entry.gradeLevel}</span>
                           <span aria-hidden="true">·</span>
-                          <span>Support Level {entry.languageSupportLevel}</span>
+                          <span>
+                            {entry.languageSupportLevel
+                              ? `Support Level ${entry.languageSupportLevel}`
+                              : "Support reference not recorded"}
+                          </span>
                           <span aria-hidden="true">·</span>
                           <time dateTime={entry.savedAt}>
                             {formatDate(entry.savedAt)}
@@ -2025,8 +2320,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 onFocus={(event) => event.currentTarget.select()}
               />
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Anyone with this link and a valid school access code can view
-                the snapshot. Don’t include student names or private details.
+                Anyone with this link can view the snapshot. Don’t include
+                student names or private details.
               </p>
             </div>
             <DialogFooter className="gap-2 sm:space-x-0">

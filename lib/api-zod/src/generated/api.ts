@@ -8,14 +8,126 @@
 import * as zod from "zod";
 
 /**
- * @summary Validate a school access code without generating content
+ * @summary Validate a verified account and, when enabled, a private-beta access code
  */
 export const ValidateAccessCodeBody = zod.object({
-  accessCode: zod.string(),
+  accessCode: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional school access code when private-beta access is enabled",
+    ),
 });
 
 export const ValidateAccessCodeResponse = zod.object({
   valid: zod.boolean(),
+});
+
+/**
+ * @summary List saved lessons for the verified account
+ */
+export const ListAccountLessonsResponse = zod.object({
+  account: zod.object({
+    email: zod.string().email(),
+    marketingOptIn: zod.boolean(),
+  }),
+  lessons: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      savedAt: zod.coerce.date(),
+      title: zod.string(),
+      gradeLevel: zod.string(),
+      languageSupportLevel: zod.string(),
+      topic: zod.string(),
+      unitProfile: zod.string().optional(),
+      lesson: zod.object({
+        title: zod.string(),
+        integratedUnitGoal: zod.string(),
+        contentObjective: zod.string(),
+        languageObjective: zod.string(),
+        languageFunctionObjective: zod.string(),
+        languageFeatureObjective: zod.string(),
+        keyVocabulary: zod.array(zod.string()),
+        sentenceFrames: zod.array(zod.string()),
+        warmUp: zod.string(),
+        mainActivity: zod.string(),
+        speakingActivity: zod.string(),
+        exitTicket: zod.string(),
+        teacherNotes: zod.string(),
+        scaffoldPlan: zod.string(),
+        scaffoldFadingPlan: zod.string(),
+        formativeAssessment: zod.string(),
+        sourcesUsed: zod.array(zod.string()),
+      }),
+    }),
+  ),
+});
+
+/**
+ * @summary Save or update a lesson for the verified account
+ */
+export const SaveAccountLessonBody = zod.object({
+  id: zod.string().uuid(),
+  title: zod.string(),
+  gradeLevel: zod.string(),
+  languageSupportLevel: zod.string(),
+  topic: zod.string(),
+  unitProfile: zod.string().optional(),
+  lesson: zod.object({
+    title: zod.string(),
+    integratedUnitGoal: zod.string(),
+    contentObjective: zod.string(),
+    languageObjective: zod.string(),
+    languageFunctionObjective: zod.string(),
+    languageFeatureObjective: zod.string(),
+    keyVocabulary: zod.array(zod.string()),
+    sentenceFrames: zod.array(zod.string()),
+    warmUp: zod.string(),
+    mainActivity: zod.string(),
+    speakingActivity: zod.string(),
+    exitTicket: zod.string(),
+    teacherNotes: zod.string(),
+    scaffoldPlan: zod.string(),
+    scaffoldFadingPlan: zod.string(),
+    formativeAssessment: zod.string(),
+    sourcesUsed: zod.array(zod.string()),
+  }),
+  marketingOptIn: zod.boolean().optional(),
+});
+
+export const SaveAccountLessonResponse = zod.object({
+  account: zod.object({
+    email: zod.string().email(),
+    marketingOptIn: zod.boolean(),
+  }),
+  lesson: zod.object({
+    id: zod.string().uuid(),
+    savedAt: zod.coerce.date(),
+    title: zod.string(),
+    gradeLevel: zod.string(),
+    languageSupportLevel: zod.string(),
+    topic: zod.string(),
+    unitProfile: zod.string().optional(),
+    lesson: zod.object({
+      title: zod.string(),
+      integratedUnitGoal: zod.string(),
+      contentObjective: zod.string(),
+      languageObjective: zod.string(),
+      languageFunctionObjective: zod.string(),
+      languageFeatureObjective: zod.string(),
+      keyVocabulary: zod.array(zod.string()),
+      sentenceFrames: zod.array(zod.string()),
+      warmUp: zod.string(),
+      mainActivity: zod.string(),
+      speakingActivity: zod.string(),
+      exitTicket: zod.string(),
+      teacherNotes: zod.string(),
+      scaffoldPlan: zod.string(),
+      scaffoldFadingPlan: zod.string(),
+      formativeAssessment: zod.string(),
+      sourcesUsed: zod.array(zod.string()),
+    }),
+  }),
 });
 
 /**
@@ -31,14 +143,17 @@ export const HealthCheckResponse = zod.object({
  */
 export const GenerateLessonPlanBody = zod.object({
   notes: zod.string().describe("Rough planning notes from the teacher"),
-  gradeLevel: zod.enum(["Grade 3", "Grade 4", "Grade 5"]),
+  gradeLevel: zod.enum(["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
   languageSupportLevel: zod.enum(["1", "2", "3", "4", "5", "6"]),
   topic: zod.string().describe("Topic or subject for the lesson"),
   unitProfile: zod
     .enum(["Grade 4 Discipline-Based Writing"])
     .optional()
     .describe("Optional canonical curriculum unit used to ground the lesson"),
-  accessCode: zod.string().describe("School access code for authorization"),
+  accessCode: zod
+    .string()
+    .optional()
+    .describe("Optional school access code for private-beta authorization"),
 });
 
 export const GenerateLessonPlanResponse = zod.object({
@@ -66,9 +181,12 @@ export const GenerateLessonPlanResponse = zod.object({
  */
 export const GenerateClassroomSupportBody = zod.object({
   need: zod.string().describe("What the students need help with right now"),
-  gradeLevel: zod.enum(["Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
+  gradeLevel: zod.enum(["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
   languageSupportLevel: zod.enum(["1", "2", "3", "4", "5", "6"]),
-  accessCode: zod.string().describe("School access code for authorization"),
+  accessCode: zod
+    .string()
+    .optional()
+    .describe("Optional school access code for private-beta authorization"),
 });
 
 export const GenerateClassroomSupportResponse = zod.object({

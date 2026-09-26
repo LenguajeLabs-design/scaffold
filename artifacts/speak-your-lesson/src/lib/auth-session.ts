@@ -15,4 +15,5 @@ export function setCredential(token: string) {
   clearTimeout(timer);
   credential = token;
   timer = setTimeout(clearCredential, expiresIn);
+  window.dispatchEvent(new Event("scaffold-authenticated"));
 }

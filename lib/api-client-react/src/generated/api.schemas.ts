@@ -9,10 +9,69 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface AccountProfile {
+  email: string;
+  marketingOptIn: boolean;
+}
+
+export interface LessonPlan {
+  title: string;
+  integratedUnitGoal: string;
+  contentObjective: string;
+  languageObjective: string;
+  languageFunctionObjective: string;
+  languageFeatureObjective: string;
+  keyVocabulary: string[];
+  sentenceFrames: string[];
+  warmUp: string;
+  mainActivity: string;
+  speakingActivity: string;
+  exitTicket: string;
+  teacherNotes: string;
+  scaffoldPlan: string;
+  scaffoldFadingPlan: string;
+  formativeAssessment: string;
+  sourcesUsed: string[];
+}
+
+export interface AccountLesson {
+  id: string;
+  savedAt: string;
+  title: string;
+  gradeLevel: string;
+  languageSupportLevel: string;
+  topic: string;
+  unitProfile?: string;
+  lesson: LessonPlan;
+}
+
+export interface AccountLessonsResponse {
+  account: AccountProfile;
+  lessons: AccountLesson[];
+}
+
+export interface SaveAccountLessonBody {
+  id: string;
+  title: string;
+  gradeLevel: string;
+  languageSupportLevel: string;
+  topic: string;
+  unitProfile?: string;
+  lesson: LessonPlan;
+  marketingOptIn?: boolean;
+}
+
+export interface SaveAccountLessonResponse {
+  account: AccountProfile;
+  lesson: AccountLesson;
+}
+
 export type GenerateLessonPlanBodyGradeLevel =
   (typeof GenerateLessonPlanBodyGradeLevel)[keyof typeof GenerateLessonPlanBodyGradeLevel];
 
 export const GenerateLessonPlanBodyGradeLevel = {
+  Grade_1: "Grade 1",
+  Grade_2: "Grade 2",
   Grade_3: "Grade 3",
   Grade_4: "Grade 4",
   Grade_5: "Grade 5",
@@ -49,34 +108,15 @@ export interface GenerateLessonPlanBody {
   topic: string;
   /** Optional canonical curriculum unit used to ground the lesson */
   unitProfile?: GenerateLessonPlanBodyUnitProfile;
-  /** School access code for authorization */
-  accessCode: string;
-}
-
-export interface LessonPlan {
-  title: string;
-  integratedUnitGoal: string;
-  contentObjective: string;
-  languageObjective: string;
-  languageFunctionObjective: string;
-  languageFeatureObjective: string;
-  keyVocabulary: string[];
-  sentenceFrames: string[];
-  warmUp: string;
-  mainActivity: string;
-  speakingActivity: string;
-  exitTicket: string;
-  teacherNotes: string;
-  scaffoldPlan: string;
-  scaffoldFadingPlan: string;
-  formativeAssessment: string;
-  sourcesUsed: string[];
+  /** Optional school access code for private-beta authorization */
+  accessCode?: string;
 }
 
 export type GenerateClassroomSupportBodyGradeLevel =
   (typeof GenerateClassroomSupportBodyGradeLevel)[keyof typeof GenerateClassroomSupportBodyGradeLevel];
 
 export const GenerateClassroomSupportBodyGradeLevel = {
+  Grade_1: "Grade 1",
   Grade_2: "Grade 2",
   Grade_3: "Grade 3",
   Grade_4: "Grade 4",
@@ -100,8 +140,8 @@ export interface GenerateClassroomSupportBody {
   need: string;
   gradeLevel: GenerateClassroomSupportBodyGradeLevel;
   languageSupportLevel: GenerateClassroomSupportBodyLanguageSupportLevel;
-  /** School access code for authorization */
-  accessCode: string;
+  /** Optional school access code for private-beta authorization */
+  accessCode?: string;
 }
 
 export interface ClassroomSupport {
@@ -118,7 +158,8 @@ export interface ErrorResponse {
 }
 
 export type ValidateAccessCodeBody = {
-  accessCode: string;
+  /** Optional school access code when private-beta access is enabled */
+  accessCode?: string;
 };
 
 export type ValidateAccessCode200 = {

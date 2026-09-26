@@ -40,6 +40,18 @@ function writeToStorage(lessons: SavedLesson[]): void {
 export function useSavedLessons() {
   const [lessons, setLessons] = useState<SavedLesson[]>(readFromStorage);
 
+  const mergeRemote = useCallback((remoteLessons: SavedLesson[]): void => {
+    setLessons((previous) => {
+      const merged = new Map(previous.map((lesson) => [lesson.id, lesson]));
+      for (const lesson of remoteLessons) merged.set(lesson.id, lesson);
+      const next = [...merged.values()].sort(
+        (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
+      );
+      writeToStorage(next);
+      return next;
+    });
+  }, []);
+
   const save = useCallback(
     (
       lesson: LessonPlan,
@@ -111,5 +123,5 @@ export function useSavedLessons() {
     return copy;
   }, []);
 
-  return { lessons, save, update, duplicate, remove };
+  return { lessons, save, update, duplicate, remove, mergeRemote };
 }
