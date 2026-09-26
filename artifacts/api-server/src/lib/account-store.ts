@@ -29,6 +29,20 @@ export interface AccountLessonInput {
   marketingOptIn?: boolean;
 }
 
+export interface AdminAccountSummary {
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+  marketingOptIn: boolean;
+  savedLessonCount: number;
+}
+
+export interface AdminAccountsSummary {
+  totalAccounts: number;
+  marketingOptInAccounts: number;
+  savedLessons: number;
+}
+
 export async function initializeAccountStore(): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS scaffold_accounts (
@@ -150,4 +164,44 @@ export async function saveAccountLesson(
   );
 
   return lesson;
+}
+
+export async function listAdminAccounts(): Promise<{
+  summary: AdminAccountsSummary;
+  accounts: AdminAccountSummary[];
+}> {
+  const [{ rows: [summary] }, { rows: accounts }] = await Promise.all([
+    pool.query<AdminAccountsSummary>(
+      `
+        SELECT
+          COUNT(*)::int AS "totalAccounts",
+          COUNT(*) FILTER (WHERE marketing_opt_in)::int AS "marketingOptInAccounts",
+          COALESCE((SELECT COUNT(*) FROM scaffold_saved_lessons), 0)::int AS "savedLessons"
+        FROM scaffold_accounts
+      `,
+    ),
+    pool.query<AdminAccountSummary>(
+      `
+        SELECT
+          a.email,
+          a.created_at AS "createdAt",
+          a.updated_at AS "updatedAt",
+          a.marketing_opt_in AS "marketingOptIn",
+          COUNT(s.client_id)::int AS "savedLessonCount"
+        FROM scaffold_accounts a
+        LEFT JOIN scaffold_saved_lessons s ON s.account_id = a.id
+        GROUP BY a.id, a.email, a.created_at, a.updated_at, a.marketing_opt_in
+        ORDER BY a.created_at DESC
+      `,
+    ),
+  ]);
+
+  return {
+    summary: summary ?? {
+      totalAccounts: 0,
+      marketingOptInAccounts: 0,
+      savedLessons: 0,
+    },
+    accounts,
+  };
 }

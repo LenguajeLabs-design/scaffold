@@ -5,12 +5,14 @@ import classroomCopilotRouter from "./classroom-copilot";
 
 import accessRouter from "./access";
 import accountRouter from "./account";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(accessRouter);
 router.use(accountRouter);
+router.use(adminRouter);
 router.use(lessonPlanRouter);
 router.use(classroomCopilotRouter);
 

@@ -18,6 +18,7 @@ import type {
 
 import type {
   AccountLessonsResponse,
+  AdminAccountsResponse,
   ClassroomSupport,
   ErrorResponse,
   GenerateClassroomSupportBody,
@@ -201,10 +202,85 @@ export function useListAccountLessons<
 }
 
 /**
+ * @summary List account signup and saved-lesson summaries for administrators
+ */
+export const getListAdminAccountsUrl = () => {
+  return `/api/admin/accounts`;
+};
+
+export const listAdminAccounts = async (
+  options?: RequestInit,
+): Promise<AdminAccountsResponse> => {
+  return customFetch<AdminAccountsResponse>(getListAdminAccountsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAdminAccountsQueryKey = () => {
+  return [`/api/admin/accounts`] as const;
+};
+
+export const getListAdminAccountsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAdminAccounts>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminAccounts>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAdminAccountsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAdminAccounts>>
+  > = ({ signal }) => listAdminAccounts({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminAccounts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAdminAccountsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAdminAccounts>>
+>;
+export type ListAdminAccountsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List account signup and saved-lesson summaries for administrators
+ */
+
+export function useListAdminAccounts<
+  TData = Awaited<ReturnType<typeof listAdminAccounts>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminAccounts>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAdminAccountsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Save or update a lesson for the verified account
  */
 export const getSaveAccountLessonUrl = () => {
-  return `/api/account/lessons`;
+  return `/api/admin/accounts`;
 };
 
 export const saveAccountLesson = async (

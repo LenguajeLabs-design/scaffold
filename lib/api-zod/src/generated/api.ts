@@ -64,6 +64,42 @@ export const ListAccountLessonsResponse = zod.object({
 });
 
 /**
+ * @summary List account signup and saved-lesson summaries for administrators
+ */
+export const listAdminAccountsResponseSummaryTotalAccountsMin = 0;
+
+export const listAdminAccountsResponseSummaryMarketingOptInAccountsMin = 0;
+
+export const listAdminAccountsResponseSummarySavedLessonsMin = 0;
+
+export const listAdminAccountsResponseAccountsItemSavedLessonCountMin = 0;
+
+export const ListAdminAccountsResponse = zod.object({
+  summary: zod.object({
+    totalAccounts: zod
+      .number()
+      .min(listAdminAccountsResponseSummaryTotalAccountsMin),
+    marketingOptInAccounts: zod
+      .number()
+      .min(listAdminAccountsResponseSummaryMarketingOptInAccountsMin),
+    savedLessons: zod
+      .number()
+      .min(listAdminAccountsResponseSummarySavedLessonsMin),
+  }),
+  accounts: zod.array(
+    zod.object({
+      email: zod.string().email(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+      marketingOptIn: zod.boolean(),
+      savedLessonCount: zod
+        .number()
+        .min(listAdminAccountsResponseAccountsItemSavedLessonCountMin),
+    }),
+  ),
+});
+
+/**
  * @summary Save or update a lesson for the verified account
  */
 export const SaveAccountLessonBody = zod.object({

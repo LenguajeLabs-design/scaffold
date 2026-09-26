@@ -66,6 +66,29 @@ export interface SaveAccountLessonResponse {
   lesson: AccountLesson;
 }
 
+export interface AdminAccountSummary {
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+  marketingOptIn: boolean;
+  /** @minimum 0 */
+  savedLessonCount: number;
+}
+
+export type AdminAccountsResponseSummary = {
+  /** @minimum 0 */
+  totalAccounts: number;
+  /** @minimum 0 */
+  marketingOptInAccounts: number;
+  /** @minimum 0 */
+  savedLessons: number;
+};
+
+export interface AdminAccountsResponse {
+  summary: AdminAccountsResponseSummary;
+  accounts: AdminAccountSummary[];
+}
+
 export type GenerateLessonPlanBodyGradeLevel =
   (typeof GenerateLessonPlanBodyGradeLevel)[keyof typeof GenerateLessonPlanBodyGradeLevel];
 

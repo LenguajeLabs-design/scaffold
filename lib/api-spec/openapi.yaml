@@ -16,6 +16,8 @@ tags:
     description: Classroom Copilot quick EAL support operations
   - name: account
     description: Verified account and saved lesson operations
+  - name: admin
+    description: Allowlisted administrator account reporting
 paths:
   /access/validate:
     post:
@@ -70,6 +72,32 @@ paths:
                 $ref: "#/components/schemas/AccountLessonsResponse"
         "401":
           description: Sign-in required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/accounts:
+    get:
+      operationId: listAdminAccounts
+      tags: [admin]
+      summary: List account signup and saved-lesson summaries for administrators
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account summary for an allowlisted administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccountsResponse"
+        "401":
+          description: Sign-in required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Administrator access required
           content:
             application/json:
               schema:
@@ -281,6 +309,55 @@ components:
       required:
         - account
         - lesson
+    AdminAccountSummary:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        marketingOptIn:
+          type: boolean
+        savedLessonCount:
+          type: integer
+          minimum: 0
+      required:
+        - email
+        - createdAt
+        - updatedAt
+        - marketingOptIn
+        - savedLessonCount
+    AdminAccountsResponse:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalAccounts:
+              type: integer
+              minimum: 0
+            marketingOptInAccounts:
+              type: integer
+              minimum: 0
+            savedLessons:
+              type: integer
+              minimum: 0
+          required:
+            - totalAccounts
+            - marketingOptInAccounts
+            - savedLessons
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAccountSummary"
+      required:
+        - summary
+        - accounts
     GenerateLessonPlanBody:
       type: object
       properties:

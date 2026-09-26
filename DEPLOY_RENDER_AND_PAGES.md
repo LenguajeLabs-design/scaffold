@@ -72,6 +72,13 @@ Codes, the admin allowlist, database URL, hash secret, and OpenAI key must
 never be placed in frontend build variables. Replit secrets do not
 automatically transfer to Render.
 
+### Admin account view
+
+Allowlisted administrators can open `https://scaffolded.app/admin` and sign in
+with Google to view verified account emails, signup and last-activity times,
+saved-lesson counts, and update opt-in status. The server enforces the
+`ADMIN_EMAILS` allowlist; the dashboard does not expose lesson content.
+
 Create a Google OAuth **Web application** client and add both the production
 GitHub Pages URL and local development URL to its authorized JavaScript origins.
 The browser receives an ID token, but the API verifies its signature and

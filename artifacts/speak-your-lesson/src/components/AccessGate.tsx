@@ -537,7 +537,7 @@ export function AccessGate({
                 </div>
               ) : (
                 <a
-                  href="/scaffold/admin"
+                  href="/admin"
                   className="mt-4 block text-xs text-muted-foreground hover:text-primary hover:underline"
                 >
                   Admin testing link

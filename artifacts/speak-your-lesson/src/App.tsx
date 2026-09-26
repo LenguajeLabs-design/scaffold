@@ -12,6 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ClassroomCopilot from "@/pages/ClassroomCopilot";
+import AdminPage from "@/pages/AdminPage";
 import Legal from "@/pages/Legal";
 import { AccessGate } from "@/components/AccessGate";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
@@ -288,12 +289,23 @@ function Router() {
     };
   }, [adminOnly]);
 
+  if (adminOnly && isAdmin) {
+    return (
+      <AdminPage
+        onLogout={() => {
+          logout();
+          navigate("/");
+        }}
+      />
+    );
+  }
+
   if (adminOnly || (ACCESS_GATE_ENABLED && requireAccessCode && !isUnlocked)) {
     return (
       <AccessGate
         onUnlock={(code, admin) => {
           unlock(code, admin);
-          if (admin) navigate("/");
+          if (admin) navigate(adminOnly ? "/admin" : "/");
         }}
         onDemo={() => {
           enterDemo();
