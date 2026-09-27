@@ -51,15 +51,9 @@ import { DEMO_COPILOT_SESSIONS } from "@/data/demo-copilot";
 import { DEMO_CLASSROOM_PROBLEM } from "@/data/demo-lesson";
 import { trackFunnelEvent } from "@/lib/analytics";
 import { RichText } from "@/components/RichText";
+import { GenerationProgress } from "@/components/GenerationProgress";
 
 const MAX_NEED_CHARS = 2000;
-
-const supportGenerationSteps = [
-  "Reading the classroom moment",
-  "Identifying the likely language barrier",
-  "Preparing a quick student-facing support",
-  "Adding a teacher move you can try now",
-];
 
 const languageSupportDescriptions: Record<string, string> = {
   "1": "Intensive support with visible models and supported responses",
@@ -563,41 +557,7 @@ export default function ClassroomCopilot({
         </Card>
 
         {isGenerating && !displayed && (
-          <section
-            className="overflow-hidden rounded-2xl border border-[var(--brand-blue)]/25 bg-card text-center shadow-[0_16px_40px_rgba(30,27,75,0.06)] animate-in fade-in duration-300"
-            aria-labelledby="generating-support-heading"
-            aria-live="polite"
-          >
-            <div className="h-1 w-full animate-pulse bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]" />
-            <div className="px-6 py-12">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-              </div>
-              <h2
-                id="generating-support-heading"
-                className="mt-4 font-semibold text-foreground"
-              >
-                Building a quick support
-              </h2>
-              <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Scaffold is turning the classroom moment into a small support
-                you can review and use right away.
-              </p>
-              <ol className="mx-auto mt-6 max-w-sm space-y-2 text-left">
-                {supportGenerationSteps.map((step, index) => (
-                  <li
-                    key={step}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
-                  >
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-                      {index + 1}
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </section>
+          <GenerationProgress mode="support" />
         )}
 
         {displayed && !isGenerating && (

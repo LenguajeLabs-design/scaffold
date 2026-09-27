@@ -92,6 +92,7 @@ import {
   DEMO_STUDENT_TASK,
 } from "@/data/demo-lesson";
 import { RichText } from "@/components/RichText";
+import { GenerationProgress } from "@/components/GenerationProgress";
 import { trackFunnelEvent } from "@/lib/analytics";
 import {
   decodeSharedPlan,
@@ -1609,31 +1610,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         )}
 
         {isGenerating && !displayed && (
-          <section
-            className="overflow-hidden rounded-2xl border border-[var(--brand-blue)]/25 bg-card text-center shadow-[0_16px_40px_rgba(30,27,75,0.06)] animate-in fade-in duration-300"
-            aria-labelledby="generating-lesson-heading"
-            aria-live="polite"
-          >
-            <div className="h-1 w-full animate-pulse bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-purple)]" />
-            <div className="px-6 py-12">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)]/20 via-[var(--brand-blue)]/20 to-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]">
-                <Sparkles
-                  className="h-5 w-5 animate-pulse"
-                  aria-hidden="true"
-                />
-              </div>
-              <h2
-                id="generating-lesson-heading"
-                className="mt-4 font-semibold text-foreground"
-              >
-                Building your lesson plan
-              </h2>
-              <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Organizing objectives, language supports, activities, and
-                assessment ideas. This may take a moment.
-              </p>
-            </div>
-          </section>
+          <GenerationProgress mode="lesson" />
         )}
 
         {displayed && (
