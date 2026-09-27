@@ -1663,19 +1663,23 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </p>
               </div>
             </div>
-            <ActivationSummary
-              displayed={displayed}
-              isDemo={isDemo && !isSharedPlan}
-              onUseWithLesson={useSampleWithLesson}
-            />
+            {isDemo && !isSharedPlan && (
+              <ActivationSummary
+                displayed={displayed}
+                isDemo
+                onUseWithLesson={useSampleWithLesson}
+              />
+            )}
             {!isSharedPlan && (
               <div className="flex items-end justify-between gap-4 border-b border-border/70 pb-2 pt-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
-                    Full lesson plan
+                    {isDemo ? "Full lesson plan" : "Lesson plan"}
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Review the complete sequence after the first useful move.
+                    {isDemo
+                      ? "Review the complete sequence after the first useful move."
+                      : "Review the complete sequence and adapt the supports for your lesson."}
                   </p>
                 </div>
                 <BookOpenText className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
