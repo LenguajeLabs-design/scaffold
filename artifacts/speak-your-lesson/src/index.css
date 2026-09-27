@@ -12,13 +12,18 @@
   }
 }
 
-@keyframes scaffold-progress-float {
-  0%,
-  100% {
-    transform: translateY(0);
+@keyframes scaffold-bar-arrive {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--scaffold-bar-start)) scaleX(0.45);
   }
-  50% {
-    transform: translateY(-3px);
+  72% {
+    opacity: 1;
+    transform: translateX(0) scaleX(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scaleX(1);
   }
 }
 
@@ -26,14 +31,69 @@
   animation: scaffold-progress-sheen 2.4s ease-in-out infinite;
 }
 
-.scaffold-progress-float {
-  animation: scaffold-progress-float 3.2s ease-in-out infinite;
+.scaffold-assembly-frame {
+  display: grid;
+  place-items: center;
+  width: 7.75rem;
+  height: 7.75rem;
+  border: 0.3rem solid rgb(124 140 255 / 0.16);
+  border-radius: 2.15rem;
+  background: linear-gradient(
+    145deg,
+    rgb(124 140 255 / 0.08),
+    rgb(164 160 255 / 0.12) 48%,
+    rgb(126 217 87 / 0.08)
+  );
+  box-shadow: 0 14px 32px rgb(15 45 74 / 0.08);
+}
+
+.scaffold-assembly-mark {
+  display: grid;
+  width: 4.6rem;
+  gap: 0.55rem;
+}
+
+.scaffold-assembly-bar {
+  display: block;
+  height: 0.78rem;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateX(var(--scaffold-bar-start)) scaleX(0.45);
+  transform-origin: center;
+}
+
+.scaffold-assembly-bar.is-visible {
+  animation: scaffold-bar-arrive 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.scaffold-assembly-bar-purple {
+  --scaffold-bar-start: -2.2rem;
+  width: 82%;
+  margin-left: auto;
+  background: var(--brand-blue);
+  box-shadow: 0 4px 12px rgb(124 140 255 / 0.28);
+}
+
+.scaffold-assembly-bar-green {
+  --scaffold-bar-start: 2.2rem;
+  width: 100%;
+  background: var(--brand-teal);
+  box-shadow: 0 4px 12px rgb(126 217 87 / 0.26);
+}
+
+.scaffold-assembly-bar-yellow {
+  --scaffold-bar-start: -2.2rem;
+  width: 72%;
+  background: var(--brand-sun);
+  box-shadow: 0 4px 12px rgb(255 209 102 / 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .scaffold-progress-sheen,
-  .scaffold-progress-float {
+  .scaffold-assembly-bar.is-visible {
     animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

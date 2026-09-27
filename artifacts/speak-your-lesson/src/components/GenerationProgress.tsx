@@ -1,12 +1,4 @@
 import { useEffect, useState } from "react";
-import {
-  BookOpenCheck,
-  Check,
-  MessageSquareQuote,
-  Sparkles,
-  Target,
-  type LucideIcon,
-} from "lucide-react";
 
 type GenerationProgressMode = "lesson" | "support";
 
@@ -17,7 +9,6 @@ interface GenerationProgressProps {
 interface ProgressStage {
   label: string;
   detail: string;
-  icon: LucideIcon;
 }
 
 const progressContent: Record<
@@ -31,18 +22,15 @@ const progressContent: Record<
     stages: [
       {
         label: "Find the teaching point",
-        detail: "Keeping your learning goal in view.",
-        icon: Target,
+        detail: "Starting with the learning goal.",
       },
       {
         label: "Match support to the task",
         detail: "Connecting the language move to what students need to do.",
-        icon: BookOpenCheck,
       },
       {
         label: "Make it ready to try",
         detail: "Preparing a teacher move and student-facing language support.",
-        icon: MessageSquareQuote,
       },
     ],
   },
@@ -54,17 +42,14 @@ const progressContent: Record<
       {
         label: "Read the moment",
         detail: "Looking for the teaching point and language barrier.",
-        icon: MessageSquareQuote,
       },
       {
         label: "Match support to the task",
         detail: "Connecting the language move to what students need to do.",
-        icon: BookOpenCheck,
       },
       {
         label: "Prepare a move to try",
         detail: "Making the support practical, visible, and easy to adapt.",
-        icon: Sparkles,
       },
     ],
   },
@@ -97,69 +82,60 @@ export function GenerationProgress({ mode = "lesson" }: GenerationProgressProps)
       </div>
       <div className="px-5 py-8 sm:px-8 sm:py-10">
         <div className="mx-auto max-w-xl">
-          <div className="flex items-center gap-3 text-left sm:justify-center">
-            <div className="scaffold-progress-float relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-teal)]/20 via-[var(--brand-blue)]/20 to-[var(--brand-purple)]/20 text-[var(--brand-purple-strong)]">
-              <Sparkles className="h-5 w-5" aria-hidden="true" />
+          <div className="text-center">
+            <div className="scaffold-assembly-frame mx-auto" aria-hidden="true">
+              <div className="scaffold-assembly-mark">
+                {["purple", "green", "yellow"].map((color, index) => (
+                  <span
+                    key={color}
+                    className={`scaffold-assembly-bar scaffold-assembly-bar-${color} ${
+                      index <= activeStage ? "is-visible" : ""
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
-            <div>
-              <h2
-                id="generation-progress-heading"
-                className="font-semibold text-foreground"
-              >
-                {content.title}
-              </h2>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                {content.description}
-              </p>
-            </div>
+            <h2
+              id="generation-progress-heading"
+              className="mt-5 font-semibold text-foreground"
+            >
+              {content.title}
+            </h2>
+            <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+              {content.description}
+            </p>
           </div>
 
-          <div className="relative mt-8" aria-hidden="true">
-            <div className="absolute left-[16.666%] right-[16.666%] top-6 h-px bg-border" />
-            <div
-              className="absolute left-[16.666%] top-6 h-px bg-[var(--brand-teal-strong)] transition-[width] duration-700"
-              style={{
-                width: `${(activeStage / (content.stages.length - 1)) * 66.668}%`,
-              }}
-            />
-            <div className="relative grid grid-cols-3 gap-2">
-              {content.stages.map((stage, index) => {
-                const StageIcon = stage.icon;
-                const isComplete = index < activeStage;
-                const isActive = index === activeStage;
-
-                return (
-                  <div key={stage.label} className="flex flex-col items-center gap-2">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-500 ${
-                        isActive
-                          ? "scaffold-progress-float border-[var(--brand-blue-strong)] bg-[var(--brand-blue-strong)] text-white shadow-[0_8px_20px_rgba(77,96,202,0.24)]"
-                          : isComplete
-                            ? "border-[var(--brand-teal-strong)]/30 bg-[var(--brand-teal)]/20 text-[var(--brand-teal-strong)]"
-                            : "border-border bg-background text-muted-foreground"
-                      }`}
-                    >
-                      {isComplete ? (
-                        <Check className="h-5 w-5" />
-                      ) : (
-                        <StageIcon className="h-5 w-5" />
-                      )}
-                    </div>
-                    <span
-                      className={`max-w-[9rem] text-[11px] font-medium leading-snug sm:text-xs ${
-                        isActive ? "text-foreground" : "text-muted-foreground"
-                      }`}
-                    >
-                      {stage.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="mt-7 flex items-start justify-center gap-5 sm:gap-10" aria-hidden="true">
+            {content.stages.map((stage, index) => (
+              <div
+                key={stage.label}
+                className={`max-w-[8rem] text-[11px] leading-snug transition-colors duration-500 sm:text-xs ${
+                  index === activeStage
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <span
+                  className={`mx-auto mb-2 block h-1.5 w-1.5 rounded-full transition-colors duration-500 ${
+                    index <= activeStage
+                      ? index === 0
+                        ? "bg-[var(--brand-blue-strong)]"
+                        : index === 1
+                          ? "bg-[var(--brand-teal-strong)]"
+                          : "bg-amber-500"
+                      : "bg-border"
+                  }`}
+                />
+                {stage.label}
+              </div>
+            ))}
           </div>
 
           <div className="mt-7 rounded-xl border border-border/70 bg-background/60 px-3.5 py-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{content.stages[activeStage].detail}</span>
+            <span className="font-medium text-foreground">
+              {content.stages[activeStage].detail}
+            </span>
             <span className="ml-1">Your notes stay here while this runs.</span>
           </div>
         </div>
