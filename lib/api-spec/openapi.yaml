@@ -145,7 +145,45 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
+              $ref: "#/components/schemas/HealthStatus"
+  /events:
+    post:
+      operationId: recordFunnelEvent
+      tags: [health]
+      summary: Record a privacy-safe activation funnel event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event, surface]
+              properties:
+                event:
+                  type: string
+                  enum:
+                    - landing_cta_clicked
+                    - sample_opened
+                    - sample_use_with_lesson_clicked
+                    - planner_started
+                    - first_useful_move_visible
+                    - support_copied
+                    - support_adapted
+                    - plan_saved
+                    - return_visit
+                    - off_topic_redirected
+                surface:
+                  type: string
+                  enum: [landing, planner, copilot]
+      responses:
+        "204":
+          description: Event accepted
+        "400":
+          description: Invalid event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /lesson-plan/generate:
     post:
       operationId: generateLessonPlan

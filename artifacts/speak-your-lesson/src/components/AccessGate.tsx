@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resolveApiUrl } from "@/lib/api-base-url";
+import { trackFunnelEvent } from "@/lib/analytics";
 
 import { setCredential } from "@/lib/auth-session";
 
@@ -208,6 +209,7 @@ export function AccessGate({
   }
 
   function revealAccessForm() {
+    trackFunnelEvent("landing_cta_clicked", "landing");
     setShowAccessForm(true);
     if (adminOnly || requireAccessCode) {
       window.setTimeout(() => accessCodeInput.current?.focus(), 80);

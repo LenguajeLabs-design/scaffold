@@ -7,6 +7,8 @@ import { authenticate, AccessError, type Actor } from "../lib/auth";
 import { UsageLimit } from "../lib/usage-store";
 import { logUsage } from "../lib/usage-logger";
 import { beta } from "../config/beta";
+import { logFunnel } from "../lib/funnel-logger";
+import { checkPlanningScope } from "../lib/scope-guard";
 
 const router: IRouter = Router();
 router.post("/classroom-copilot/generate", async (req, res) => {
@@ -28,6 +30,12 @@ router.post("/classroom-copilot/generate", async (req, res) => {
     const input = parsed.data;
     if (!input.need.trim() || input.need.length > 2000) {
       res.status(400).json({ error: "Please keep your description within 2,000 characters." });
+      return;
+    }
+    const scope = checkPlanningScope(input.need);
+    if (!scope.allowed) {
+      logFunnel("off_topic_redirected", "copilot", scope.reason);
+      res.status(400).json({ error: scope.message, code: "off_topic" });
       return;
     }
     const prompts = buildClassroomSupportPrompt(input);

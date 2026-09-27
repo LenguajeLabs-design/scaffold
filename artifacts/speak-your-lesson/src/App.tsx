@@ -26,6 +26,7 @@ import {
 } from "@/components/OnboardingDialog";
 import { DEMO_CODE, useAccessCode } from "@/hooks/use-access-code";
 import { resolveApiUrl } from "@/lib/api-base-url";
+import { trackFunnelEvent } from "@/lib/analytics";
 import { HelpCircle, KeyRound } from "lucide-react";
 
 const queryClient = new QueryClient({
@@ -308,6 +309,7 @@ function Router() {
           if (admin) navigate(adminOnly ? "/admin" : "/");
         }}
         onDemo={() => {
+          trackFunnelEvent("sample_opened", "landing");
           enterDemo();
           setOnboardingOpen(false);
         }}

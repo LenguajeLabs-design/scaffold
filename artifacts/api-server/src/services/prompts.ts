@@ -43,6 +43,8 @@ const LESSON_PLANNING_REQUIREMENTS = [
   "Use Scaffold's original Language Support Level framework and the actual task demand.",
   "Keep activities coherent from warm-up through exit ticket.",
   "Use teacherNotes for actionable guidance, not vague reminders.",
+  "Make scaffoldPlan one useful move tied to the stated classroom evidence, including what the teacher does, what students do, and what remains student-owned.",
+  "Make scaffoldFadingPlan name observable evidence for fading, changing, or increasing the support.",
 ].join(" ");
 
 const CLASSROOM_COPILOT_REQUIREMENTS = [
@@ -132,6 +134,8 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
     "- Keep the lesson realistic for one class period unless the notes clearly suggest otherwise.\n" +
     "- Use no more than 5 high-value vocabulary words unless fewer are more appropriate.\n" +
     "- Make sentence frames closely match what students need to say or write in this lesson.\n" +
+    "- In scaffoldPlan, lead with one useful move for the immediate task; do not provide a disconnected list of accommodations.\n" +
+    "- In scaffoldFadingPlan, state what the teacher should observe before reducing or changing the support.\n" +
     "- In teacherNotes, include actionable bullets that help the teacher differentiate and watch for likely student needs.\n" +
     "- Do not mention missing information or ask follow-up questions. Make the most reasonable teacher-friendly assumptions.\n\n" +
     "IMPORTANT: For all multi-sentence fields (warmUp, mainActivity, speakingActivity, exitTicket, teacherNotes) " +

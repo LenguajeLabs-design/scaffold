@@ -48,6 +48,8 @@ import {
   type SavedCopilotSession,
 } from "@/hooks/use-saved-copilot-sessions";
 import { DEMO_COPILOT_SESSIONS } from "@/data/demo-copilot";
+import { DEMO_CLASSROOM_PROBLEM } from "@/data/demo-lesson";
+import { trackFunnelEvent } from "@/lib/analytics";
 import { RichText } from "@/components/RichText";
 
 const MAX_NEED_CHARS = 2000;
@@ -137,7 +139,6 @@ export default function ClassroomCopilot({
   const [copied, setCopied] = useState(false);
   const [displayed, setDisplayed] = useState<DisplayedSession | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const [demoIndex, setDemoIndex] = useState(0);
 
   // Cooldown state
   const [cooldownSecs, setCooldownSecs] = useState(0);
@@ -179,14 +180,10 @@ export default function ClassroomCopilot({
   const { sessions, save, remove } = useSavedCopilotSessions();
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    trackFunnelEvent("planner_started", "copilot");
     if (isDemo) {
-      const sampleIndex = demoIndex % DEMO_COPILOT_SESSIONS.length;
-      const support = DEMO_COPILOT_SESSIONS[sampleIndex];
-      const sampleNeed =
-        sampleIndex === 0
-          ? "Explaining fractions with equal parts"
-          : "Explaining the stages of the water cycle";
-      setDemoIndex((i) => i + 1);
+      const support = DEMO_COPILOT_SESSIONS[0];
+      const sampleNeed = DEMO_CLASSROOM_PROBLEM;
       setSavedId(null);
       const id = save(support, {
         gradeLevel: values.gradeLevel,
@@ -200,6 +197,7 @@ export default function ClassroomCopilot({
         languageSupportLevel: values.languageSupportLevel,
         need: sampleNeed,
       });
+      trackFunnelEvent("first_useful_move_visible", "copilot");
       return;
     }
     setSavedId(null);
@@ -219,6 +217,7 @@ export default function ClassroomCopilot({
       need: vals.need,
     });
     setSavedId(id);
+    trackFunnelEvent("plan_saved", "copilot");
     setDisplayed({
       support: result,
       gradeLevel: vals.gradeLevel,
@@ -272,6 +271,7 @@ export default function ClassroomCopilot({
   async function handleCopyAll() {
     if (!displayed) return;
     await navigator.clipboard.writeText(formatAllForCopy(displayed.support));
+    trackFunnelEvent("support_copied", "copilot");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -279,10 +279,13 @@ export default function ClassroomCopilot({
   const isGenerating = isPending && !isDemo;
   const canSubmit = !isGenerating && cooldownSecs === 0;
 
+  const apiError = error as {
+    data?: { error?: string; code?: string };
+  };
   const errorMsg: string | null = isError
-    ? ((error as { data?: { error?: string } })?.data?.error ??
-      (error as Error)?.message ??
-      "Something went wrong. Please try again.")
+    ? apiError?.data?.code === "off_topic"
+      ? (apiError.data.error ?? "Please return to the lesson goal and student task.")
+      : "Something went wrong. Please try again."
     : null;
 
   return (

@@ -6,6 +6,8 @@ import { buildLessonPlanPrompt } from "../services/prompts";
 import { authenticate, AccessError, type Actor } from "../lib/auth";
 import { UsageLimit } from "../lib/usage-store";
 import { logUsage } from "../lib/usage-logger";
+import { logFunnel } from "../lib/funnel-logger";
+import { checkPlanningScope } from "../lib/scope-guard";
 import { beta } from "../config/beta";
 
 const router: IRouter = Router();
@@ -28,6 +30,12 @@ router.post("/lesson-plan/generate", async (req, res) => {
     const input = parsed.data;
     if (!input.notes.trim() || input.notes.length > 2000 || !input.topic.trim() || input.topic.length > 200) {
       res.status(400).json({ error: "Please keep your description within 2,000 characters and any topic within 200 characters." });
+      return;
+    }
+    const scope = checkPlanningScope(`${input.topic}\n${input.notes}`);
+    if (!scope.allowed) {
+      logFunnel("off_topic_redirected", "planner", scope.reason);
+      res.status(400).json({ error: scope.message, code: "off_topic" });
       return;
     }
     const prompts = buildLessonPlanPrompt(input);

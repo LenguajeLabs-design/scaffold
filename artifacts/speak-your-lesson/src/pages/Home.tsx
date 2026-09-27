@@ -11,6 +11,7 @@ import {
 } from "@workspace/api-client-react";
 import {
   AlertTriangle,
+  ArrowDown,
   Loader2,
   Trash2,
   BookMarked,
@@ -84,8 +85,14 @@ import {
   useAccountSession,
   type AccountLesson,
 } from "@/components/account-session";
-import { DEMO_LESSON_PLANS } from "@/data/demo-lesson";
+import {
+  DEMO_CLASSROOM_PROBLEM,
+  DEMO_LEARNING_GOAL,
+  DEMO_LESSON_PLAN,
+  DEMO_STUDENT_TASK,
+} from "@/data/demo-lesson";
 import { RichText } from "@/components/RichText";
+import { trackFunnelEvent } from "@/lib/analytics";
 import {
   decodeSharedPlan,
   encodeSharedPlan,
@@ -573,6 +580,155 @@ function CopyAction({
   );
 }
 
+function ActivationSummary({
+  displayed,
+  isDemo,
+  onUseWithLesson,
+}: {
+  displayed: DisplayedLesson;
+  isDemo: boolean;
+  onUseWithLesson: () => void;
+}) {
+  const { lesson } = displayed;
+
+  return (
+    <Card
+      className="overflow-hidden border-[var(--brand-blue)]/25 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(232,247,250,0.4))] shadow-[0_18px_48px_rgba(15,45,74,0.07)]"
+      data-testid="activation-summary"
+    >
+      <CardHeader className="border-b border-border/70 px-5 pb-4 pt-5 sm:px-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-teal-strong)]">
+            {isDemo ? "Sample classroom moment" : "Start here"}
+          </p>
+          {isDemo && (
+            <Badge
+              variant="outline"
+              className="border-amber-200 bg-amber-50 text-xs font-medium text-amber-700"
+            >
+              Sample · no curriculum citation
+            </Badge>
+          )}
+        </div>
+        <CardTitle className="mt-2 max-w-3xl text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          The smallest useful support for this classroom moment
+        </CardTitle>
+        {isDemo && (
+          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-2xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 p-3.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+                Classroom problem
+              </p>
+              <p className="mt-1.5 leading-relaxed text-foreground">
+                {DEMO_CLASSROOM_PROBLEM}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/10 p-3.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
+                Learning goal
+              </p>
+              <p className="mt-1.5 leading-relaxed text-foreground">
+                {DEMO_LEARNING_GOAL}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-[var(--brand-blue)]/10 p-3.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+                Student task
+              </p>
+              <p className="mt-1.5 leading-relaxed text-foreground">
+                {DEMO_STUDENT_TASK}
+              </p>
+            </div>
+          </div>
+        )}
+      </CardHeader>
+      <CardContent className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
+        <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-white/75 p-4 sm:col-span-2">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            The one useful move
+          </p>
+          <div className="mt-2 text-sm leading-relaxed text-foreground">
+            <RichText text={lesson.scaffoldPlan || lesson.warmUp} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/10 p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
+            <Target className="h-4 w-4" aria-hidden="true" />
+            Why this support fits
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground">
+            It keeps the learning goal visible while targeting the language
+            move students need for the task: {lesson.languageObjective}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
+            <Route className="h-4 w-4" aria-hidden="true" />
+            Try this first
+          </p>
+          <div className="mt-2 text-sm leading-relaxed text-foreground">
+            <RichText text={lesson.warmUp} />
+          </div>
+        </div>
+        {isDemo && (
+          <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4 sm:col-span-2">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
+              <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
+              Student-facing language support
+            </p>
+            <ul className="mt-2 space-y-2 text-sm leading-relaxed text-foreground">
+              {lesson.sentenceFrames.map((frame) => (
+                <li key={frame} className="flex gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand-purple-strong)]" />
+                  <span>{frame}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="rounded-2xl border border-[var(--brand-sun)]/35 bg-[var(--brand-sun)]/12 p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+            <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+            What to watch for
+          </p>
+          <div className="mt-2 text-sm leading-relaxed text-foreground">
+            <RichText text={lesson.formativeAssessment} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-[var(--brand-blue)]/10 p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+            <TrendingUp className="h-4 w-4" aria-hidden="true" />
+            When to fade or change support
+          </p>
+          <div className="mt-2 text-sm leading-relaxed text-foreground">
+            <RichText text={lesson.scaffoldFadingPlan} />
+          </div>
+        </div>
+        {isDemo && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-white/70 p-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Adapt the wording, frame, or amount of support to fit your own
+              lesson. Scaffold does not replace a language specialist or your
+              professional judgment.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 shrink-0 gap-2 border-[var(--brand-blue)]/30 bg-white font-semibold text-[var(--brand-blue-strong)]"
+              onClick={onUseWithLesson}
+              data-testid="button-sample-use-with-lesson"
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Use with my lesson
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Home({ accessCode, isDemo }: HomeProps) {
   const { lessons, save, update, duplicate, remove, mergeRemote } = useSavedLessons();
   const {
@@ -619,13 +775,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [isSharedPlan, setIsSharedPlan] = useState(false);
   const [shareError, setShareError] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [demoIndex, setDemoIndex] = useState(0);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [showPlanningContext, setShowPlanningContext] = useState(false);
   const [captureMarketing, setCaptureMarketing] = useState(false);
   const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const [captureError, setCaptureError] = useState<string | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const usefulMoveTrackedRef = useRef(false);
+  const adaptationTrackedRef = useRef(false);
 
   // Cooldown state
   const [cooldownSecs, setCooldownSecs] = useState(0);
@@ -662,6 +819,50 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isDemo || new URL(window.location.href).searchParams.has("share")) {
+      return;
+    }
+
+    form.reset({
+      topic: DEMO_LESSON_PLAN.title,
+      gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_4,
+      languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
+      unitProfile: undefined,
+      notes: DEMO_CLASSROOM_PROBLEM,
+    });
+    setDisplayed({
+      lesson: DEMO_LESSON_PLAN,
+      gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_4,
+      languageSupportLevel:
+        GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
+      topic: DEMO_LESSON_PLAN.title,
+      unitProfile: undefined,
+    });
+    setSavedId(null);
+    setIsEditing(false);
+    setIsSharedPlan(false);
+  }, [isDemo]);
+
+  useEffect(() => {
+    try {
+      const returnVisitKey = "scaffold-return-visit-v1";
+      if (localStorage.getItem(returnVisitKey) === "true") {
+        trackFunnelEvent("return_visit", "planner");
+      } else {
+        localStorage.setItem(returnVisitKey, "true");
+      }
+    } catch {
+      // Analytics must not block planning when storage is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!displayed || usefulMoveTrackedRef.current) return;
+    usefulMoveTrackedRef.current = true;
+    trackFunnelEvent("first_useful_move_visible", "planner");
+  }, [displayed]);
+
   function startCooldown(secs: number) {
     setCooldownSecs(secs);
     if (cooldownRef.current) clearInterval(cooldownRef.current);
@@ -685,6 +886,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       "",
       `${url.pathname}${url.search}${url.hash}`,
     );
+  }
+
+  function scrollToResults() {
+    document
+      .querySelector('[data-testid="section-results"]')
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function applyQuickStart(brief: string) {
@@ -742,38 +949,21 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    trackFunnelEvent("planner_started", "planner");
     setIsEditing(false);
     setIsSharedPlan(false);
     setShareError(false);
     clearSharedPlanFromUrl(true);
     if (isDemo) {
-      const hasPilotUnit =
-        values.unitProfile ===
-        GenerateLessonPlanBodyUnitProfile["Grade_4_Discipline-Based_Writing"];
-      const plan = hasPilotUnit
-        ? DEMO_LESSON_PLANS[1]
-        : DEMO_LESSON_PLANS[demoIndex % DEMO_LESSON_PLANS.length];
-      if (!hasPilotUnit) setDemoIndex((i) => i + 1);
       setSavedId(null);
-      const id = save(plan, {
-        gradeLevel: values.gradeLevel,
-        languageSupportLevel: values.languageSupportLevel,
-        topic: plan.title,
-        unitProfile: values.unitProfile,
-      });
-      setSavedId(id);
       setDisplayed({
-        lesson: plan,
-        gradeLevel: values.gradeLevel,
-        languageSupportLevel: values.languageSupportLevel,
-        topic: plan.title,
-        unitProfile: values.unitProfile,
+        lesson: DEMO_LESSON_PLAN,
+        gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_4,
+        languageSupportLevel:
+          GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
+        topic: DEMO_LESSON_PLAN.title,
+        unitProfile: undefined,
       });
-      window.setTimeout(() => {
-        document
-          .querySelector('[data-testid="section-results"]')
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 50);
       return;
     }
     setSavedId(null);
@@ -796,6 +986,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       unitProfile: vals.unitProfile,
     });
     setSavedId(id);
+    trackFunnelEvent("plan_saved", "planner");
     setDisplayed({
       lesson: result,
       gradeLevel: vals.gradeLevel,
@@ -859,6 +1050,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   async function copySection(section: string, text: string) {
     try {
       await navigator.clipboard.writeText(text);
+      trackFunnelEvent("support_copied", "planner");
       setCopiedSection(section);
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
       copyTimerRef.current = setTimeout(() => setCopiedSection(null), 1800);
@@ -886,6 +1078,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       unitProfile: displayed.unitProfile,
     });
     setSavedId(id);
+    trackFunnelEvent("plan_saved", "planner");
     setIsSharedPlan(false);
     clearSharedPlanFromUrl(true);
   }
@@ -900,6 +1093,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   }
 
   function toggleEditing() {
+    if (!isEditing && !adaptationTrackedRef.current) {
+      adaptationTrackedRef.current = true;
+      trackFunnelEvent("support_adapted", "planner");
+    }
     if (isEditing && displayed) {
       updateLesson({
         title: displayed.lesson.title.trim() || "Untitled lesson",
@@ -912,6 +1109,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       });
     }
     setIsEditing((current) => !current);
+  }
+
+  function useSampleWithLesson() {
+    trackFunnelEvent("sample_use_with_lesson_clicked", "planner");
+    if (!isEditing) toggleEditing();
+    window.setTimeout(() => {
+      document
+        .querySelector('[data-testid="section-results"]')
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   }
 
   function duplicateSavedLesson(entry: SavedLesson) {
@@ -949,6 +1156,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     setDisplayed(null);
     setSavedId(null);
     setIsEditing(false);
+    adaptationTrackedRef.current = false;
     setIsSharedPlan(false);
     setShareError(false);
     clearSharedPlanFromUrl(true);
@@ -972,14 +1180,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const isGenerating = isPending && !isDemo;
   const canSubmit = !isGenerating && cooldownSecs === 0;
 
+  const apiError = error as {
+    data?: { error?: string; code?: string };
+  };
+  const isScopeRedirect = apiError?.data?.code === "off_topic";
   const rawErrorMsg: string | null = isError
-    ? ((error as { data?: { error?: string } })?.data?.error ??
+    ? (apiError?.data?.error ??
       (error as Error)?.message ??
       "Failed to generate lesson plan. Please try again.")
     : null;
 
   const errorMsg = rawErrorMsg
-    ? /network|fetch|reach|connection/i.test(rawErrorMsg)
+    ? isScopeRedirect
+      ? rawErrorMsg
+      : /network|fetch|reach|connection/i.test(rawErrorMsg)
       ? "We couldn’t reach the lesson service. Check your connection and try again."
       : "We couldn’t create the lesson plan. Your notes are still here—please try again."
     : null;
@@ -1033,16 +1247,28 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         )}
 
         {isDemo && !isSharedPlan && (
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm leading-relaxed text-amber-900">
-            <FlaskConical
-              className="mt-0.5 h-4 w-4 shrink-0"
-              aria-hidden="true"
-            />
-            <p>
-              <strong>Sample preview.</strong> Create a plan to see a prepared
-              example. Your entries stay in this browser and won’t change the
-              example lesson.
-            </p>
+          <div className="flex flex-col gap-4 rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3.5 text-sm leading-relaxed text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <FlaskConical
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
+              <p>
+                <strong>Sample preview.</strong> A prepared Grade 4 reading
+                moment is ready. See the useful move first, then copy, adapt,
+                or start your own lesson.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-10 shrink-0 gap-2 border-amber-300 bg-white/70 font-semibold text-amber-900 hover:bg-white"
+              onClick={scrollToResults}
+              data-testid="button-sample-see-move"
+            >
+              See the useful move
+              <ArrowDown className="h-4 w-4" aria-hidden="true" />
+            </Button>
           </div>
         )}
 
@@ -1413,7 +1639,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         {displayed && (
           <section
             data-testid="section-results"
-            className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            className="scroll-mt-28 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
             <div
               className="flex items-start gap-3 rounded-2xl border border-[var(--brand-teal)]/35 bg-[var(--brand-teal)]/10 px-4 py-3.5 text-[var(--brand-teal-strong)]"
@@ -1437,6 +1663,24 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </p>
               </div>
             </div>
+            <ActivationSummary
+              displayed={displayed}
+              isDemo={isDemo && !isSharedPlan}
+              onUseWithLesson={useSampleWithLesson}
+            />
+            {!isSharedPlan && (
+              <div className="flex items-end justify-between gap-4 border-b border-border/70 pb-2 pt-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
+                    Full lesson plan
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Review the complete sequence after the first useful move.
+                  </p>
+                </div>
+                <BookOpenText className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+              </div>
+            )}
             {!isSharedPlan && (
               <Card
                 className="border-[var(--brand-blue)]/20 bg-card shadow-none"
@@ -1561,22 +1805,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </CardContent>
               </Card>
             )}
-            <Card className="lesson-card lesson-card--blue border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.035]">
-              <CardHeader className="px-5 pb-2 pt-5">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-                  <Sparkles className="h-4 w-4 text-[var(--brand-blue-strong)]" aria-hidden="true" />
-                  Try this first
-                </CardTitle>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  One starting move to use before you build out the rest of the lesson.
-                </p>
-              </CardHeader>
-              <CardContent className="px-5 pb-5 text-sm leading-relaxed text-foreground">
-                <RichText
-                  text={displayed.lesson.scaffoldPlan || displayed.lesson.warmUp}
-                />
-              </CardContent>
-            </Card>
             <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 {isEditing ? (
