@@ -175,6 +175,25 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Record a privacy-safe activation funnel event
+ */
+export const RecordFunnelEventBody = zod.object({
+  event: zod.enum([
+    "landing_cta_clicked",
+    "sample_opened",
+    "sample_use_with_lesson_clicked",
+    "planner_started",
+    "first_useful_move_visible",
+    "support_copied",
+    "support_adapted",
+    "plan_saved",
+    "return_visit",
+    "off_topic_redirected",
+  ]),
+  surface: zod.enum(["landing", "planner", "copilot"]),
+});
+
+/**
  * @summary Generate a lesson plan from teacher notes
  */
 export const GenerateLessonPlanBody = zod.object({
@@ -186,6 +205,16 @@ export const GenerateLessonPlanBody = zod.object({
     .enum(["Grade 4 Discipline-Based Writing"])
     .optional()
     .describe("Optional canonical curriculum unit used to ground the lesson"),
+  teacherGuidanceLanguage: zod
+    .enum(["en", "es"])
+    .optional()
+    .describe("Language used for teacher-facing explanations and guidance"),
+  studentMaterialsLanguage: zod
+    .enum(["en", "es"])
+    .optional()
+    .describe(
+      "Language used for student-facing vocabulary and sentence frames",
+    ),
   accessCode: zod
     .string()
     .optional()

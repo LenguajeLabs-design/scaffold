@@ -5,7 +5,7 @@ import {
   Link,
   useLocation,
 } from "wouter";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +34,10 @@ const queryClient = new QueryClient({
 });
 const ACCESS_GATE_ENABLED =
   import.meta.env.VITE_ACCESS_GATE_ENABLED !== "false";
+
+const LanguagePreview = import.meta.env.DEV
+  ? lazy(() => import("@/pages/LanguagePreview"))
+  : null;
 
 function ScaffoldMark({ className }: { className?: string }) {
   return (
@@ -69,6 +73,15 @@ function NavBar({
       shortLabel: "Copilot",
       href: "/classroom-copilot",
     },
+    ...(import.meta.env.DEV
+      ? [
+          {
+            label: "Language preview",
+            shortLabel: "Languages",
+            href: "/language-preview",
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -92,22 +105,36 @@ function NavBar({
               tab.href === "/"
                 ? location === "/"
                 : location.startsWith(tab.href);
+            const content = (
+              <span
+                className={`inline-flex min-h-11 items-center rounded-xl px-2 text-xs font-medium transition-colors cursor-pointer sm:px-3 sm:text-sm ${
+                  isActive
+                    ? "bg-card text-primary shadow-sm ring-1 ring-border/70"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                }`}
+              >
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </span>
+            );
+            if (tab.href === "/language-preview") {
+              return (
+                <a
+                  key={tab.href}
+                  href={tab.href}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {content}
+                </a>
+              );
+            }
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
               >
-                <span
-                  className={`inline-flex min-h-11 items-center rounded-xl px-2 text-xs font-medium transition-colors cursor-pointer sm:px-3 sm:text-sm ${
-                    isActive
-                      ? "bg-card text-primary shadow-sm ring-1 ring-border/70"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  }`}
-                >
-                  <span className="sm:hidden">{tab.shortLabel}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </span>
+                {content}
               </Link>
             );
           })}
@@ -128,12 +155,28 @@ function NavBar({
           <button
             onClick={isDemo || isAccountSignedIn ? onLogout : onOpenAccount}
             className="shrink-0 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            title={isDemo ? "Use an access code" : isAccountSignedIn ? "Sign out" : "Sign in"}
-            aria-label={isDemo ? "Use an access code" : isAccountSignedIn ? "Sign out" : "Sign in"}
+            title={
+              isDemo
+                ? "Use an access code"
+                : isAccountSignedIn
+                  ? "Sign out"
+                  : "Sign in"
+            }
+            aria-label={
+              isDemo
+                ? "Use an access code"
+                : isAccountSignedIn
+                  ? "Sign out"
+                  : "Sign in"
+            }
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">
-              {isDemo ? "Use access code" : isAccountSignedIn ? "Sign out" : "Sign in"}
+              {isDemo
+                ? "Use access code"
+                : isAccountSignedIn
+                  ? "Sign out"
+                  : "Sign in"}
             </span>
           </button>
         )}
@@ -195,9 +238,15 @@ function AccountAccessDialog({
         <div className="mt-6 space-y-3">
           <GoogleSignInButton onCredential={handleCredential} />
           {isSigningIn && (
-            <p className="text-xs text-muted-foreground">Loading your saved lessons…</p>
+            <p className="text-xs text-muted-foreground">
+              Loading your saved lessons…
+            </p>
           )}
-          {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
+          {error && (
+            <p className="text-xs text-destructive" role="alert">
+              {error}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -235,16 +284,40 @@ function Footer() {
               </a>
             </p>
             <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-              Designed for educators supporting multilingual learners. Uses language proficiency levels as an instructional reference.
+              Designed for educators supporting multilingual learners. Uses
+              language proficiency levels as an instructional reference.
             </p>
             <p className="max-w-md text-[11px] leading-relaxed text-muted-foreground">
-              Scaffold is independently developed. <Link href="/about" className="text-primary hover:underline">Learn more</Link>
+              Scaffold is independently developed.{" "}
+              <Link href="/about" className="text-primary hover:underline">
+                Learn more
+              </Link>
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-              <Link href="/about#about" className="hover:text-primary hover:underline">About &amp; methodology</Link>
-              <Link href="/about#disclaimer" className="hover:text-primary hover:underline">Disclaimer</Link>
-              <Link href="/about#terms" className="hover:text-primary hover:underline">Terms</Link>
-              <Link href="/about#privacy" className="hover:text-primary hover:underline">Privacy</Link>
+              <Link
+                href="/about#about"
+                className="hover:text-primary hover:underline"
+              >
+                About &amp; methodology
+              </Link>
+              <Link
+                href="/about#disclaimer"
+                className="hover:text-primary hover:underline"
+              >
+                Disclaimer
+              </Link>
+              <Link
+                href="/about#terms"
+                className="hover:text-primary hover:underline"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/about#privacy"
+                className="hover:text-primary hover:underline"
+              >
+                Privacy
+              </Link>
             </div>
           </div>
 
@@ -278,7 +351,8 @@ function Router() {
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((config) => {
-        if (!cancelled) setRequireAccessCode(Boolean(config?.requireAccessCode));
+        if (!cancelled)
+          setRequireAccessCode(Boolean(config?.requireAccessCode));
       })
       .catch(() => {
         // If the config endpoint is unavailable, keep the public path open.
@@ -360,6 +434,16 @@ function Router() {
               />
             )}
           />
+          {LanguagePreview && (
+            <Route
+              path="/language-preview"
+              component={() => (
+                <Suspense fallback={<p className="p-8">Loading preview…</p>}>
+                  <LanguagePreview />
+                </Suspense>
+              )}
+            />
+          )}
           <Route path="/about" component={Legal} />
           <Route component={NotFound} />
         </Switch>
@@ -388,6 +472,17 @@ function Router() {
 }
 
 function App() {
+  if (
+    LanguagePreview &&
+    window.location.pathname === `${import.meta.env.BASE_URL}language-preview`
+  ) {
+    return (
+      <Suspense fallback={<p className="p-8">Loading preview…</p>}>
+        <LanguagePreview />
+      </Suspense>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AccountSessionProvider>

@@ -145,7 +145,7 @@ paths:
           content:
             application/json:
               schema:
-              $ref: "#/components/schemas/HealthStatus"
+                $ref: "#/components/schemas/HealthStatus"
   /events:
     post:
       operationId: recordFunnelEvent
@@ -415,6 +415,14 @@ components:
           type: string
           enum: ["Grade 4 Discipline-Based Writing"]
           description: Optional canonical curriculum unit used to ground the lesson
+        teacherGuidanceLanguage:
+          type: string
+          enum: ["en", "es"]
+          description: Language used for teacher-facing explanations and guidance
+        studentMaterialsLanguage:
+          type: string
+          enum: ["en", "es"]
+          description: Language used for student-facing vocabulary and sentence frames
         accessCode:
           type: string
           description: Optional school access code for private-beta authorization

@@ -25,6 +25,7 @@ import type {
   GenerateLessonPlanBody,
   HealthStatus,
   LessonPlan,
+  RecordFunnelEventBody,
   SaveAccountLessonBody,
   SaveAccountLessonResponse,
   ValidateAccessCode200,
@@ -437,6 +438,92 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Record a privacy-safe activation funnel event
+ */
+export const getRecordFunnelEventUrl = () => {
+  return `/api/events`;
+};
+
+export const recordFunnelEvent = async (
+  recordFunnelEventBody: RecordFunnelEventBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRecordFunnelEventUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(recordFunnelEventBody),
+  });
+};
+
+export const getRecordFunnelEventMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordFunnelEvent>>,
+    TError,
+    { data: BodyType<RecordFunnelEventBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recordFunnelEvent>>,
+  TError,
+  { data: BodyType<RecordFunnelEventBody> },
+  TContext
+> => {
+  const mutationKey = ["recordFunnelEvent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recordFunnelEvent>>,
+    { data: BodyType<RecordFunnelEventBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return recordFunnelEvent(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecordFunnelEventMutationResult = NonNullable<
+  Awaited<ReturnType<typeof recordFunnelEvent>>
+>;
+export type RecordFunnelEventMutationBody = BodyType<RecordFunnelEventBody>;
+export type RecordFunnelEventMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Record a privacy-safe activation funnel event
+ */
+export const useRecordFunnelEvent = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordFunnelEvent>>,
+    TError,
+    { data: BodyType<RecordFunnelEventBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof recordFunnelEvent>>,
+  TError,
+  { data: BodyType<RecordFunnelEventBody> },
+  TContext
+> => {
+  return useMutation(getRecordFunnelEventMutationOptions(options));
+};
 
 /**
  * @summary Generate a lesson plan from teacher notes

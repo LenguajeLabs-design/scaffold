@@ -7,6 +7,8 @@
  */
 import type { GenerateLessonPlanBodyGradeLevel } from "./generateLessonPlanBodyGradeLevel";
 import type { GenerateLessonPlanBodyLanguageSupportLevel } from "./generateLessonPlanBodyLanguageSupportLevel";
+import type { GenerateLessonPlanBodyStudentMaterialsLanguage } from "./generateLessonPlanBodyStudentMaterialsLanguage";
+import type { GenerateLessonPlanBodyTeacherGuidanceLanguage } from "./generateLessonPlanBodyTeacherGuidanceLanguage";
 import type { GenerateLessonPlanBodyUnitProfile } from "./generateLessonPlanBodyUnitProfile";
 
 export interface GenerateLessonPlanBody {
@@ -18,6 +20,10 @@ export interface GenerateLessonPlanBody {
   topic: string;
   /** Optional canonical curriculum unit used to ground the lesson */
   unitProfile?: GenerateLessonPlanBodyUnitProfile;
+  /** Language used for teacher-facing explanations and guidance */
+  teacherGuidanceLanguage?: GenerateLessonPlanBodyTeacherGuidanceLanguage;
+  /** Language used for student-facing vocabulary and sentence frames */
+  studentMaterialsLanguage?: GenerateLessonPlanBodyStudentMaterialsLanguage;
   /** Optional school access code for private-beta authorization */
   accessCode?: string;
 }

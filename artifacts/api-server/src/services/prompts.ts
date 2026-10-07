@@ -19,6 +19,8 @@ import {
 export interface LessonPlanPromptArgs {
   gradeLevel: string;
   languageSupportLevel: string;
+  teacherGuidanceLanguage?: string;
+  studentMaterialsLanguage?: string;
   topic: string;
   notes: string;
   unitProfile?: string;
@@ -119,6 +121,8 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
     "for an elementary multilingual learner classroom.\n\n" +
     `Grade Level: ${args.gradeLevel}\n` +
     `Language Support Level: ${args.languageSupportLevel}\n` +
+    `Teacher guidance language: ${args.teacherGuidanceLanguage === "es" ? "Spanish" : "English"}\n` +
+    `Student materials language: ${args.studentMaterialsLanguage === "es" ? "Spanish" : "English"}\n` +
     `Topic/Subject: ${args.topic}\n\n` +
     `Selected Unit: ${args.unitProfile ?? "General lesson planning"}\n\n` +
     `Canonical guide context:\n${canonicalContext}\n\n` +
@@ -137,6 +141,10 @@ export function buildLessonPlanPrompt(args: LessonPlanPromptArgs): PromptPair {
     "- In scaffoldPlan, lead with one useful move for the immediate task; do not provide a disconnected list of accommodations.\n" +
     "- In scaffoldFadingPlan, state what the teacher should observe before reducing or changing the support.\n" +
     "- In teacherNotes, include actionable bullets that help the teacher differentiate and watch for likely student needs.\n" +
+    "- Write teacher-facing explanations and directions in the selected teacher guidance language.\n" +
+    "- Write keyVocabulary and sentenceFrames in the selected student materials language. Keep vocabulary choices and sentence frames aligned to the lesson's actual content and language demand.\n" +
+    "- In teacher-facing fields, any quoted sample prompt intended for students should use the selected student materials language; keep the surrounding teacher explanation in the teacher guidance language.\n" +
+    "- Preserve the meaning and rigor of the curriculum context. Do not translate, rename, or invent canonical source titles in sourcesUsed.\n" +
     "- Do not mention missing information or ask follow-up questions. Make the most reasonable teacher-friendly assumptions.\n\n" +
     "IMPORTANT: For all multi-sentence fields (warmUp, mainActivity, speakingActivity, exitTicket, teacherNotes) " +
     "use structured plain-text formatting:\n" +

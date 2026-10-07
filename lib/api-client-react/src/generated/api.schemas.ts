@@ -122,6 +122,28 @@ export const GenerateLessonPlanBodyUnitProfile = {
   "Grade_4_Discipline-Based_Writing": "Grade 4 Discipline-Based Writing",
 } as const;
 
+/**
+ * Language used for teacher-facing explanations and guidance
+ */
+export type GenerateLessonPlanBodyTeacherGuidanceLanguage =
+  (typeof GenerateLessonPlanBodyTeacherGuidanceLanguage)[keyof typeof GenerateLessonPlanBodyTeacherGuidanceLanguage];
+
+export const GenerateLessonPlanBodyTeacherGuidanceLanguage = {
+  en: "en",
+  es: "es",
+} as const;
+
+/**
+ * Language used for student-facing vocabulary and sentence frames
+ */
+export type GenerateLessonPlanBodyStudentMaterialsLanguage =
+  (typeof GenerateLessonPlanBodyStudentMaterialsLanguage)[keyof typeof GenerateLessonPlanBodyStudentMaterialsLanguage];
+
+export const GenerateLessonPlanBodyStudentMaterialsLanguage = {
+  en: "en",
+  es: "es",
+} as const;
+
 export interface GenerateLessonPlanBody {
   /** Rough planning notes from the teacher */
   notes: string;
@@ -131,6 +153,10 @@ export interface GenerateLessonPlanBody {
   topic: string;
   /** Optional canonical curriculum unit used to ground the lesson */
   unitProfile?: GenerateLessonPlanBodyUnitProfile;
+  /** Language used for teacher-facing explanations and guidance */
+  teacherGuidanceLanguage?: GenerateLessonPlanBodyTeacherGuidanceLanguage;
+  /** Language used for student-facing vocabulary and sentence frames */
+  studentMaterialsLanguage?: GenerateLessonPlanBodyStudentMaterialsLanguage;
   /** Optional school access code for private-beta authorization */
   accessCode?: string;
 }
@@ -187,4 +213,34 @@ export type ValidateAccessCodeBody = {
 
 export type ValidateAccessCode200 = {
   valid: boolean;
+};
+
+export type RecordFunnelEventBodyEvent =
+  (typeof RecordFunnelEventBodyEvent)[keyof typeof RecordFunnelEventBodyEvent];
+
+export const RecordFunnelEventBodyEvent = {
+  landing_cta_clicked: "landing_cta_clicked",
+  sample_opened: "sample_opened",
+  sample_use_with_lesson_clicked: "sample_use_with_lesson_clicked",
+  planner_started: "planner_started",
+  first_useful_move_visible: "first_useful_move_visible",
+  support_copied: "support_copied",
+  support_adapted: "support_adapted",
+  plan_saved: "plan_saved",
+  return_visit: "return_visit",
+  off_topic_redirected: "off_topic_redirected",
+} as const;
+
+export type RecordFunnelEventBodySurface =
+  (typeof RecordFunnelEventBodySurface)[keyof typeof RecordFunnelEventBodySurface];
+
+export const RecordFunnelEventBodySurface = {
+  landing: "landing",
+  planner: "planner",
+  copilot: "copilot",
+} as const;
+
+export type RecordFunnelEventBody = {
+  event: RecordFunnelEventBodyEvent;
+  surface: RecordFunnelEventBodySurface;
 };

@@ -95,9 +95,12 @@ import { RichText } from "@/components/RichText";
 import { GenerationProgress } from "@/components/GenerationProgress";
 import { trackFunnelEvent } from "@/lib/analytics";
 import {
-  decodeSharedPlan,
-  encodeSharedPlan,
-} from "@/lib/shared-plan";
+  isLanguage,
+  languages as supportedLanguages,
+  type Language,
+} from "@/data/language-preview/copy";
+import { getPreviewLessonPlan } from "@/data/language-preview/demo-plan";
+import { decodeSharedPlan, encodeSharedPlan } from "@/lib/shared-plan";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,6 +113,24 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const MAX_NOTES_CHARS = 2000;
+const LANGUAGE_PREFERENCES_KEY = "scaffold-language-preview-v1";
+
+function readLanguagePreferences() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(LANGUAGE_PREFERENCES_KEY) ?? "null",
+    ) as { app?: unknown; materials?: unknown } | null;
+    return {
+      teacher: isLanguage(saved?.app) ? saved.app : ("en" as Language),
+      studentMaterials: isLanguage(saved?.materials)
+        ? saved.materials
+        : ("en" as Language),
+    };
+  } catch {
+    return { teacher: "en" as Language, studentMaterials: "en" as Language };
+  }
+}
+
 const supportLevelLabels: Record<string, string> = {
   "1": "Intensive language support",
   "2": "High language support",
@@ -122,7 +143,9 @@ const supportLevelLabels: Record<string, string> = {
 const formSchema = z.object({
   topic: z.string().min(1, "Topic is required"),
   gradeLevel: z.nativeEnum(GenerateLessonPlanBodyGradeLevel),
-  languageSupportLevel: z.nativeEnum(GenerateLessonPlanBodyLanguageSupportLevel),
+  languageSupportLevel: z.nativeEnum(
+    GenerateLessonPlanBodyLanguageSupportLevel,
+  ),
   unitProfile: z.nativeEnum(GenerateLessonPlanBodyUnitProfile).optional(),
   notes: z
     .string()
@@ -170,7 +193,8 @@ interface HomeProps {
 // Print-only view
 // ---------------------------------------------------------------------------
 function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
-  const { lesson, gradeLevel, languageSupportLevel, topic, unitProfile } = displayed;
+  const { lesson, gradeLevel, languageSupportLevel, topic, unitProfile } =
+    displayed;
   const printDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -659,8 +683,8 @@ function ActivationSummary({
             Why this support fits
           </p>
           <p className="mt-2 text-sm leading-relaxed text-foreground">
-            It keeps the learning goal visible while targeting the language
-            move students need for the task: {lesson.languageObjective}
+            It keeps the learning goal visible while targeting the language move
+            students need for the task: {lesson.languageObjective}
           </p>
         </div>
         <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
@@ -731,7 +755,8 @@ function ActivationSummary({
 }
 
 export default function Home({ accessCode, isDemo }: HomeProps) {
-  const { lessons, save, update, duplicate, remove, mergeRemote } = useSavedLessons();
+  const { lessons, save, update, duplicate, remove, mergeRemote } =
+    useSavedLessons();
   const {
     account,
     lessons: accountLessons,
@@ -740,6 +765,46 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     error: accountError,
   } = useAccountSession();
   const rememberedPlan = lessons[0];
+  const [languagePreferences, setLanguagePreferences] = useState(
+    readLanguagePreferences,
+  );
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(LANGUAGE_PREFERENCES_KEY) ?? "{}",
+      ) as Record<string, unknown>;
+      localStorage.setItem(
+        LANGUAGE_PREFERENCES_KEY,
+        JSON.stringify({
+          ...saved,
+          app: languagePreferences.teacher,
+          guidance: languagePreferences.teacher,
+          materials: languagePreferences.studentMaterials,
+        }),
+      );
+    } catch {
+      // The planner remains usable if browser storage is unavailable.
+    }
+  }, [languagePreferences]);
+  useEffect(() => {
+    if (
+      !isDemo ||
+      new URL(window.location.href).searchParams.has("share")
+    ) {
+      return;
+    }
+    setDisplayed((current) =>
+      current
+        ? {
+            ...current,
+            lesson: getPreviewLessonPlan(
+              languagePreferences.teacher,
+              languagePreferences.studentMaterials,
+            ),
+          }
+        : current,
+    );
+  }, [isDemo, languagePreferences]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -770,9 +835,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [displayed, setDisplayed] = useState<DisplayedLesson | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [renamingLesson, setRenamingLesson] = useState<SavedLesson | null>(null);
+  const [renamingLesson, setRenamingLesson] = useState<SavedLesson | null>(
+    null,
+  );
   const [renameValue, setRenameValue] = useState("");
-  const [deletingLesson, setDeletingLesson] = useState<SavedLesson | null>(null);
+  const [deletingLesson, setDeletingLesson] = useState<SavedLesson | null>(
+    null,
+  );
   const [isSharedPlan, setIsSharedPlan] = useState(false);
   const [shareError, setShareError] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -833,10 +902,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       notes: DEMO_CLASSROOM_PROBLEM,
     });
     setDisplayed({
-      lesson: DEMO_LESSON_PLAN,
+      lesson: getPreviewLessonPlan(
+        languagePreferences.teacher,
+        languagePreferences.studentMaterials,
+      ),
       gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_4,
-      languageSupportLevel:
-        GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
+      languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
       topic: DEMO_LESSON_PLAN.title,
       unitProfile: undefined,
     });
@@ -933,7 +1004,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         lesson: accountLesson,
         marketingOptIn: captureMarketing,
       });
-      setCaptureNotice("Saved to your account. You can find this lesson on another device after signing in.");
+      setCaptureNotice(
+        "Saved to your account. You can find this lesson on another device after signing in.",
+      );
     } catch (caught) {
       setCaptureError(
         caught instanceof Error
@@ -958,7 +1031,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     if (isDemo) {
       setSavedId(null);
       setDisplayed({
-        lesson: DEMO_LESSON_PLAN,
+        lesson: getPreviewLessonPlan(
+          languagePreferences.teacher,
+          languagePreferences.studentMaterials,
+        ),
         gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_4,
         languageSupportLevel:
           GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
@@ -968,7 +1044,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       return;
     }
     setSavedId(null);
-    generateLessonPlan({ data: { ...values, accessCode } });
+    generateLessonPlan({
+      data: {
+        ...values,
+        teacherGuidanceLanguage: languagePreferences.teacher,
+        studentMaterialsLanguage: languagePreferences.studentMaterials,
+        accessCode,
+      },
+    });
   }
 
   useEffect(() => {
@@ -1010,7 +1093,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         marketingOptIn: captureMarketing,
       })
         .then(() => {
-          setCaptureNotice("Saved to your account. You can find this lesson on another device after signing in.");
+          setCaptureNotice(
+            "Saved to your account. You can find this lesson on another device after signing in.",
+          );
         })
         .catch(() => undefined);
     }
@@ -1180,6 +1265,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
   const isGenerating = isPending && !isDemo;
   const canSubmit = !isGenerating && cooldownSecs === 0;
+  const languagePreviewPlan = getPreviewLessonPlan(
+    languagePreferences.teacher,
+    languagePreferences.studentMaterials,
+  );
 
   const apiError = error as {
     data?: { error?: string; code?: string };
@@ -1195,8 +1284,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     ? isScopeRedirect
       ? rawErrorMsg
       : /network|fetch|reach|connection/i.test(rawErrorMsg)
-      ? "We couldn’t reach the lesson service. Check your connection and try again."
-      : rawErrorMsg
+        ? "We couldn’t reach the lesson service. Check your connection and try again."
+        : rawErrorMsg
     : null;
 
   return (
@@ -1256,8 +1345,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               />
               <p>
                 <strong>Sample preview.</strong> A prepared Grade 4 reading
-                moment is ready. See the useful move first, then copy, adapt,
-                or start your own lesson.
+                moment is ready. See the useful move first, then copy, adapt, or
+                start your own lesson.
               </p>
             </div>
             <Button
@@ -1286,6 +1375,87 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   className="space-y-6"
                 >
                   <input type="hidden" {...form.register("topic")} />
+                  <fieldset className="rounded-xl border border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.035] p-4">
+                    <legend className="px-1 text-sm font-semibold text-foreground">
+                      Language preferences
+                    </legend>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="space-y-2 text-sm font-medium">
+                        <span className="block">Teacher guidance language</span>
+                        <select
+                          value={languagePreferences.teacher}
+                          onChange={(event) => {
+                            const language = event.target.value;
+                            if (isLanguage(language)) {
+                              setLanguagePreferences((current) => ({
+                                ...current,
+                                teacher: language,
+                              }));
+                            }
+                          }}
+                          className="min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {supportedLanguages.map((language) => (
+                            <option key={language.code} value={language.code}>
+                              {language.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="space-y-2 text-sm font-medium">
+                        <span className="block">
+                          Student materials language
+                        </span>
+                        <select
+                          value={languagePreferences.studentMaterials}
+                          onChange={(event) => {
+                            const language = event.target.value;
+                            if (isLanguage(language)) {
+                              setLanguagePreferences((current) => ({
+                                ...current,
+                                studentMaterials: language,
+                              }));
+                            }
+                          }}
+                          className="min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {supportedLanguages.map((language) => (
+                            <option key={language.code} value={language.code}>
+                              {language.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="mt-4 grid gap-3 rounded-lg border border-border/70 bg-background/80 p-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          Teacher guidance preview
+                        </p>
+                        <p
+                          lang={languagePreferences.teacher}
+                          className="mt-1 text-xs leading-5 text-muted-foreground"
+                        >
+                          {languagePreviewPlan.scaffoldPlan}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          Student materials preview
+                        </p>
+                        <p
+                          lang={languagePreferences.studentMaterials}
+                          className="mt-1 text-xs leading-5 text-muted-foreground"
+                        >
+                          {languagePreviewPlan.sentenceFrames[0]}
+                        </p>
+                      </div>
+                      <p className="text-xs leading-5 text-muted-foreground sm:col-span-2">
+                        Prepared example only. These choices are saved in this
+                        browser and guide language in generated plans.
+                      </p>
+                    </div>
+                  </fieldset>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
                       Start with the classroom moment
@@ -1351,10 +1521,26 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     </p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {[
-                        [BookOpenText, "Adapt a lesson", "I need to adapt tomorrow’s lesson for multilingual learners."],
-                        [MessageSquareQuote, "Support writing", "My students have ideas but cannot get started with the writing."],
-                        [Tags, "Build vocabulary", "Help me teach the key vocabulary before this lesson."],
-                        [StickyNote, "Create sentence frames", "Create sentence frames for students to explain their thinking."],
+                        [
+                          BookOpenText,
+                          "Adapt a lesson",
+                          "I need to adapt tomorrow’s lesson for multilingual learners.",
+                        ],
+                        [
+                          MessageSquareQuote,
+                          "Support writing",
+                          "My students have ideas but cannot get started with the writing.",
+                        ],
+                        [
+                          Tags,
+                          "Build vocabulary",
+                          "Help me teach the key vocabulary before this lesson.",
+                        ],
+                        [
+                          StickyNote,
+                          "Create sentence frames",
+                          "Create sentence frames for students to explain their thinking.",
+                        ],
                       ].map(([Icon, label, brief]) => (
                         <button
                           key={label as string}
@@ -1363,7 +1549,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           onClick={() => applyQuickStart(brief as string)}
                         >
                           {React.createElement(Icon as LucideIcon, {
-                            className: "h-4 w-4 shrink-0 text-[var(--brand-blue-strong)]",
+                            className:
+                              "h-4 w-4 shrink-0 text-[var(--brand-blue-strong)]",
                             "aria-hidden": true,
                           })}
                           <span>{label as string}</span>
@@ -1377,15 +1564,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       type="button"
                       className="flex min-h-14 w-full items-center justify-between gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                       aria-expanded={showPlanningContext}
-                      onClick={() => setShowPlanningContext((current) => !current)}
+                      onClick={() =>
+                        setShowPlanningContext((current) => !current)
+                      }
                     >
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-foreground">
                           Planning context
                         </span>
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                          {form.watch("gradeLevel")} · Student support reference: Level {form.watch("languageSupportLevel")}
-                          {rememberedPlan ? " · remembered from your last plan" : ""}
+                          {form.watch("gradeLevel")} · Student support
+                          reference: Level {form.watch("languageSupportLevel")}
+                          {rememberedPlan
+                            ? " · remembered from your last plan"
+                            : ""}
                         </span>
                       </span>
                       <ChevronDown
@@ -1404,15 +1596,29 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                               <FormLabel className="text-sm font-medium">
                                 Grade level
                               </FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-grade-level" className="text-sm">
+                                  <SelectTrigger
+                                    data-testid="select-grade-level"
+                                    className="text-sm"
+                                  >
                                     <SelectValue placeholder="Select a grade" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {(Object.values(GenerateLessonPlanBodyGradeLevel) as string[]).map((grade) => (
-                                    <SelectItem key={grade} value={grade} className="text-sm">
+                                  {(
+                                    Object.values(
+                                      GenerateLessonPlanBodyGradeLevel,
+                                    ) as string[]
+                                  ).map((grade) => (
+                                    <SelectItem
+                                      key={grade}
+                                      value={grade}
+                                      className="text-sm"
+                                    >
                                       {grade}
                                     </SelectItem>
                                   ))}
@@ -1431,22 +1637,38 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                               <FormLabel className="text-sm font-medium">
                                 Student support reference
                               </FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-language-support-level" className="text-sm">
+                                  <SelectTrigger
+                                    data-testid="select-language-support-level"
+                                    className="text-sm"
+                                  >
                                     <SelectValue placeholder="Select support" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {(Object.entries(GenerateLessonPlanBodyLanguageSupportLevel) as [string, string][]).map(([, value]) => (
-                                    <SelectItem key={value} value={value} className="text-sm">
-                                      Level {value} · {supportLevelLabels[value]}
+                                  {(
+                                    Object.entries(
+                                      GenerateLessonPlanBodyLanguageSupportLevel,
+                                    ) as [string, string][]
+                                  ).map(([, value]) => (
+                                    <SelectItem
+                                      key={value}
+                                      value={value}
+                                      className="text-sm"
+                                    >
+                                      Level {value} ·{" "}
+                                      {supportLevelLabels[value]}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                               <p className="text-xs leading-relaxed text-muted-foreground">
-                                An instructional reference, not an assessment or placement.
+                                An instructional reference, not an assessment or
+                                placement.
                               </p>
                               <FormMessage />
                             </FormItem>
@@ -1459,16 +1681,29 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           render={({ field }) => (
                             <FormItem className="sm:col-span-2">
                               <FormLabel className="text-sm font-medium">
-                                Curriculum focus <span className="font-normal text-muted-foreground">(optional)</span>
+                                Curriculum focus{" "}
+                                <span className="font-normal text-muted-foreground">
+                                  (optional)
+                                </span>
                               </FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger className="text-sm">
                                     <SelectValue placeholder="Use the general planner" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value={GenerateLessonPlanBodyUnitProfile["Grade_4_Discipline-Based_Writing"]} className="text-sm">
+                                  <SelectItem
+                                    value={
+                                      GenerateLessonPlanBodyUnitProfile[
+                                        "Grade_4_Discipline-Based_Writing"
+                                      ]
+                                    }
+                                    className="text-sm"
+                                  >
                                     Grade 4 · Discipline-based writing
                                   </SelectItem>
                                 </SelectContent>
@@ -1483,14 +1718,24 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
                   <div className="space-y-3 pt-1">
                     {errorMsg && (
-                      <div className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive" role="alert">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                      <div
+                        className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive"
+                        role="alert"
+                      >
+                        <AlertTriangle
+                          className="mt-0.5 h-4 w-4 shrink-0"
+                          aria-hidden="true"
+                        />
                         <span>{errorMsg}</span>
                       </div>
                     )}
                     {cooldownSecs > 0 && !errorMsg && (
-                      <div className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]" role="status">
-                        You can create another plan in {cooldownSecs} seconds. Your current notes will stay in place.
+                      <div
+                        className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]"
+                        role="status"
+                      >
+                        You can create another plan in {cooldownSecs} seconds.
+                        Your current notes will stay in place.
                       </div>
                     )}
                     <Button
@@ -1521,14 +1766,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             </CardContent>
           </Card>
 
-          <aside className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-24" aria-label="Your Scaffold workspace">
+          <aside
+            className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-24"
+            aria-label="Your Scaffold workspace"
+          >
             {lessons.length > 0 ? (
               <Card className="border-white/90 bg-card/90 shadow-[0_18px_50px_rgba(15,45,74,0.06)]">
                 <CardHeader className="px-5 pb-2 pt-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                        <BookMarked className="h-4 w-4 text-[var(--brand-teal-strong)]" aria-hidden="true" />
+                        <BookMarked
+                          className="h-4 w-4 text-[var(--brand-teal-strong)]"
+                          aria-hidden="true"
+                        />
                         Continue your work
                       </CardTitle>
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
@@ -1556,10 +1807,17 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           {entry.lesson.title}
                         </span>
                         <span className="mt-1 block truncate text-xs text-muted-foreground">
-                          {entry.gradeLevel} · {entry.languageSupportLevel ? `Level ${entry.languageSupportLevel}` : "Support reference not recorded"} · {formatDate(entry.savedAt)}
+                          {entry.gradeLevel} ·{" "}
+                          {entry.languageSupportLevel
+                            ? `Level ${entry.languageSupportLevel}`
+                            : "Support reference not recorded"}{" "}
+                          · {formatDate(entry.savedAt)}
                         </span>
                       </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                      <ChevronRight
+                        className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      />
                     </button>
                   ))}
                   <p className="px-1 pt-2 text-xs leading-relaxed text-muted-foreground">
@@ -1570,16 +1828,26 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             ) : (
               <Card className="border-white/90 bg-card/75 shadow-[0_18px_50px_rgba(15,45,74,0.04)]">
                 <CardHeader className="px-5 pb-2 pt-5">
-                  <CardTitle className="text-base font-semibold">A useful place to start</CardTitle>
+                  <CardTitle className="text-base font-semibold">
+                    A useful place to start
+                  </CardTitle>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Describe the lesson or classroom moment in your own words. You can refine the details later.
+                    Describe the lesson or classroom moment in your own words.
+                    You can refine the details later.
                   </p>
                 </CardHeader>
                 <CardContent className="px-5 pb-5">
                   <div className="space-y-3 text-sm text-muted-foreground">
-                    {["Your instructional goal", "The language barrier you’re noticing", "What students should be able to do next"].map((item) => (
+                    {[
+                      "Your instructional goal",
+                      "The language barrier you’re noticing",
+                      "What students should be able to do next",
+                    ].map((item) => (
                       <div key={item} className="flex items-start gap-2.5">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-teal-strong)]" aria-hidden="true" />
+                        <CheckCircle2
+                          className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-teal-strong)]"
+                          aria-hidden="true"
+                        />
                         <span>{item}</span>
                       </div>
                     ))}
@@ -1589,7 +1857,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
             )}
 
             <p className="px-1 text-xs leading-relaxed text-muted-foreground">
-              Teacher review stays central. Scaffold suggests options you can adapt to your students, curriculum, and professional judgment.
+              Teacher review stays central. Scaffold suggests options you can
+              adapt to your students, curriculum, and professional judgment.
             </p>
           </aside>
         </div>
@@ -1609,9 +1878,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </section>
         )}
 
-        {isGenerating && !displayed && (
-          <GenerationProgress mode="lesson" />
-        )}
+        {isGenerating && !displayed && <GenerationProgress mode="lesson" />}
 
         {displayed && (
           <section
@@ -1659,7 +1926,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       : "Review the complete sequence and adapt the supports for your lesson."}
                   </p>
                 </div>
-                <BookOpenText className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+                <BookOpenText
+                  className="hidden h-5 w-5 text-muted-foreground sm:block"
+                  aria-hidden="true"
+                />
               </div>
             )}
             {!isSharedPlan && (
@@ -1676,7 +1946,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       {displayed.lesson.title}
                     </CardTitle>
                     <div className="flex shrink-0 flex-wrap gap-2">
-                      <Badge variant="secondary" className="text-xs font-medium">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs font-medium"
+                      >
                         {displayed.gradeLevel}
                       </Badge>
                       <Badge variant="outline" className="text-xs font-medium">
@@ -1749,21 +2022,34 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   </div>
 
                   {captureNotice ? (
-                    <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/10 px-3.5 py-3 text-sm leading-relaxed text-[var(--brand-teal-strong)]" role="status">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <div
+                      className="mt-4 flex items-start gap-2.5 rounded-xl border border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/10 px-3.5 py-3 text-sm leading-relaxed text-[var(--brand-teal-strong)]"
+                      role="status"
+                    >
+                      <CheckCircle2
+                        className="mt-0.5 h-4 w-4 shrink-0"
+                        aria-hidden="true"
+                      />
                       <span>{captureNotice}</span>
                     </div>
                   ) : (
                     <div className="mt-5 space-y-3">
-                      <GoogleSignInButton onCredential={handleAccountCredential} />
+                      <GoogleSignInButton
+                        onCredential={handleAccountCredential}
+                      />
                       <label className="flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
                         <input
                           type="checkbox"
                           checked={captureMarketing}
-                          onChange={(event) => setCaptureMarketing(event.target.checked)}
+                          onChange={(event) =>
+                            setCaptureMarketing(event.target.checked)
+                          }
                           className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-[var(--brand-blue-strong)]"
                         />
-                        <span>Send me occasional Scaffold updates and short feedback requests.</span>
+                        <span>
+                          Send me occasional Scaffold updates and short feedback
+                          requests.
+                        </span>
                       </label>
                       <button
                         type="button"
@@ -1773,11 +2059,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         Continue without saving
                       </button>
                       <p className="text-[11px] leading-relaxed text-muted-foreground">
-                        Your Google email is used to identify your account. It is
-                        not added to lesson prompts or student records.
+                        Your Google email is used to identify your account. It
+                        is not added to lesson prompts or student records.
                       </p>
                       {(captureError || accountError) && (
-                        <p className="text-xs leading-relaxed text-destructive" role="alert">
+                        <p
+                          className="text-xs leading-relaxed text-destructive"
+                          role="alert"
+                        >
                           {captureError || accountError}
                         </p>
                       )}
@@ -1983,10 +2272,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </Card>
             )}
 
-            <Card
-              id="plan-overview"
-              className="lesson-card scroll-mt-24"
-            >
+            <Card id="plan-overview" className="lesson-card scroll-mt-24">
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-5 pb-4 pt-5">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
@@ -2042,7 +2328,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       <Textarea
                         value={displayed.lesson.languageObjective}
                         onChange={(event) =>
-                          updateLesson({ languageObjective: event.target.value })
+                          updateLesson({
+                            languageObjective: event.target.value,
+                          })
                         }
                         aria-label="Edit language objective"
                         className="min-h-28 resize-y border-[var(--brand-purple)]/30 bg-background/80 text-sm leading-relaxed"
@@ -2273,7 +2561,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   content: displayed.lesson.exitTicket,
                 },
               ].map(({ step, label, field, content }) => (
-                <Card key={step} className={`lesson-card ${Number(step) % 2 === 0 ? "lesson-card--blue" : ""}`}>
+                <Card
+                  key={step}
+                  className={`lesson-card ${Number(step) % 2 === 0 ? "lesson-card--blue" : ""}`}
+                >
                   <CardHeader className="flex flex-row items-start justify-between gap-3 px-4 pb-2 pt-4">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <span className="w-5 h-5 rounded bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
@@ -2285,7 +2576,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       copied={copiedSection === `lesson-step-${step}`}
                       label={label}
                       onClick={() =>
-                        copySection(`lesson-step-${step}`, `${label}\n${content}`)
+                        copySection(
+                          `lesson-step-${step}`,
+                          `${label}\n${content}`,
+                        )
                       }
                     />
                   </CardHeader>
@@ -2375,9 +2669,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       )
                     }
                     isEditing={isEditing}
-                    onChange={(value) =>
-                      updateLesson({ scaffoldPlan: value })
-                    }
+                    onChange={(value) => updateLesson({ scaffoldPlan: value })}
                   />
                   <GuidanceDetails
                     icon={TrendingUp}
@@ -2421,18 +2713,23 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
             {displayed.lesson.sourcesUsed?.length > 0 && (
               <div className="flex items-center gap-2 px-1 text-xs leading-relaxed text-muted-foreground">
-                <LibraryBig className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <LibraryBig
+                  className="h-3.5 w-3.5 shrink-0"
+                  aria-hidden="true"
+                />
                 <span>
                   {`Planning basis: Scaffold instructional guidance at Support Level ${displayed.languageSupportLevel}${
-                    displayed.unitProfile
-                      ? ` and ${displayed.unitProfile}`
-                      : ""
+                    displayed.unitProfile ? ` and ${displayed.unitProfile}` : ""
                   }.`}
                 </span>
               </div>
             )}
             <p className="rounded-xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-              Teacher review required: Scaffold generates instructional suggestions, not official proficiency determinations or individualized educational recommendations. Adapt this plan to your students, curriculum, school policies, and professional judgment.
+              Teacher review required: Scaffold generates instructional
+              suggestions, not official proficiency determinations or
+              individualized educational recommendations. Adapt this plan to
+              your students, curriculum, school policies, and professional
+              judgment.
             </p>
             {!isSharedPlan && (
               <Card className="border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/[0.045] shadow-none">
@@ -2546,7 +2843,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-44 rounded-xl p-1.5"
+                      >
                         <DropdownMenuItem
                           className="min-h-10 rounded-lg"
                           onSelect={() => beginRename(entry)}
