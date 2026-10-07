@@ -1280,10 +1280,17 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       "Failed to generate lesson plan. Please try again.")
     : null;
 
+  // API responses include useful, actionable messages such as a beta allowance
+  // or cooldown. Only replace a genuine browser/network failure with the
+  // connection guidance; words like "reached" also occur in server messages.
+  const isNetworkError =
+    !apiError?.data?.error &&
+    /network|failed to fetch|fetch failed|connection/i.test(rawErrorMsg ?? "");
+
   const errorMsg = rawErrorMsg
     ? isScopeRedirect
       ? rawErrorMsg
-      : /network|fetch|reach|connection/i.test(rawErrorMsg)
+      : isNetworkError
         ? "We couldn’t reach the lesson service. Check your connection and try again."
         : rawErrorMsg
     : null;
