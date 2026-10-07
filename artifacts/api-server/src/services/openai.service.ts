@@ -4,6 +4,15 @@ import { privateHash, type Actor } from "../lib/auth";
 import { reserve, finish } from "../lib/usage-store";
 import { logUsage, type FeatureKey } from "../lib/usage-logger";
 
+export class GenerationServiceError extends Error {
+  constructor(
+    public readonly reason: "provider_unavailable" | "invalid_output",
+    public readonly providerStatus?: number,
+  ) {
+    super(reason);
+  }
+}
+
 export interface OpenAICallOptions {
   model: string;
   maxTokens: number;
@@ -27,14 +36,34 @@ export async function callOpenAIForJSON<T>(options: OpenAICallOptions): Promise<
   let usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | undefined;
   let outcome: "completed" | "failed" = "failed";
   try {
-    const completion = await openai.chat.completions.create({
-      model, max_completion_tokens: maxTokens,
-      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
-    }, { maxRetries: 0, timeout: API_TIMEOUT_MS });
+    let completion;
+    try {
+      completion = await openai.chat.completions.create({
+        model,
+        max_completion_tokens: maxTokens,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }, { maxRetries: 0, timeout: API_TIMEOUT_MS });
+    } catch (error) {
+      const providerStatus =
+        typeof error === "object" && error !== null && "status" in error &&
+        typeof error.status === "number"
+          ? error.status
+          : undefined;
+      throw new GenerationServiceError("provider_unavailable", providerStatus);
+    }
     usage = completion.usage ?? undefined;
     const raw = completion.choices[0]?.message?.content;
-    if (!raw) throw new Error("Empty response");
-    const result = JSON.parse(raw) as T;
+    if (!raw) throw new GenerationServiceError("invalid_output");
+    let result: T;
+    try {
+      result = JSON.parse(raw) as T;
+    } catch {
+      throw new GenerationServiceError("invalid_output");
+    }
     outcome = "completed";
     return result;
   } finally {

@@ -1196,7 +1196,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       ? rawErrorMsg
       : /network|fetch|reach|connection/i.test(rawErrorMsg)
       ? "We couldn’t reach the lesson service. Check your connection and try again."
-      : "We couldn’t create the lesson plan. Your notes are still here—please try again."
+      : rawErrorMsg
     : null;
 
   return (
