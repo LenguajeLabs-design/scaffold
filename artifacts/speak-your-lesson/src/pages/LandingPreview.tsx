@@ -11,10 +11,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DEMO_CLASSROOM_PROBLEM,
-  DEMO_LESSON_PLAN,
-} from "@/data/demo-lesson";
 
 function ScaffoldMark({ className = "" }: { className?: string }) {
   return (
@@ -81,6 +77,13 @@ const outputSections = [
   },
 ];
 
+const preparedItems = [
+  { label: "Learning goal", icon: PencilLine, tile: "bg-[#e8eaff] text-[#5965dc]" },
+  { label: "Language objective", icon: Languages, tile: "bg-[#e5f4eb] text-[#258657]" },
+  { label: "Sentence frames", icon: ClipboardPaste, tile: "bg-[#fff1d1] text-[#b77b14]" },
+  { label: "Teacher moves", icon: Route, tile: "bg-[#eee7ff] text-[#7655ca]" },
+];
+
 export default function LandingPreview({
   onExploreSample,
   onStartPlanning,
@@ -134,16 +137,21 @@ export default function LandingPreview({
       <main id="top">
         <section className="relative overflow-hidden border-b border-[var(--brand-indigo)]/8">
           <div className="landing-dot-field absolute inset-0" aria-hidden="true" />
-          <div className="relative mx-auto grid min-h-[calc(100vh-4.75rem)] w-full max-w-[90rem] items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,0.88fr)_minmax(34rem,1.12fr)] lg:px-12 lg:py-16">
+          <div className="relative mx-auto grid min-h-[calc(100vh-4.75rem)] w-full max-w-[90rem] items-center gap-10 px-5 py-14 sm:gap-12 sm:px-8 sm:py-20 lg:grid-cols-2 lg:px-12 lg:py-16">
             <div className="max-w-2xl">
-              <p className="mb-6 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--brand-teal-strong)]">
+              <p className="mb-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--brand-teal-strong)]">
                 <span className="h-px w-8 bg-[var(--brand-teal-strong)]/55" aria-hidden="true" />
-                Planning support for multilingual classrooms
+                Practical support for multilingual learners
               </p>
-              <h1 className="text-[clamp(3.2rem,6.5vw,6.9rem)] font-semibold leading-[0.91] tracking-[-0.07em] text-[var(--brand-indigo)]">
-                Start with the moment.
-                <span className="mt-2 block text-[var(--brand-blue-strong)]">
-                  Build only what helps.
+              <h1 className="text-[clamp(3.3rem,5.1vw,5rem)] font-semibold leading-[0.92] tracking-[-0.075em] text-[var(--brand-indigo)]">
+                Same lesson.
+                <span className="mt-1 block">More learners.</span>
+                <span className="relative mt-1 block w-fit text-[var(--brand-blue-strong)]">
+                  Brighter possibilities.
+                  <span
+                    className="absolute -bottom-2 left-0 h-1.5 w-full rounded-full bg-[var(--brand-sun)]"
+                    aria-hidden="true"
+                  />
                 </span>
               </h1>
               <p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
@@ -154,18 +162,20 @@ export default function LandingPreview({
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button
                   type="button"
-                  onClick={onExploreSample}
-                  className="h-14 gap-2 rounded-xl px-7 text-base font-semibold shadow-[0_16px_34px_rgba(15,45,74,0.18)]"
+                  onClick={onStartPlanning}
+                  className="h-14 gap-2 rounded-xl bg-[var(--brand-night)] px-7 text-base font-semibold text-white shadow-[0_16px_34px_rgba(15,45,74,0.18)] hover:bg-[var(--brand-indigo)]"
                 >
-                  Explore a sample plan
+                  Start planning
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
-                <a
-                  href="#how-it-works"
-                  className="inline-flex h-14 items-center justify-center rounded-xl border border-[var(--brand-indigo)]/15 bg-white px-7 text-base font-semibold text-[var(--brand-indigo)] shadow-sm transition-colors hover:bg-muted/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onExploreSample}
+                  className="h-14 rounded-xl border-[var(--brand-indigo)]/15 bg-white px-7 text-base font-semibold text-[var(--brand-indigo)] shadow-sm hover:bg-muted/55"
                 >
-                  See how it works
-                </a>
+                  Explore sample
+                </Button>
               </div>
 
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[var(--brand-indigo)]/68">
@@ -184,75 +194,62 @@ export default function LandingPreview({
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-[46rem] lg:mx-0 lg:ml-auto">
-              <div className="absolute -left-8 top-16 hidden h-28 w-28 rounded-full border border-[var(--brand-blue)]/25 lg:block" aria-hidden="true" />
-              <div className="relative overflow-hidden rounded-[2rem] border border-[var(--brand-indigo)]/12 bg-[var(--brand-night)] p-3 shadow-[0_35px_90px_rgba(15,45,74,0.24)] sm:p-5">
-                <div className="rounded-[1.45rem] bg-[#f7f6f1] p-4 sm:p-6 lg:p-7">
-                  <div className="flex items-center justify-between gap-4 border-b border-[var(--brand-indigo)]/10 pb-4">
+            <aside
+              className="relative mx-auto w-full max-w-[44rem] lg:mx-0 lg:ml-auto"
+              aria-label="Sample lesson plan preview"
+            >
+              <div
+                className="absolute inset-2 rotate-[-2deg] overflow-hidden rounded-[2rem] bg-[var(--brand-night)] shadow-[0_35px_90px_rgba(15,45,74,0.24)] sm:inset-3"
+                aria-hidden="true"
+              >
+                <span className="absolute -right-8 -top-16 h-72 w-72 rotate-[28deg] rounded-[3rem] bg-[var(--brand-teal)]/15" />
+                <span className="absolute -bottom-28 left-8 h-72 w-72 rotate-[28deg] rounded-[3rem] bg-[var(--brand-blue)]/30" />
+              </div>
+
+              <div className="relative mx-auto my-5 w-[91%] rotate-[0.5deg] rounded-[1.6rem] border border-white/70 bg-[#f7f6f1] p-3 shadow-[0_24px_60px_rgba(15,45,74,0.20)] sm:my-7 sm:p-5 lg:rotate-[1deg]">
+                <div className="rounded-[1.2rem] bg-white px-5 py-6 shadow-[0_2px_12px_rgba(15,45,74,0.05)] sm:px-7 sm:py-8">
+                  <div className="mb-5 flex items-center justify-between gap-4 sm:mb-7">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-blue-strong)]">
-                        A classroom moment, made usable
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
+                        Grade 4 reading · Sample plan
                       </p>
-                      <p className="mt-1 text-sm text-muted-foreground">Grade 4 reading · General scaffold example</p>
+                      <h2 className="mt-2 text-lg font-semibold tracking-tight text-[var(--brand-indigo)] sm:text-xl">
+                        Scaffold prepares
+                      </h2>
                     </div>
-                    <span className="hidden rounded-full bg-white px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm ring-1 ring-border/70 sm:inline-flex">
-                      Reviewable draft
+                    <span className="hidden rounded-full bg-[var(--brand-teal)]/12 px-3 py-1.5 text-xs font-medium text-[var(--brand-teal-strong)] sm:inline-flex">
+                      Reviewable example
                     </span>
                   </div>
 
-                  <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,0.82fr)_3rem_minmax(0,1.18fr)] sm:items-stretch">
-                    <div className="rounded-2xl border border-[var(--brand-blue)]/18 bg-white p-4 shadow-[0_12px_30px_rgba(15,45,74,0.06)]">
-                      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-[var(--brand-blue-strong)]">
-                        <PencilLine className="h-4 w-4" aria-hidden="true" />
-                        Teacher note
-                      </div>
-                      <p className="mt-4 text-sm leading-6 text-[var(--brand-indigo)]/82">
-                        “{DEMO_CLASSROOM_PROBLEM}”
-                      </p>
-                    </div>
-
-                    <div className="support-trace hidden flex-col items-center justify-center gap-2 sm:flex" aria-hidden="true">
-                      <span className="support-trace-dot" />
-                      <ArrowRight className="h-5 w-5 text-[var(--brand-teal)]" />
-                    </div>
-
-                    <div className="rounded-2xl border border-[var(--brand-teal)]/30 bg-white p-4 shadow-[0_16px_36px_rgba(15,45,74,0.08)] sm:p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-[var(--brand-teal-strong)]">
-                          <Route className="h-4 w-4" aria-hidden="true" />
-                          Try this first
-                        </div>
-                        <span className="rounded-full bg-[var(--brand-teal)]/15 px-2.5 py-1 text-[10px] font-semibold text-[var(--brand-teal-strong)]">
-                          Smallest useful move
+                  <ul className="space-y-3 sm:space-y-4">
+                    {preparedItems.map(({ label, icon: Icon, tile }) => (
+                      <li
+                        key={label}
+                        className="flex min-h-[4.25rem] items-center gap-3 rounded-2xl border border-[var(--brand-indigo)]/7 bg-[#fbfaf8] px-3 py-2.5 sm:gap-4 sm:px-4"
+                      >
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tile}`}>
+                          <Icon className="h-5 w-5" aria-hidden="true" />
                         </span>
-                      </div>
-                      <p className="mt-4 text-sm font-medium leading-6 text-[var(--brand-indigo)]">
-                        {DEMO_LESSON_PLAN.scaffoldPlan}
-                      </p>
-                    </div>
-                  </div>
+                        <span className="flex-1 text-sm font-medium text-[var(--brand-indigo)] sm:text-base">
+                          {label}
+                        </span>
+                        <span
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm"
+                          aria-hidden="true"
+                        >
+                          <Check className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-[var(--brand-sun)]/18 p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-[#8a6308]">
-                        Students still own
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-[var(--brand-indigo)]/80">
-                        The action, interpretation, and evidence they choose.
-                      </p>
-                    </div>
-                    <div className="rounded-2xl bg-[var(--brand-blue)]/10 p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-[var(--brand-blue-strong)]">
-                        Fade when
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-[var(--brand-indigo)]/80">
-                        Students connect all three independently during partner talk.
-                      </p>
-                    </div>
-                  </div>
+                  <p className="mt-5 text-xs leading-5 text-muted-foreground sm:mt-6 sm:text-sm">
+                    Review the support, adapt it to your class, and keep the lesson’s thinking with students.
+                  </p>
                 </div>
               </div>
-            </div>
+            </aside>
           </div>
         </section>
 
