@@ -151,7 +151,3 @@ See [DEPLOY_RENDER_AND_PAGES.md](DEPLOY_RENDER_AND_PAGES.md) for initial infrast
 ## Status
 
 Version 2.1 is a release candidate until the production deployment and smoke tests in [RELEASE_2_1.md](RELEASE_2_1.md) are complete. Do not use the footer version alone as proof that a particular source revision is deployed.
-
-## License
-
-MIT
