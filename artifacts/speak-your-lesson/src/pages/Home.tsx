@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useGenerateLessonPlan,
   GenerateLessonPlanBodyGradeLevel,
-  GenerateLessonPlanBodyUnitProfile,
   GenerateLessonPlanBodyLanguageSupportLevel,
   type LessonPlan,
 } from "@workspace/api-client-react";
@@ -150,7 +149,6 @@ const formSchema = z.object({
   languageSupportLevel: z.nativeEnum(
     GenerateLessonPlanBodyLanguageSupportLevel,
   ),
-  unitProfile: z.nativeEnum(GenerateLessonPlanBodyUnitProfile).optional(),
   notes: z
     .string()
     .min(5, "Planning notes are required")
@@ -826,9 +824,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       languageSupportLevel:
         (rememberedPlan?.languageSupportLevel as GenerateLessonPlanBodyLanguageSupportLevel) ??
         GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_1,
-      unitProfile:
-        (rememberedPlan?.unitProfile as GenerateLessonPlanBodyUnitProfile) ??
-        undefined,
       notes: "",
       sourceMaterial: "",
     },
@@ -929,7 +924,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       topic: DEMO_LESSON_PLAN.title,
       gradeLevel: GenerateLessonPlanBodyGradeLevel.Grade_4,
       languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
-      unitProfile: undefined,
       notes: DEMO_CLASSROOM_PROBLEM,
       sourceMaterial: "",
     });
@@ -1071,7 +1065,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         languageSupportLevel:
           GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
         topic: DEMO_LESSON_PLAN.title,
-        unitProfile: undefined,
       });
       return;
     }
@@ -1093,13 +1086,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       languageSupportLevel: string;
       topic: string;
       notes: string;
-      unitProfile?: string;
     };
     const id = save(result, {
       gradeLevel: vals.gradeLevel,
       languageSupportLevel: vals.languageSupportLevel,
       topic: vals.topic,
-      unitProfile: vals.unitProfile,
     });
     setSavedId(id);
     trackFunnelEvent("plan_saved", "planner");
@@ -1108,7 +1099,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       gradeLevel: vals.gradeLevel,
       languageSupportLevel: vals.languageSupportLevel,
       topic: vals.topic,
-      unitProfile: vals.unitProfile,
     });
     if (account) {
       void saveAccountLesson({
@@ -1119,7 +1109,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           gradeLevel: vals.gradeLevel,
           languageSupportLevel: vals.languageSupportLevel,
           topic: vals.topic,
-          unitProfile: vals.unitProfile,
           lesson: result,
         },
         marketingOptIn: captureMarketing,
@@ -1267,7 +1256,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     form.reset({
       gradeLevel: current.gradeLevel,
       languageSupportLevel: current.languageSupportLevel,
-      unitProfile: current.unitProfile,
       topic: "",
       notes: "",
       sourceMaterial: "",
@@ -2026,44 +2014,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                                 An instructional reference, not an assessment or
                                 placement.
                               </p>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="unitProfile"
-                          render={({ field }) => (
-                            <FormItem className="sm:col-span-2">
-                              <FormLabel className="text-sm font-medium">
-                                Curriculum focus{" "}
-                                <span className="font-normal text-muted-foreground">
-                                  (optional)
-                                </span>
-                              </FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="text-sm">
-                                    <SelectValue placeholder="Use the general planner" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem
-                                    value={
-                                      GenerateLessonPlanBodyUnitProfile[
-                                        "Grade_4_Discipline-Based_Writing"
-                                      ]
-                                    }
-                                    className="text-sm"
-                                  >
-                                    Grade 4 · Discipline-based writing
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
