@@ -147,6 +147,11 @@ export const GenerateLessonPlanBodyStudentMaterialsLanguage = {
 export interface GenerateLessonPlanBody {
   /** Rough planning notes from the teacher */
   notes: string;
+  /**
+   * Optional pasted lesson material used as temporary planning context
+   * @maxLength 8000
+   */
+  sourceMaterial?: string;
   gradeLevel: GenerateLessonPlanBodyGradeLevel;
   languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel;
   /** Topic or subject for the lesson */

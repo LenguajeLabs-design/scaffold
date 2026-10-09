@@ -196,8 +196,17 @@ export const RecordFunnelEventBody = zod.object({
 /**
  * @summary Generate a lesson plan from teacher notes
  */
+export const generateLessonPlanBodySourceMaterialMax = 8000;
+
 export const GenerateLessonPlanBody = zod.object({
   notes: zod.string().describe("Rough planning notes from the teacher"),
+  sourceMaterial: zod
+    .string()
+    .max(generateLessonPlanBodySourceMaterialMax)
+    .optional()
+    .describe(
+      "Optional pasted lesson material used as temporary planning context",
+    ),
   gradeLevel: zod.enum(["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"]),
   languageSupportLevel: zod.enum(["1", "2", "3", "4", "5", "6"]),
   topic: zod.string().describe("Topic or subject for the lesson"),

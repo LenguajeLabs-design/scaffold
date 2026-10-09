@@ -28,11 +28,22 @@ router.post("/lesson-plan/generate", async (req, res) => {
       return;
     }
     const input = parsed.data;
-    if (!input.notes.trim() || input.notes.length > 2000 || !input.topic.trim() || input.topic.length > 200) {
-      res.status(400).json({ error: "Please keep your description within 2,000 characters and any topic within 200 characters." });
+    if (
+      !input.notes.trim() ||
+      input.notes.length > 2000 ||
+      (input.sourceMaterial?.length ?? 0) > 8000 ||
+      !input.topic.trim() ||
+      input.topic.length > 200
+    ) {
+      res.status(400).json({
+        error:
+          "Please keep your classroom description within 2,000 characters, pasted lesson material within 8,000 characters, and any topic within 200 characters.",
+      });
       return;
     }
-    const scope = checkPlanningScope(`${input.topic}\n${input.notes}`);
+    const scope = checkPlanningScope(
+      `${input.topic}\n${input.notes}\n${input.sourceMaterial ?? ""}`,
+    );
     if (!scope.allowed) {
       logFunnel("off_topic_redirected", "planner", scope.reason);
       res.status(400).json({ error: scope.message, code: "off_topic" });
