@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   Check,
-  ChevronDown,
   ClipboardPaste,
   Eye,
   FileText,
@@ -537,19 +536,6 @@ export default function LandingPreview({
           </div>
         </section>
 
-        <section className="border-t border-[var(--brand-indigo)]/8 px-5 py-6 sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[90rem]">
-            <details className="group rounded-2xl px-2 py-2 text-sm text-muted-foreground">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-medium text-[var(--brand-indigo)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                What this weekend preview includes
-                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <p className="max-w-3xl pb-3 pt-2 leading-6">
-                This is a landing-page concept using Scaffold’s existing sample content. It does not activate draft curriculum profiles or introduce new product claims.
-              </p>
-            </details>
-          </div>
-        </section>
       </main>
 
       <footer className="border-t border-[var(--brand-indigo)]/8 bg-white/50 px-5 py-8 sm:px-8 lg:px-12">
