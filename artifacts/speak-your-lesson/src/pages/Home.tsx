@@ -43,6 +43,9 @@ import {
   Share2,
   UserRoundPlus,
   Mail,
+  FileText,
+  ClipboardPaste,
+  UploadCloud,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -113,6 +116,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const MAX_NOTES_CHARS = 2000;
+const MAX_SOURCE_MATERIAL_CHARS = 8000;
 const LANGUAGE_PREFERENCES_KEY = "scaffold-language-preview-v1";
 
 function readLanguagePreferences() {
@@ -154,6 +158,13 @@ const formSchema = z.object({
       MAX_NOTES_CHARS,
       `Planning notes must be ${MAX_NOTES_CHARS} characters or fewer`,
     ),
+  sourceMaterial: z
+    .string()
+    .max(
+      MAX_SOURCE_MATERIAL_CHARS,
+      `Lesson material must be ${MAX_SOURCE_MATERIAL_CHARS} characters or fewer`,
+    )
+    .optional(),
 });
 
 function topicFromBrief(brief: string): string {
@@ -819,11 +830,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         (rememberedPlan?.unitProfile as GenerateLessonPlanBodyUnitProfile) ??
         undefined,
       notes: "",
+      sourceMaterial: "",
     },
   });
 
   const notesValue = form.watch("notes");
   const notesLength = notesValue.length;
+  const sourceMaterialValue = form.watch("sourceMaterial") ?? "";
+  const sourceMaterialLength = sourceMaterialValue.length;
 
   const {
     mutate: generateLessonPlan,
@@ -847,12 +861,29 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [showPlanningContext, setShowPlanningContext] = useState(false);
+  const [showSourceMaterials, setShowSourceMaterials] = useState(
+    () => new URL(window.location.href).searchParams.get("start") === "materials",
+  );
+  const [sourceMaterialMode, setSourceMaterialMode] = useState<"paste" | "pdf">(
+    "paste",
+  );
   const [captureMarketing, setCaptureMarketing] = useState(false);
   const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const [captureError, setCaptureError] = useState<string | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const usefulMoveTrackedRef = useRef(false);
   const adaptationTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (new URL(window.location.href).searchParams.get("start") !== "materials") {
+      return;
+    }
+    window.setTimeout(() => {
+      document
+        .getElementById("source-materials")
+        ?.scrollIntoView({ block: "start" });
+    }, 50);
+  }, []);
 
   // Cooldown state
   const [cooldownSecs, setCooldownSecs] = useState(0);
@@ -900,6 +931,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
       unitProfile: undefined,
       notes: DEMO_CLASSROOM_PROBLEM,
+      sourceMaterial: "",
     });
     setDisplayed({
       lesson: getPreviewLessonPlan(
@@ -1238,6 +1270,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       unitProfile: current.unitProfile,
       topic: "",
       notes: "",
+      sourceMaterial: "",
     });
     setDisplayed(null);
     setSavedId(null);
@@ -1370,7 +1403,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         )}
 
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)]">
-          <Card className="order-2 overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm lg:order-1">
+          <Card className="order-1 overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm">
             <div
               className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-sun)]"
               aria-hidden="true"
@@ -1382,10 +1415,105 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   className="space-y-6"
                 >
                   <input type="hidden" {...form.register("topic")} />
-                  <fieldset className="rounded-xl border border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.035] p-4">
-                    <legend className="px-1 text-sm font-semibold text-foreground">
-                      Language preferences
-                    </legend>
+                  <nav
+                    className="rounded-2xl border border-[var(--brand-blue)]/15 bg-[var(--brand-blue)]/[0.045] p-4"
+                    aria-label="Planning path"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Your path through this page
+                        </p>
+                        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                          Materials are optional. The classroom need is the only required starting point.
+                        </p>
+                      </div>
+                      <span className="hidden rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-blue-strong)] ring-1 ring-[var(--brand-blue)]/15 sm:inline-flex">
+                        Guided flow
+                      </span>
+                    </div>
+                    <ol className="mt-4 grid gap-2 sm:grid-cols-3">
+                      {[
+                        {
+                          label: "Bring what you have",
+                          detail: sourceMaterialValue.trim() ? "Lesson text added" : "Optional lesson material",
+                          target: "source-materials",
+                          complete: Boolean(sourceMaterialValue.trim()),
+                        },
+                        {
+                          label: "Name the classroom need",
+                          detail: notesValue.trim() ? "Classroom moment added" : "A short description",
+                          target: "classroom-need",
+                          complete: Boolean(notesValue.trim()),
+                        },
+                        {
+                          label: "Create the support plan",
+                          detail: "Review the defaults first",
+                          target: "review-and-generate",
+                          complete: false,
+                        },
+                      ].map((step, index) => (
+                        <li key={step.target}>
+                          <button
+                            type="button"
+                            className="flex min-h-16 w-full items-start gap-2.5 rounded-xl bg-white/80 p-3 text-left ring-1 ring-border/60 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={() => {
+                              if (step.target === "source-materials") {
+                                setShowSourceMaterials(true);
+                              }
+                              document
+                                .getElementById(step.target)
+                                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                              if (step.target === "classroom-need") {
+                                window.setTimeout(() => {
+                                  document
+                                    .querySelector<HTMLTextAreaElement>('[data-testid="input-notes"]')
+                                    ?.focus();
+                                }, 350);
+                              }
+                            }}
+                          >
+                            <span
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                                step.complete
+                                  ? "bg-[var(--brand-teal)] text-white"
+                                  : "bg-[var(--brand-blue)]/10 text-[var(--brand-blue-strong)]"
+                              }`}
+                            >
+                              {step.complete ? (
+                                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                              ) : (
+                                index + 1
+                              )}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-xs font-semibold leading-4 text-foreground">
+                                {step.label}
+                              </span>
+                              <span className="mt-1 block text-[11px] leading-4 text-muted-foreground">
+                                {step.detail}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  </nav>
+
+                  <details className="group overflow-hidden rounded-xl border border-[var(--brand-blue)]/20 bg-[var(--brand-blue)]/[0.035]">
+                    <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-foreground">
+                          Output languages
+                        </span>
+                        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                          {supportedLanguages.find((language) => language.code === languagePreferences.teacher)?.name} guidance · {supportedLanguages.find((language) => language.code === languagePreferences.studentMaterials)?.name} student materials
+                        </span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+                    </summary>
+                    <fieldset className="border-t border-[var(--brand-blue)]/15 p-4">
+                      <legend className="sr-only">Language preferences</legend>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <label className="space-y-2 text-sm font-medium">
                         <span className="block">Teacher guidance language</span>
@@ -1462,10 +1590,213 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         browser and guide language in generated plans.
                       </p>
                     </div>
-                  </fieldset>
-                  <div>
+                    </fieldset>
+                  </details>
+
+                  <section
+                    id="source-materials"
+                    className="scroll-mt-24 overflow-hidden rounded-2xl border border-[var(--brand-purple)]/22 bg-[var(--brand-purple)]/[0.035]"
+                    aria-labelledby="source-materials-heading"
+                  >
+                    <button
+                      type="button"
+                      className="flex min-h-16 w-full items-center justify-between gap-4 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"
+                      aria-expanded={showSourceMaterials}
+                      onClick={() => setShowSourceMaterials((current) => !current)}
+                      data-testid="button-toggle-source-materials"
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--brand-purple-strong)] shadow-sm ring-1 ring-[var(--brand-purple)]/15">
+                          {sourceMaterialValue.trim() ? (
+                            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                          ) : (
+                            <FileText className="h-5 w-5" aria-hidden="true" />
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span
+                            id="source-materials-heading"
+                            className="block text-sm font-semibold text-foreground"
+                          >
+                            Bring existing lesson materials
+                            <span className="ml-1.5 font-normal text-muted-foreground">
+                              (optional)
+                            </span>
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                            {sourceMaterialValue.trim()
+                              ? `Lesson text added · ${sourceMaterialLength.toLocaleString()} characters`
+                              : "Paste lesson text now · PDF extraction is a future concept"}
+                          </span>
+                        </span>
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${showSourceMaterials ? "rotate-180" : ""}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    {showSourceMaterials && (
+                      <div className="border-t border-[var(--brand-purple)]/16 p-4 sm:p-5">
+                        <div
+                          className="grid grid-cols-2 gap-2 rounded-xl bg-background/75 p-1.5 ring-1 ring-border/60"
+                          role="tablist"
+                          aria-label="Lesson material input method"
+                        >
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={sourceMaterialMode === "paste"}
+                            className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm ${
+                              sourceMaterialMode === "paste"
+                                ? "bg-white text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                            onClick={() => setSourceMaterialMode("paste")}
+                            data-testid="tab-paste-source-material"
+                          >
+                            <ClipboardPaste className="h-4 w-4" aria-hidden="true" />
+                            Paste lesson text
+                          </button>
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={sourceMaterialMode === "pdf"}
+                            className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm ${
+                              sourceMaterialMode === "pdf"
+                                ? "bg-white text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                            onClick={() => setSourceMaterialMode("pdf")}
+                            data-testid="tab-pdf-source-material"
+                          >
+                            <UploadCloud className="h-4 w-4" aria-hidden="true" />
+                            PDF upload
+                            <span className="rounded-full bg-[var(--brand-sun)]/25 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] text-[#805b06]">
+                              Concept
+                            </span>
+                          </button>
+                        </div>
+
+                        {sourceMaterialMode === "paste" ? (
+                          <div className="mt-4">
+                            <FormField
+                              control={form.control}
+                              name="sourceMaterial"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <div className="flex items-baseline justify-between gap-3">
+                                    <div>
+                                      <FormLabel className="text-sm font-semibold">
+                                        Existing lesson text
+                                      </FormLabel>
+                                      <p
+                                        id="source-material-guidance"
+                                        className="mt-1 text-xs leading-5 text-muted-foreground"
+                                      >
+                                        Paste or type the part of the lesson you want Scaffold to adapt.
+                                      </p>
+                                    </div>
+                                    <span
+                                      className={`text-xs tabular-nums ${
+                                        sourceMaterialLength >
+                                        MAX_SOURCE_MATERIAL_CHARS * 0.9
+                                          ? "font-medium text-destructive"
+                                          : "text-muted-foreground"
+                                      }`}
+                                    >
+                                      {sourceMaterialLength.toLocaleString()}/
+                                      {MAX_SOURCE_MATERIAL_CHARS.toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <FormControl>
+                                    <Textarea
+                                      placeholder="Paste the lesson goal, task directions, success criteria, or relevant planning notes here."
+                                      className="min-h-[180px] resize-y border-2 border-[var(--brand-purple)]/40 bg-white text-sm leading-6 shadow-[0_0_0_3px_rgba(124,92,199,0.07)] transition-[border-color,box-shadow] hover:border-[var(--brand-purple)]/60 focus-visible:border-[var(--brand-purple)] focus-visible:ring-2 focus-visible:ring-[var(--brand-purple)]/25"
+                                      data-testid="input-source-material"
+                                      aria-describedby="source-material-guidance source-material-privacy"
+                                      maxLength={MAX_SOURCE_MATERIAL_CHARS}
+                                      {...field}
+                                      value={field.value ?? ""}
+                                    />
+                                  </FormControl>
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <p
+                                      id="source-material-privacy"
+                                      className="max-w-xl text-xs leading-5 text-muted-foreground"
+                                    >
+                                      Used as temporary lesson context for this generation. It is not added to the curriculum library or included in the saved plan. Don’t paste student records or identifiable student work.
+                                    </p>
+                                    {sourceMaterialValue && (
+                                      <button
+                                        type="button"
+                                        className="min-h-8 shrink-0 self-start text-xs font-semibold text-[var(--brand-purple-strong)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        onClick={() =>
+                                          form.setValue("sourceMaterial", "", {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          })
+                                        }
+                                      >
+                                        Clear lesson text
+                                      </button>
+                                    )}
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className="mt-4 rounded-2xl border border-dashed border-[var(--brand-purple)]/35 bg-background/75 p-6 text-center"
+                            role="tabpanel"
+                            data-testid="panel-pdf-concept"
+                          >
+                            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-purple)]/12 text-[var(--brand-purple-strong)]">
+                              <UploadCloud className="h-5 w-5" aria-hidden="true" />
+                            </span>
+                            <h3 className="mt-4 text-base font-semibold text-foreground">
+                              Secure PDF extraction is not active yet
+                            </h3>
+                            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">
+                              This concept will require file validation, text-only extraction, clear retention rules, and a review step before any content is sent for generation.
+                            </p>
+                            <p className="mt-3 text-xs font-medium text-[var(--brand-purple-strong)]">
+                              For now, copy the relevant lesson text and use the Paste lesson text tab.
+                            </p>
+                          </div>
+                        )}
+                        <div className="mt-4 flex flex-col gap-3 border-t border-[var(--brand-purple)]/14 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-xs leading-5 text-muted-foreground">
+                            Next, tell Scaffold where students need support.
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 w-full shrink-0 gap-2 bg-white sm:w-auto"
+                            onClick={() => {
+                              document
+                                .getElementById("classroom-need")
+                                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                              window.setTimeout(() => {
+                                document
+                                  .querySelector<HTMLTextAreaElement>('[data-testid="input-notes"]')
+                                  ?.focus();
+                              }, 350);
+                            }}
+                          >
+                            Describe classroom need
+                            <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+
+                  <div id="classroom-need" className="scroll-mt-24">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
-                      Start with the classroom moment
+                      Required · Classroom moment
                     </p>
                     <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
                       What are you trying to teach or solve?
@@ -1494,11 +1825,18 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                             {notesLength}/{MAX_NOTES_CHARS}
                           </span>
                         </div>
+                        <p
+                          id="classroom-need-guidance"
+                          className="text-xs leading-5 text-muted-foreground"
+                        >
+                          Describe what students are trying to do, what they can already do, and where they get stuck.
+                        </p>
                         <FormControl>
                           <Textarea
                             placeholder="For example: My Grade 4 students understand the science idea but cannot explain their thinking in writing."
-                            className="min-h-[165px] resize-y border-border/80 bg-background/80 text-base leading-relaxed shadow-none focus-visible:ring-[var(--brand-blue)]"
+                            className="min-h-[165px] resize-y border-2 border-[var(--brand-blue)]/40 bg-white text-base leading-relaxed shadow-[0_0_0_3px_rgba(63,116,166,0.07)] transition-[border-color,box-shadow] hover:border-[var(--brand-blue)]/60 focus-visible:border-[var(--brand-blue)] focus-visible:ring-2 focus-visible:ring-[var(--brand-blue)]/25"
                             data-testid="input-notes"
+                            aria-describedby="classroom-need-guidance classroom-need-privacy"
                             maxLength={MAX_NOTES_CHARS}
                             {...field}
                             onChange={(event) => {
@@ -1512,7 +1850,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           />
                         </FormControl>
                         <div className="flex items-start justify-between gap-3">
-                          <p className="text-xs leading-relaxed text-muted-foreground">
+                          <p
+                            id="classroom-need-privacy"
+                            className="text-xs leading-relaxed text-muted-foreground"
+                          >
                             Don’t include student names or private student
                             information.
                           </p>
@@ -1523,9 +1864,14 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   />
 
                   <div className="space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Quick starts
-                    </p>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Need a starting point?
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        Choose one to fill the classroom-need box, then make it your own.
+                      </p>
+                    </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {[
                         [
@@ -1566,7 +1912,10 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-border/70 bg-muted/25">
+                  <div
+                    id="review-and-generate"
+                    className="scroll-mt-24 rounded-2xl border border-border/70 bg-muted/25"
+                  >
                     <button
                       type="button"
                       className="flex min-h-14 w-full items-center justify-between gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
@@ -1577,7 +1926,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     >
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-foreground">
-                          Planning context
+                          Review planning context
                         </span>
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                           {form.watch("gradeLevel")} · Student support
@@ -1723,7 +2072,20 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     )}
                   </div>
 
-                  <div className="space-y-3 pt-1">
+                  <div className="space-y-3 rounded-2xl border border-[var(--brand-blue)]/15 bg-[var(--brand-blue)]/[0.035] p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand-blue)]/10 text-xs font-bold text-[var(--brand-blue-strong)]">
+                        3
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Create your support plan
+                        </p>
+                        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                          Scaffold will use your classroom moment, optional materials, and the defaults above. You can edit the result.
+                        </p>
+                      </div>
+                    </div>
                     {errorMsg && (
                       <div
                         className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive"
@@ -1759,7 +2121,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       ) : cooldownSecs > 0 ? (
                         `Wait ${cooldownSecs}s`
                       ) : (
-                        "Get support"
+                        "Create support plan"
                       )}
                     </Button>
                     <p className="text-center text-xs leading-relaxed text-muted-foreground">
@@ -1774,7 +2136,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </Card>
 
           <aside
-            className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-24"
+            className="order-2 space-y-4 lg:sticky lg:top-24"
             aria-label="Your Scaffold workspace"
           >
             {lessons.length > 0 ? (

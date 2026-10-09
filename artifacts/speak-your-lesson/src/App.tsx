@@ -14,6 +14,7 @@ import Home from "@/pages/Home";
 import ClassroomCopilot from "@/pages/ClassroomCopilot";
 import AdminPage from "@/pages/AdminPage";
 import Legal from "@/pages/Legal";
+import LandingPreview from "@/pages/LandingPreview";
 import { AccessGate } from "@/components/AccessGate";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import {
@@ -322,9 +323,9 @@ function Footer() {
           </div>
 
           <p className="text-xs text-muted-foreground shrink-0 sm:text-right">
-            Version 2.0
+            Version 2.1
             <br />
-            Updated September 2026
+            Updated October 2026
           </p>
         </div>
       </div>
@@ -341,10 +342,12 @@ function Router() {
   const [location] = useLocation();
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const adminOnly = location === "/admin" || location.endsWith("/admin");
+  const isLandingPreview =
+    location === "/landing-preview" || location.endsWith("/landing-preview");
   const [requireAccessCode, setRequireAccessCode] = useState(false);
 
   useEffect(() => {
-    if (!ACCESS_GATE_ENABLED || adminOnly) return;
+    if (!ACCESS_GATE_ENABLED || adminOnly || isLandingPreview) return;
     let cancelled = false;
     void fetch(resolveApiUrl("/api/access/config"), {
       signal: AbortSignal.timeout(10_000),
@@ -362,7 +365,22 @@ function Router() {
     return () => {
       cancelled = true;
     };
-  }, [adminOnly]);
+  }, [adminOnly, isLandingPreview]);
+
+  if (isLandingPreview) {
+    return (
+      <LandingPreview
+        onExploreSample={() => {
+          trackFunnelEvent("sample_opened", "landing");
+          enterDemo();
+          setOnboardingOpen(false);
+          navigate("/");
+        }}
+        onStartPlanning={() => navigate("/")}
+        onStartFromMaterials={() => navigate("/?start=materials")}
+      />
+    );
+  }
 
   if (adminOnly && isAdmin) {
     return (

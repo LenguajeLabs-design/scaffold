@@ -27,6 +27,43 @@
   }
 }
 
+@keyframes scaffold-support-trace {
+  0%,
+  18% {
+    opacity: 0;
+    transform: translateX(-0.55rem) scale(0.7);
+  }
+  45%,
+  76% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0.55rem) scale(0.7);
+  }
+}
+
+.landing-dot-field {
+  opacity: 0.4;
+  background-image: radial-gradient(
+    circle,
+    rgb(124 140 255 / 0.2) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to right, transparent 3%, black 48%, transparent 92%);
+}
+
+.support-trace-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--brand-teal);
+  box-shadow: 0 0 0 0.35rem rgb(126 217 87 / 0.14);
+  animation: scaffold-support-trace 2.8s ease-in-out infinite;
+}
+
 .scaffold-progress-sheen {
   animation: scaffold-progress-sheen 2.4s ease-in-out infinite;
 }
@@ -90,7 +127,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .scaffold-progress-sheen,
-  .scaffold-assembly-bar.is-visible {
+  .scaffold-assembly-bar.is-visible,
+  .support-trace-dot {
     animation: none;
     opacity: 1;
     transform: none;
