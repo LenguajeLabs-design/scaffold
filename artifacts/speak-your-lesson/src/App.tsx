@@ -255,79 +255,81 @@ function AccountAccessDialog({
 }
 
 function Footer() {
+  const lenguajeLabsSites = [
+    {
+      name: "My Multilingual Family",
+      domain: "mymultilingualfamily.com",
+      href: "https://www.mymultilingualfamily.com",
+    },
+    {
+      name: "ReadLinguaFlow",
+      domain: "readlinguaflow.com",
+      href: "https://www.readlinguaflow.com",
+    },
+    {
+      name: "Federico Orozco",
+      domain: "federicoorozco.co",
+      href: "https://www.federicoorozco.co",
+    },
+    {
+      name: "Lingua Strategies",
+      domain: "lenguajelabs-design.github.io",
+      href: "https://lenguajelabs-design.github.io/Lingua-Strategies",
+    },
+  ];
+
   return (
-    <footer className="mt-16 border-t border-white/70 bg-card/70 backdrop-blur-xl print:hidden">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white ring-1 ring-[var(--brand-blue)]/15">
-              <ScaffoldMark className="w-4" />
+    <footer className="ll-footer mt-16 print:hidden">
+      <div className="ll-footer__main">
+        <div className="ll-footer__intro">
+          <Link className="ll-footer__brand" href="/">
+            <span className="ll-footer__logo">
+              <ScaffoldMark className="w-5" />
             </span>
-            <span className="text-sm font-semibold tracking-tight text-primary">
-              Scaffold
-            </span>
-          </div>
-
-          <div className="flex-1 space-y-2">
-            <p className="text-sm font-semibold text-foreground">
-              Created by Federico Orozco
-            </p>
-            <p className="text-xs text-muted-foreground">
-              EAL Educator | AI &amp; Multilingual Learning Innovation
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Contact:{" "}
-              <a
-                href="mailto:forozc1@gmail.com"
-                className="text-primary hover:underline"
-              >
-                forozc1@gmail.com
-              </a>
-            </p>
-            <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-              Designed for educators supporting multilingual learners. Uses
-              language proficiency levels as an instructional reference.
-            </p>
-            <p className="max-w-md text-[11px] leading-relaxed text-muted-foreground">
-              Scaffold is independently developed.{" "}
-              <Link href="/about" className="text-primary hover:underline">
-                Learn more
-              </Link>
-            </p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-              <Link
-                href="/about#about"
-                className="hover:text-primary hover:underline"
-              >
-                About &amp; methodology
-              </Link>
-              <Link
-                href="/about#disclaimer"
-                className="hover:text-primary hover:underline"
-              >
-                Disclaimer
-              </Link>
-              <Link
-                href="/about#terms"
-                className="hover:text-primary hover:underline"
-              >
-                Terms
-              </Link>
-              <Link
-                href="/about#privacy"
-                className="hover:text-primary hover:underline"
-              >
-                Privacy
-              </Link>
-            </div>
-          </div>
-
-          <p className="text-xs text-muted-foreground shrink-0 sm:text-right">
-            Version 2.1
-            <br />
-            Updated October 2026
+            <span>Scaffold</span>
+          </Link>
+          <p>
+            Thoughtful planning support for educators of multilingual learners.
           </p>
+          <Link className="ll-footer__about" href="/about">
+            About Scaffold and its methodology
+          </Link>
         </div>
+
+        <div className="ll-footer__sites">
+          <p className="ll-footer__label" id="lenguajeLabsSites">
+            More from Lenguaje Labs
+          </p>
+          <nav className="ll-footer__links" aria-labelledby="lenguajeLabsSites">
+            {lenguajeLabsSites.map((site) => (
+              <a
+                href={site.href}
+                key={site.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>
+                  <strong>{site.name}</strong>
+                  <small>{site.domain}</small>
+                </span>
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M7 17 17 7M8 7h9v9" />
+                </svg>
+              </a>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      <div className="ll-footer__bottom">
+        <span>© 2026 Federico Orozco / Lenguaje Labs</span>
+        <nav aria-label="Legal and product information">
+          <Link href="/about#about">About</Link>
+          <Link href="/about#disclaimer">Disclaimer</Link>
+          <Link href="/about#terms">Terms</Link>
+          <Link href="/about#privacy">Privacy</Link>
+        </nav>
+        <span>Version 2.1 · Made for educators, with care.</span>
       </div>
     </footer>
   );
