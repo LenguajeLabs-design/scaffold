@@ -124,11 +124,10 @@ export default function LandingPreview({
 
           <Button
             type="button"
-            onClick={onExploreSample}
-            className="min-h-11 rounded-xl px-4 text-sm font-semibold shadow-[0_10px_26px_rgba(15,45,74,0.14)] sm:px-5"
+            onClick={onStartPlanning}
+            className="min-h-11 rounded-xl px-3 text-xs font-semibold shadow-[0_10px_26px_rgba(15,45,74,0.14)] sm:px-5 sm:text-sm"
           >
-            <span className="hidden sm:inline">Explore a sample</span>
-            <span className="sm:hidden">Sample</span>
+            Open the planner
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
@@ -177,6 +176,10 @@ export default function LandingPreview({
                   Explore sample
                 </Button>
               </div>
+
+              <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
+                Start with a lesson you’re teaching or a classroom challenge you’ve noticed. Rough notes are enough.
+              </p>
 
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[var(--brand-indigo)]/68">
                 {[
