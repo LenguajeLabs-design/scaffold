@@ -77,6 +77,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -788,13 +795,17 @@ function PlanningDiagnosisCard({
         </div>
 
         <div className="border-t border-border/70 pt-4">
-          <p className="text-sm font-semibold text-foreground">
-            Other support options
-          </p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            The chosen scaffold remains the recommendation. Select any
-            alternatives you want to keep in view.
-          </p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Other support options
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                The chosen scaffold remains the recommendation. Select any
+                alternatives you want to keep in view.
+              </p>
+            </div>
+          </div>
           <div className="mt-3 grid gap-2.5 md:grid-cols-3">
             {SCAFFOLD_ALTERNATIVES.map((alternative) => {
               const isSelected = diagnosis.selectedAlternativeIds.includes(
@@ -1094,6 +1105,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [captureMarketing, setCaptureMarketing] = useState(false);
   const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const [captureError, setCaptureError] = useState<string | null>(null);
+  const [isRecentPlansOpen, setIsRecentPlansOpen] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const usefulMoveTrackedRef = useRef(false);
   const adaptationTrackedRef = useRef(false);
@@ -1586,8 +1598,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     <div className="bg-background text-foreground">
       {displayed && <PrintableLesson displayed={displayed} />}
 
-      <main className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:space-y-12 sm:py-14 print:hidden">
-        <section className="max-w-3xl" aria-labelledby="home-heading">
+      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:space-y-12 sm:py-14 print:hidden">
+        <section className="max-w-4xl" aria-labelledby="home-heading">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--brand-blue-strong)] shadow-[0_8px_20px_rgba(15,45,74,0.08)] ring-1 ring-[var(--brand-blue)]/15">
               <BookOpenText className="h-4.5 w-4.5" aria-hidden="true" />
@@ -1600,6 +1612,23 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 Practical support for multilingual learners
               </p>
             </div>
+            {lessons.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-auto min-h-11 shrink-0 bg-white/80"
+                onClick={() => setIsRecentPlansOpen(true)}
+                data-testid="button-open-recent-plans"
+              >
+                <BookMarked className="h-4 w-4 text-[var(--brand-teal-strong)]" aria-hidden="true" />
+                <span className="hidden sm:inline">Recent plans</span>
+                <span className="sm:hidden">Plans</span>
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  {lessons.length}
+                </span>
+              </Button>
+            )}
           </div>
           <h1
             id="home-heading"
@@ -1656,13 +1685,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
         )}
 
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)]">
-          <Card className="order-1 overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm">
+        <div className="mx-auto w-full max-w-7xl">
+          <Card className="overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm">
             <div
               className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-sun)]"
               aria-hidden="true"
             />
-            <CardContent className="p-5 sm:p-7">
+            <CardContent className="p-5 sm:p-7 lg:p-9">
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -2391,7 +2420,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </Card>
 
           <aside
-            className="order-2 space-y-4 lg:sticky lg:top-24"
+            className="hidden"
             aria-label="Your Scaffold workspace"
           >
             {lessons.length > 0 ? (
@@ -2503,6 +2532,61 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         )}
 
         {isGenerating && !displayed && <GenerationProgress mode="lesson" />}
+
+        <Sheet open={isRecentPlansOpen} onOpenChange={setIsRecentPlansOpen}>
+          <SheetContent
+            side="right"
+            className="flex w-full flex-col p-0 sm:max-w-md"
+          >
+            <SheetHeader className="border-b border-border/70 px-5 pb-4 pt-6 text-left sm:px-6">
+              <div className="flex items-center gap-2 pr-8">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-teal)]/15 text-[var(--brand-teal-strong)]">
+                  <BookMarked className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div>
+                  <SheetTitle>Continue your work</SheetTitle>
+                  <SheetDescription className="mt-1 leading-relaxed">
+                    Your recent plans are saved in this browser.
+                  </SheetDescription>
+                </div>
+              </div>
+            </SheetHeader>
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-4 sm:px-5">
+              {lessons.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  className="group flex min-h-16 w-full items-center gap-3 rounded-xl border border-border/70 bg-background/60 px-3.5 py-3 text-left transition-colors hover:border-[var(--brand-blue)]/35 hover:bg-[var(--brand-blue)]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => {
+                    setIsRecentPlansOpen(false);
+                    viewSavedLesson(entry);
+                  }}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-blue)]/10 text-[var(--brand-blue-strong)]">
+                    <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-foreground">
+                      {entry.lesson.title}
+                    </span>
+                    <span className="mt-1 block truncate text-xs text-muted-foreground">
+                      {entry.gradeLevel} · {entry.languageSupportLevel
+                        ? `Level ${entry.languageSupportLevel}`
+                        : "Support reference not recorded"} · {formatDate(entry.savedAt)}
+                    </span>
+                  </span>
+                  <ChevronRight
+                    className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </button>
+              ))}
+              <p className="px-1 pb-2 pt-3 text-xs leading-relaxed text-muted-foreground">
+                Open a plan to edit, duplicate, share, or print it.
+              </p>
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {displayed && (
           <section
