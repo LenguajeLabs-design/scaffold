@@ -45,6 +45,7 @@ import {
   FileText,
   ClipboardPaste,
   UploadCloud,
+  CircleCheck,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -103,6 +104,10 @@ import {
 } from "@/data/language-preview/copy";
 import { getPreviewLessonPlan } from "@/data/language-preview/demo-plan";
 import { decodeSharedPlan, encodeSharedPlan } from "@/lib/shared-plan";
+import {
+  SCAFFOLD_ALTERNATIVES,
+  type PlanningDiagnosis,
+} from "@/lib/planning-diagnosis";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -191,6 +196,27 @@ interface DisplayedLesson {
   languageSupportLevel: string;
   topic: string;
   unitProfile?: string;
+  planningDiagnosis?: PlanningDiagnosis;
+}
+
+function createPlanningDiagnosis(
+  lesson: LessonPlan,
+  classroomEvidence?: string,
+): PlanningDiagnosis {
+  return {
+    learningGoal: lesson.integratedUnitGoal || lesson.contentObjective,
+    languageDemand: lesson.languageObjective,
+    likelyBarrier: classroomEvidence?.trim() || lesson.teacherNotes,
+    chosenScaffold: lesson.scaffoldPlan || lesson.warmUp,
+    selectedAlternativeIds: [],
+  };
+}
+
+function participationFor(lesson: LessonPlan): string {
+  return compactLessonText(
+    lesson.speakingActivity || lesson.warmUp,
+    180,
+  );
 }
 
 interface HomeProps {
@@ -204,6 +230,8 @@ interface HomeProps {
 function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
   const { lesson, gradeLevel, languageSupportLevel, topic, unitProfile } =
     displayed;
+  const diagnosis =
+    displayed.planningDiagnosis ?? createPlanningDiagnosis(lesson);
   const printDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -366,6 +394,29 @@ function PrintableLesson({ displayed }: { displayed: DisplayedLesson }) {
         {unitProfile && <span style={s.metaPill}>{unitProfile}</span>}
       </div>
       <hr style={s.divider} />
+      <div style={{ ...s.box, marginBottom: "12px", background: "#f8fafc" }}>
+        <div style={s.sectionLabel}>Planning Diagnosis — Teacher Review</div>
+        <p style={s.sectionBody}>
+          <strong>Learning goal (preserve target): </strong>
+          {diagnosis.learningGoal}
+        </p>
+        <p style={{ ...s.sectionBody, marginTop: "5px" }}>
+          <strong>Language demand: </strong>
+          {diagnosis.languageDemand}
+        </p>
+        <p style={{ ...s.sectionBody, marginTop: "5px" }}>
+          <strong>Likely barrier: </strong>
+          {diagnosis.likelyBarrier}
+        </p>
+        <p style={{ ...s.sectionBody, marginTop: "5px" }}>
+          <strong>Chosen scaffold: </strong>
+          {diagnosis.chosenScaffold}
+        </p>
+        <p style={{ ...s.sectionBody, marginTop: "5px" }}>
+          <strong>Participation: </strong>
+          {participationFor(lesson)}
+        </p>
+      </div>
       {lesson.integratedUnitGoal && (
         <div style={{ ...s.box, marginBottom: "12px", background: "#f8fafc" }}>
           <div style={s.sectionLabel}>Integrated Unit Goal</div>
@@ -552,6 +603,8 @@ function GuidanceDetails({
 
 function formatLessonForCopy(displayed: DisplayedLesson): string {
   const lesson = displayed.lesson;
+  const diagnosis =
+    displayed.planningDiagnosis ?? createPlanningDiagnosis(lesson);
 
   return [
     lesson.title,
@@ -566,6 +619,10 @@ function formatLessonForCopy(displayed: DisplayedLesson): string {
       : null,
     lesson.languageFeatureObjective
       ? `LANGUAGE FEATURE\n${lesson.languageFeatureObjective}`
+      : null,
+    `PLANNING DIAGNOSIS\nLearning goal (preserve target): ${diagnosis.learningGoal}\n\nLanguage demand: ${diagnosis.languageDemand}\n\nLikely barrier: ${diagnosis.likelyBarrier}\n\nChosen scaffold: ${diagnosis.chosenScaffold}`,
+    diagnosis.selectedAlternativeIds.length > 0
+      ? `KEPT SUPPORT ALTERNATIVES\n${SCAFFOLD_ALTERNATIVES.filter((alternative) => diagnosis.selectedAlternativeIds.includes(alternative.id)).map((alternative) => alternative.title).join("\n")}`
       : null,
     `KEY VOCABULARY\n${lesson.keyVocabulary.join(", ")}`,
     `SENTENCE FRAMES\n${lesson.sentenceFrames.map((frame, index) => `${index + 1}. ${frame}`).join("\n")}`,
@@ -611,6 +668,174 @@ function CopyAction({
       )}
       {copied ? "Copied" : "Copy"}
     </Button>
+  );
+}
+
+function PlanningDiagnosisCard({
+  diagnosis,
+  isEditing,
+  onToggleEditing,
+  onChange,
+}: {
+  diagnosis: PlanningDiagnosis;
+  isEditing: boolean;
+  onToggleEditing: () => void;
+  onChange: (changes: Partial<PlanningDiagnosis>) => void;
+}) {
+  const fields: Array<{
+    key: keyof Pick<
+      PlanningDiagnosis,
+      "learningGoal" | "languageDemand" | "likelyBarrier" | "chosenScaffold"
+    >;
+    label: string;
+    tone: string;
+    preserveTarget?: boolean;
+  }> = [
+    {
+      key: "learningGoal",
+      label: "Learning goal",
+      tone: "border-primary/25 bg-primary/[0.055]",
+      preserveTarget: true,
+    },
+    {
+      key: "languageDemand",
+      label: "Language demand",
+      tone: "border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/[0.07]",
+    },
+    {
+      key: "likelyBarrier",
+      label: "Likely barrier",
+      tone: "border-[var(--brand-sun)]/35 bg-[var(--brand-sun)]/[0.12]",
+    },
+    {
+      key: "chosenScaffold",
+      label: "Chosen scaffold",
+      tone: "border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/[0.08]",
+    },
+  ];
+
+  function toggleAlternative(id: string) {
+    const selectedAlternativeIds = diagnosis.selectedAlternativeIds.includes(id)
+      ? diagnosis.selectedAlternativeIds.filter((selected) => selected !== id)
+      : [...diagnosis.selectedAlternativeIds, id];
+    onChange({ selectedAlternativeIds });
+  }
+
+  return (
+    <Card
+      className="border-primary/20 bg-card shadow-[0_14px_34px_rgba(15,45,74,0.06)]"
+      data-testid="planning-diagnosis"
+    >
+      <CardHeader className="flex flex-row items-start justify-between gap-4 px-5 pb-4 pt-5 sm:px-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+            Planning diagnosis
+          </p>
+          <CardTitle className="mt-1 text-lg font-semibold text-foreground">
+            Review the instructional reasoning
+          </CardTitle>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            A generated starting point. Keep, revise, or replace it using your
+            classroom evidence and professional judgment.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant={isEditing ? "default" : "outline"}
+          size="sm"
+          className="min-h-10 shrink-0 gap-1.5"
+          onClick={onToggleEditing}
+        >
+          {isEditing ? (
+            <Check className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {isEditing ? "Done" : "Edit diagnosis"}
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-5 px-5 pb-5 sm:px-6 sm:pb-6">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {fields.map(({ key, label, tone, preserveTarget }) => (
+            <div key={key} className={`rounded-xl border p-4 ${tone}`}>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                  {label}
+                </p>
+                {preserveTarget && (
+                  <Badge
+                    variant="outline"
+                    className="border-primary/30 bg-background/70 text-[10px] font-semibold uppercase tracking-wide text-primary"
+                  >
+                    Preserve target
+                  </Badge>
+                )}
+              </div>
+              {isEditing ? (
+                <Textarea
+                  value={diagnosis[key]}
+                  onChange={(event) => onChange({ [key]: event.target.value })}
+                  aria-label={`Edit ${label.toLowerCase()}`}
+                  className="min-h-28 resize-y bg-background/90 text-sm leading-relaxed text-foreground"
+                />
+              ) : (
+                <p className="text-sm leading-relaxed text-foreground">
+                  {diagnosis[key]}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-border/70 pt-4">
+          <p className="text-sm font-semibold text-foreground">
+            Other support options
+          </p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            The chosen scaffold remains the recommendation. Select any
+            alternatives you want to keep in view.
+          </p>
+          <div className="mt-3 grid gap-2.5 md:grid-cols-3">
+            {SCAFFOLD_ALTERNATIVES.map((alternative) => {
+              const isSelected = diagnosis.selectedAlternativeIds.includes(
+                alternative.id,
+              );
+              return (
+                <button
+                  key={alternative.id}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => toggleAlternative(alternative.id)}
+                  className={`min-h-28 rounded-xl border p-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    isSelected
+                      ? "border-primary/45 bg-primary/[0.08]"
+                      : "border-border bg-background hover:border-primary/30 hover:bg-primary/[0.025]"
+                  }`}
+                >
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="text-sm font-semibold leading-snug text-foreground">
+                      {alternative.title}
+                    </span>
+                    {isSelected && (
+                      <CircleCheck
+                        className="h-4 w-4 shrink-0 text-primary"
+                        aria-label="Selected"
+                      />
+                    )}
+                  </span>
+                  <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">
+                    {alternative.detail}
+                  </span>
+                  <span className="mt-2 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {alternative.needTag}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -774,6 +999,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     error: accountError,
   } = useAccountSession();
   const rememberedPlan = lessons[0];
+  const [rememberedContextDecision, setRememberedContextDecision] = useState<
+    "pending" | "keep" | "change"
+  >(() => (rememberedPlan && !isDemo ? "pending" : "keep"));
   const [languagePreferences, setLanguagePreferences] = useState(
     readLanguagePreferences,
   );
@@ -856,6 +1084,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [showPlanningContext, setShowPlanningContext] = useState(false);
+  const [isEditingDiagnosis, setIsEditingDiagnosis] = useState(false);
   const [showSourceMaterials, setShowSourceMaterials] = useState(
     () => new URL(window.location.href).searchParams.get("start") === "materials",
   );
@@ -936,6 +1165,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       languageSupportLevel: GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
       topic: DEMO_LESSON_PLAN.title,
       unitProfile: undefined,
+      planningDiagnosis: createPlanningDiagnosis(
+        getPreviewLessonPlan(
+          languagePreferences.teacher,
+          languagePreferences.studentMaterials,
+        ),
+        DEMO_CLASSROOM_PROBLEM,
+      ),
     });
     setSavedId(null);
     setIsEditing(false);
@@ -1044,13 +1280,15 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
   function continueWithoutSaving() {
     setCaptureNotice(
-      "You can keep working with this lesson here. In the live version, it would remain available only in this browser.",
+      "This plan is saved in this browser. Sign in to access it on another device.",
     );
   }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (rememberedContextDecision === "pending") return;
     trackFunnelEvent("planner_started", "planner");
     setIsEditing(false);
+    setIsEditingDiagnosis(false);
     setIsSharedPlan(false);
     setShareError(false);
     clearSharedPlanFromUrl(true);
@@ -1065,6 +1303,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         languageSupportLevel:
           GenerateLessonPlanBodyLanguageSupportLevel.NUMBER_4,
         topic: DEMO_LESSON_PLAN.title,
+        planningDiagnosis: createPlanningDiagnosis(
+          getPreviewLessonPlan(
+            languagePreferences.teacher,
+            languagePreferences.studentMaterials,
+          ),
+          DEMO_CLASSROOM_PROBLEM,
+        ),
       });
       return;
     }
@@ -1087,10 +1332,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       topic: string;
       notes: string;
     };
+    const planningDiagnosis = createPlanningDiagnosis(result, vals.notes);
     const id = save(result, {
       gradeLevel: vals.gradeLevel,
       languageSupportLevel: vals.languageSupportLevel,
       topic: vals.topic,
+      planningDiagnosis,
     });
     setSavedId(id);
     trackFunnelEvent("plan_saved", "planner");
@@ -1099,6 +1346,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       gradeLevel: vals.gradeLevel,
       languageSupportLevel: vals.languageSupportLevel,
       topic: vals.topic,
+      planningDiagnosis,
     });
     if (account) {
       void saveAccountLesson({
@@ -1150,6 +1398,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       languageSupportLevel: entry.languageSupportLevel,
       topic: entry.topic,
       unitProfile: entry.unitProfile,
+      planningDiagnosis: entry.planningDiagnosis,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1183,6 +1432,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
       languageSupportLevel: displayed.languageSupportLevel,
       topic: displayed.topic,
       unitProfile: displayed.unitProfile,
+      planningDiagnosis: displayed.planningDiagnosis,
     });
     setSavedId(id);
     trackFunnelEvent("plan_saved", "planner");
@@ -1197,6 +1447,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     if (savedId) {
       update(savedId, { lesson, title: lesson.title });
     }
+  }
+
+  function updatePlanningDiagnosis(changes: Partial<PlanningDiagnosis>) {
+    if (!displayed) return;
+    const planningDiagnosis = {
+      ...(displayed.planningDiagnosis ?? createPlanningDiagnosis(displayed.lesson)),
+      ...changes,
+    };
+    setDisplayed({ ...displayed, planningDiagnosis });
+    if (savedId) update(savedId, { planningDiagnosis });
   }
 
   function toggleEditing() {
@@ -1263,6 +1523,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     setDisplayed(null);
     setSavedId(null);
     setIsEditing(false);
+    setIsEditingDiagnosis(false);
+    setRememberedContextDecision(rememberedPlan && !isDemo ? "pending" : "keep");
     adaptationTrackedRef.current = false;
     setIsSharedPlan(false);
     setShareError(false);
@@ -1285,7 +1547,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   }
 
   const isGenerating = isPending && !isDemo;
-  const canSubmit = !isGenerating && cooldownSecs === 0;
+  const canSubmit =
+    !isGenerating && cooldownSecs === 0 && rememberedContextDecision !== "pending";
   const languagePreviewPlan = getPreviewLessonPlan(
     languagePreferences.teacher,
     languagePreferences.studentMaterials,
@@ -1315,6 +1578,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
         ? "We couldn’t reach the lesson service. Check your connection and try again."
         : rawErrorMsg
     : null;
+  const displayedDiagnosis = displayed
+    ? displayed.planningDiagnosis ?? createPlanningDiagnosis(displayed.lesson)
+    : undefined;
 
   return (
     <div className="bg-background text-foreground">
@@ -1919,7 +2185,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                           {form.watch("gradeLevel")} · Student support
                           reference: Level {form.watch("languageSupportLevel")}
-                          {rememberedPlan
+                          {rememberedPlan && rememberedContextDecision === "pending"
                             ? " · remembered from your last plan"
                             : ""}
                         </span>
@@ -1929,6 +2195,41 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         aria-hidden="true"
                       />
                     </button>
+
+                    {rememberedPlan &&
+                      rememberedContextDecision === "pending" && (
+                        <div className="border-t border-border/70 bg-background/65 p-4">
+                          <p className="text-sm font-medium leading-relaxed text-foreground">
+                            Using Grade {form.watch("gradeLevel")} / Level{" "}
+                            {form.watch("languageSupportLevel")} from your last
+                            plan. Is this right?
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="min-h-10"
+                              onClick={() =>
+                                setRememberedContextDecision("keep")
+                              }
+                            >
+                              Keep
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="min-h-10"
+                              onClick={() => {
+                                setRememberedContextDecision("change");
+                                setShowPlanningContext(true);
+                              }}
+                            >
+                              Change
+                            </Button>
+                          </div>
+                        </div>
+                      )}
 
                     {showPlanningContext && (
                       <div className="grid gap-4 border-t border-border/70 p-4 sm:grid-cols-2">
@@ -2070,6 +2371,8 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         </>
                       ) : cooldownSecs > 0 ? (
                         `Wait ${cooldownSecs}s`
+                      ) : rememberedContextDecision === "pending" ? (
+                        "Confirm plan context"
                       ) : (
                         "Create support plan"
                       )}
@@ -2077,7 +2380,9 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     <p className="text-center text-xs leading-relaxed text-muted-foreground">
                       {isDemo
                         ? "Sample mode shows a prepared example without using AI."
-                        : "You’ll get a reviewable starting point, not a final prescription."}
+                        : rememberedContextDecision === "pending"
+                          ? "Confirm the remembered grade and support level before creating a plan."
+                          : "You’ll get a reviewable starting point, not a final prescription."}
                     </p>
                   </div>
                 </form>
@@ -2226,6 +2531,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </p>
               </div>
             </div>
+            {displayedDiagnosis && (
+              <PlanningDiagnosisCard
+                diagnosis={displayedDiagnosis}
+                isEditing={isEditingDiagnosis}
+                onToggleEditing={() =>
+                  setIsEditingDiagnosis((current) => !current)
+                }
+                onChange={updatePlanningDiagnosis}
+              />
+            )}
             {isDemo && !isSharedPlan && (
               <ActivationSummary
                 displayed={displayed}
@@ -2251,8 +2566,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 />
               </div>
             )}
-            {!isSharedPlan && (
-              <Card
+            <Card
                 className="border-[var(--brand-blue)]/20 bg-card shadow-none"
                 data-testid="plan-at-a-glance"
               >
@@ -2280,38 +2594,56 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     A quick read before you decide whether to save it.
                   </p>
                 </CardHeader>
-                <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
+                <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="rounded-2xl border border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/10 p-4">
                     <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
                       <Target className="h-4 w-4" aria-hidden="true" />
-                      Content objective
+                      Learning goal
                     </p>
                     <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayed.lesson.contentObjective)}
+                      {compactLessonText(displayedDiagnosis?.learningGoal ?? displayed.lesson.contentObjective)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
                     <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
                       <Languages className="h-4 w-4" aria-hidden="true" />
-                      Language objective
+                      Language demand
                     </p>
                     <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayed.lesson.languageObjective)}
+                      {compactLessonText(displayedDiagnosis?.languageDemand ?? displayed.lesson.languageObjective)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-[var(--brand-blue)]/10 p-4">
                     <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
                       <Sparkles className="h-4 w-4" aria-hidden="true" />
-                      First classroom move
+                      Likely barrier
                     </p>
                     <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayed.lesson.warmUp)}
+                      {compactLessonText(displayedDiagnosis?.likelyBarrier ?? displayed.lesson.teacherNotes)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+                      <Layers3 className="h-4 w-4" aria-hidden="true" />
+                      Chosen scaffold
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {compactLessonText(displayedDiagnosis?.chosenScaffold ?? displayed.lesson.scaffoldPlan)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-[var(--brand-blue)]/10 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
+                      <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
+                      Participation
+                    </p>
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {participationFor(displayed.lesson)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 p-4">
                     <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
                       <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
-                      Quick check
+                      Check
                     </p>
                     <p className="text-sm leading-relaxed text-foreground">
                       {compactLessonText(displayed.lesson.formativeAssessment)}
@@ -2319,7 +2651,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                   </div>
                 </CardContent>
               </Card>
-            )}
             {!isSharedPlan && (
               <Card className="border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/[0.045] shadow-none">
                 <CardContent className="p-5 sm:p-6">
@@ -2375,8 +2706,12 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                         onClick={continueWithoutSaving}
                         className="min-h-10 text-left text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        Continue without saving
+                        Continue without syncing
                       </button>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        This plan is saved in this browser. Sign in to access it
+                        on another device.
+                      </p>
                       <p className="text-[11px] leading-relaxed text-muted-foreground">
                         Your Google email is used to identify your account. It
                         is not added to lesson prompts or student records.

@@ -6,6 +6,7 @@
 
 import { useState, useCallback } from "react";
 import type { LessonPlan } from "@workspace/api-client-react";
+import type { PlanningDiagnosis } from "@/lib/planning-diagnosis";
 
 const STORAGE_KEY = "scaffold-lesson-library";
 
@@ -17,6 +18,7 @@ export interface SavedLesson {
   languageSupportLevel: string;
   topic: string;
   unitProfile?: string;
+  planningDiagnosis?: PlanningDiagnosis;
   lesson: LessonPlan;
 }
 
@@ -60,6 +62,7 @@ export function useSavedLessons() {
         languageSupportLevel: string;
         topic: string;
         unitProfile?: string;
+        planningDiagnosis?: PlanningDiagnosis;
       },
     ): string => {
       const entry: SavedLesson = {
@@ -70,6 +73,7 @@ export function useSavedLessons() {
         languageSupportLevel: meta.languageSupportLevel,
         topic: meta.topic,
         unitProfile: meta.unitProfile,
+        planningDiagnosis: meta.planningDiagnosis,
         lesson,
       };
       setLessons((prev) => {
@@ -93,7 +97,9 @@ export function useSavedLessons() {
   const update = useCallback(
     (
       id: string,
-      changes: Partial<Pick<SavedLesson, "title" | "topic" | "lesson">>,
+      changes: Partial<
+        Pick<SavedLesson, "title" | "topic" | "planningDiagnosis" | "lesson">
+      >,
     ): void => {
       setLessons((prev) => {
         const next = prev.map((entry) =>

@@ -1,4 +1,5 @@
 import type { LessonPlan } from "@workspace/api-client-react";
+import type { PlanningDiagnosis } from "@/lib/planning-diagnosis";
 
 const SHARE_VERSION = 1;
 const MAX_ENCODED_LENGTH = 100_000;
@@ -9,6 +10,7 @@ export interface SharedPlanSnapshot {
   languageSupportLevel: string;
   topic: string;
   unitProfile?: string;
+  planningDiagnosis?: PlanningDiagnosis;
 }
 
 interface ShareEnvelope {
@@ -67,6 +69,18 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
+function isPlanningDiagnosis(value: unknown): value is PlanningDiagnosis {
+  if (!value || typeof value !== "object") return false;
+  const diagnosis = value as Record<string, unknown>;
+  return (
+    typeof diagnosis.learningGoal === "string" &&
+    typeof diagnosis.languageDemand === "string" &&
+    typeof diagnosis.likelyBarrier === "string" &&
+    typeof diagnosis.chosenScaffold === "string" &&
+    isStringArray(diagnosis.selectedAlternativeIds)
+  );
+}
+
 function isLessonPlan(value: unknown): value is LessonPlan {
   if (!value || typeof value !== "object") return false;
   const lesson = value as Record<string, unknown>;
@@ -103,7 +117,9 @@ function isSharedPlanSnapshot(value: unknown): value is SharedPlanSnapshot {
     typeof plan.gradeLevel === "string" &&
     (typeof plan.languageSupportLevel === "string" || typeof (plan as Record<string, unknown>).widaBand === "string") &&
     typeof plan.topic === "string" &&
-    (plan.unitProfile === undefined || typeof plan.unitProfile === "string")
+    (plan.unitProfile === undefined || typeof plan.unitProfile === "string") &&
+    (plan.planningDiagnosis === undefined ||
+      isPlanningDiagnosis(plan.planningDiagnosis))
   );
 }
 
