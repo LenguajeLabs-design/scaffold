@@ -600,6 +600,43 @@
 }
 
 @layer components {
+  .planner-page {
+    min-height: 100%;
+    background:
+      radial-gradient(circle at 50% -18rem, rgb(0 113 227 / 0.07), transparent 38rem),
+      #f5f5f7;
+  }
+
+  .planner-surface {
+    isolation: isolate;
+  }
+
+  .planner-label-icon {
+    display: inline-flex;
+    height: 1.5rem;
+    width: 1.5rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.55rem;
+  }
+
+  .planner-control {
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .planner-control:hover {
+    border-color: rgb(0 0 0 / 0.16);
+  }
+
+  .planner-control:focus-visible {
+    border-color: #0071e3;
+    box-shadow: 0 0 0 4px rgb(0 113 227 / 0.14);
+  }
+
   .lesson-card {
     position: relative;
     overflow: hidden;

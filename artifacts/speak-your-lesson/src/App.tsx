@@ -74,15 +74,6 @@ function NavBar({
       shortLabel: "Copilot",
       href: "/classroom-copilot",
     },
-    ...(import.meta.env.DEV
-      ? [
-          {
-            label: "Language preview",
-            shortLabel: "Languages",
-            href: "/language-preview",
-          },
-        ]
-      : []),
   ];
 
   return (
@@ -118,17 +109,6 @@ function NavBar({
                 <span className="hidden sm:inline">{tab.label}</span>
               </span>
             );
-            if (tab.href === "/language-preview") {
-              return (
-                <a
-                  key={tab.href}
-                  href={tab.href}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {content}
-                </a>
-              );
-            }
             return (
               <Link
                 key={tab.href}

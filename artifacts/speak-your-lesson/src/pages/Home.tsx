@@ -1012,7 +1012,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const rememberedPlan = lessons[0];
   const [rememberedContextDecision, setRememberedContextDecision] = useState<
     "pending" | "keep" | "change"
-  >(() => (rememberedPlan && !isDemo ? "pending" : "keep"));
+  >("keep");
   const [languagePreferences, setLanguagePreferences] = useState(
     readLanguagePreferences,
   );
@@ -1297,7 +1297,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    if (rememberedContextDecision === "pending") return;
     trackFunnelEvent("planner_started", "planner");
     setIsEditing(false);
     setIsEditingDiagnosis(false);
@@ -1536,7 +1535,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     setSavedId(null);
     setIsEditing(false);
     setIsEditingDiagnosis(false);
-    setRememberedContextDecision(rememberedPlan && !isDemo ? "pending" : "keep");
+    setRememberedContextDecision("keep");
     adaptationTrackedRef.current = false;
     setIsSharedPlan(false);
     setShareError(false);
@@ -1559,8 +1558,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   }
 
   const isGenerating = isPending && !isDemo;
-  const canSubmit =
-    !isGenerating && cooldownSecs === 0 && rememberedContextDecision !== "pending";
+  const canSubmit = !isGenerating && cooldownSecs === 0;
   const languagePreviewPlan = getPreviewLessonPlan(
     languagePreferences.teacher,
     languagePreferences.studentMaterials,
@@ -1595,29 +1593,18 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
     : undefined;
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="planner-page text-foreground">
       {displayed && <PrintableLesson displayed={displayed} />}
 
-      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:space-y-12 sm:py-14 print:hidden">
-        <section className="max-w-4xl" aria-labelledby="home-heading">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--brand-blue-strong)] shadow-[0_8px_20px_rgba(15,45,74,0.08)] ring-1 ring-[var(--brand-blue)]/15">
-              <BookOpenText className="h-4.5 w-4.5" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-blue-strong)]">
-                Your planning workspace
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Practical support for multilingual learners
-              </p>
-            </div>
+      <main className="mx-auto max-w-5xl space-y-10 px-5 py-10 sm:space-y-12 sm:py-16 print:hidden">
+        <section className="mx-auto max-w-4xl" aria-labelledby="home-heading">
+          <div className="mb-5 flex justify-end">
             {lessons.length > 0 && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="ml-auto min-h-11 shrink-0 bg-white/80"
+                className="min-h-11 shrink-0 rounded-full border-black/[0.08] bg-white px-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#f5f5f7]"
                 onClick={() => setIsRecentPlansOpen(true)}
                 data-testid="button-open-recent-plans"
               >
@@ -1632,14 +1619,13 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
           <h1
             id="home-heading"
-            className="max-w-2xl text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl"
+            className="max-w-2xl text-4xl font-semibold tracking-[-0.045em] text-[#1d1d1f] sm:text-5xl"
           >
-            What do you need help with today?
+            Plan a lesson
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Start with the classroom moment—not a configuration form. Tell
-            Scaffold what you’re trying to teach or solve, and it will shape a
-            reviewable lesson plan around it.
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-[#6e6e73] sm:text-lg">
+            Turn rough notes into a ready-to-teach plan for multilingual
+            learners.
           </p>
         </section>
 
@@ -1685,19 +1671,120 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-7xl">
-          <Card className="overflow-hidden border-white/90 bg-card/95 shadow-[0_24px_64px_rgba(15,45,74,0.08)] backdrop-blur-sm">
-            <div
-              className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-sun)]"
-              aria-hidden="true"
-            />
-            <CardContent className="p-5 sm:p-7 lg:p-9">
+        <div className="mx-auto w-full max-w-4xl">
+          <Card className="planner-surface overflow-hidden rounded-[28px] border border-black/[0.08] bg-white/95 shadow-[0_18px_55px_rgba(0,0,0,0.08)] backdrop-blur-sm">
+            <div className="h-1 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-blue)] to-[var(--brand-sun)]" aria-hidden="true" />
+            <CardContent className="p-6 sm:p-8 lg:p-10">
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
                   className="space-y-6"
                 >
-                  <input type="hidden" {...form.register("topic")} />
+                  <div className="space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.25fr)]">
+                      <FormField control={form.control} name="topic" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-sm font-semibold">
+                            <span className="planner-label-icon bg-[var(--brand-blue)]/13 text-[var(--brand-blue-strong)]"><BookOpenText className="h-3.5 w-3.5" aria-hidden="true" /></span>
+                            Lesson focus <span className="font-normal text-muted-foreground">(optional)</span>
+                          </FormLabel>
+                          <FormControl><Input {...field} data-testid="input-topic" placeholder="e.g. Fractions, photosynthesis" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] shadow-none" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <FormField control={form.control} name="gradeLevel" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-sm font-semibold">
+                            <span className="planner-label-icon bg-[var(--brand-teal)]/16 text-[var(--brand-teal-strong)]"><Target className="h-3.5 w-3.5" aria-hidden="true" /></span>
+                            Grade
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger data-testid="select-grade-level" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] text-sm shadow-none"><SelectValue placeholder="Select a grade" /></SelectTrigger></FormControl>
+                            <SelectContent>{(Object.values(GenerateLessonPlanBodyGradeLevel) as string[]).map((grade) => (<SelectItem key={grade} value={grade} className="text-sm">{grade}</SelectItem>))}</SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <FormField control={form.control} name="languageSupportLevel" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-sm font-semibold">
+                            <span className="planner-label-icon bg-[var(--brand-purple)]/18 text-[var(--brand-purple-strong)]"><Languages className="h-3.5 w-3.5" aria-hidden="true" /></span>
+                            Language support
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger data-testid="select-language-support-level" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] text-sm shadow-none"><SelectValue placeholder="Choose support" /></SelectTrigger></FormControl>
+                            <SelectContent>{(Object.entries(GenerateLessonPlanBodyLanguageSupportLevel) as [string, string][]).map(([, value]) => (<SelectItem key={value} value={value} className="text-sm">Level {value} · {supportLevelLabels[value]}</SelectItem>))}</SelectContent>
+                          </Select>
+                          <p className="text-xs leading-5 text-muted-foreground">Choose the amount of language support students need for this task.</p>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+
+                    <FormField control={form.control} name="notes" render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-end justify-between gap-3">
+                          <div>
+                            <FormLabel className="flex items-center gap-2 text-base font-semibold text-foreground">
+                              <span className="planner-label-icon h-7 w-7 bg-[var(--brand-sun)]/25 text-[#8a6100]"><MessageSquareQuote className="h-4 w-4" aria-hidden="true" /></span>
+                              What are students learning, and where do they need support?
+                            </FormLabel>
+                            <p id="classroom-need-guidance" className="mt-1 text-sm leading-5 text-muted-foreground">Include the task, what students can already do, and where they get stuck.</p>
+                          </div>
+                          <span className={`shrink-0 text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "font-medium text-destructive" : "text-muted-foreground"}`}>{notesLength}/{MAX_NOTES_CHARS}</span>
+                        </div>
+                        <FormControl>
+                          <Textarea {...field} data-testid="input-notes" aria-describedby="classroom-need-guidance classroom-need-privacy" maxLength={MAX_NOTES_CHARS} placeholder="Paste a goal, task, notes, or describe what students can do and where they get stuck." className="planner-control min-h-[190px] resize-y rounded-2xl border-black/[0.10] bg-[#f5f5f7] text-base leading-relaxed shadow-none" onChange={(event) => {
+                            field.onChange(event);
+                            if (!form.getValues("topic").trim()) {
+                              form.setValue("topic", topicFromBrief(event.target.value), { shouldDirty: true, shouldValidate: true });
+                            }
+                          }} />
+                        </FormControl>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <p id="classroom-need-privacy" className="text-xs leading-relaxed text-muted-foreground">Please do not include student names or private information.</p>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )} />
+
+                    <details className="group rounded-2xl border border-black/[0.07] bg-[#f5f5f7]">
+                      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                        <span className="flex items-center gap-2"><span className="planner-label-icon bg-[var(--brand-blue)]/12 text-[var(--brand-blue-strong)]"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" /></span>More options</span>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+                      </summary>
+                      <div className="space-y-5 border-t border-black/[0.07] p-5">
+                        <FormField control={form.control} name="sourceMaterial" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-semibold">Lesson materials <span className="font-normal text-muted-foreground">(optional)</span></FormLabel>
+                            <FormControl><Textarea {...field} value={field.value ?? ""} data-testid="input-source-material" maxLength={MAX_SOURCE_MATERIAL_CHARS} placeholder="Paste the lesson goal, task directions, success criteria, or relevant planning notes." className="planner-control min-h-32 resize-y rounded-xl border-black/[0.10] bg-white text-sm leading-6 shadow-none" /></FormControl>
+                            <p className="text-xs leading-5 text-muted-foreground">Use this only for the relevant lesson text. Do not paste student records or identifiable student work.</p>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <fieldset>
+                          <legend className="text-sm font-semibold text-foreground">Output languages</legend>
+                          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                            <label className="space-y-2 text-sm font-medium"><span className="block">Teacher guidance</span><select value={languagePreferences.teacher} onChange={(event) => { const language = event.target.value; if (isLanguage(language)) setLanguagePreferences((current) => ({ ...current, teacher: language })); }} className="planner-control min-h-11 w-full rounded-xl border border-black/[0.10] bg-white px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3]/30">{supportedLanguages.map((language) => <option key={language.code} value={language.code}>{language.name}</option>)}</select></label>
+                            <label className="space-y-2 text-sm font-medium"><span className="block">Student materials</span><select value={languagePreferences.studentMaterials} onChange={(event) => { const language = event.target.value; if (isLanguage(language)) setLanguagePreferences((current) => ({ ...current, studentMaterials: language })); }} className="planner-control min-h-11 w-full rounded-xl border border-black/[0.10] bg-white px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3]/30">{supportedLanguages.map((language) => <option key={language.code} value={language.code}>{language.name}</option>)}</select></label>
+                          </div>
+                        </fieldset>
+                      </div>
+                    </details>
+
+                    {errorMsg && <div className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive" role="alert"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>{errorMsg}</span></div>}
+                    {cooldownSecs > 0 && !errorMsg && <div className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]" role="status">You can create another plan in {cooldownSecs} seconds. Your notes will stay in place.</div>}
+                    <div className="flex flex-col gap-3 border-t border-black/[0.08] pt-6 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs leading-relaxed text-muted-foreground">{isDemo ? "Sample mode shows a prepared example without using AI." : "You’ll get a reviewable starting point to adapt for your classroom."}</p>
+                      <Button type="submit" disabled={!canSubmit} data-testid="button-generate" className="min-h-12 w-full shrink-0 rounded-full bg-[#0071e3] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,113,227,0.22)] hover:bg-[#0077ed] focus-visible:ring-[#0071e3]/35 sm:w-auto">
+                        {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building your plan...</> : cooldownSecs > 0 ? `Wait ${cooldownSecs}s` : "Create my support plan"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="hidden">
                   <nav
                     className="rounded-2xl border border-[var(--brand-blue)]/15 bg-[var(--brand-blue)]/[0.045] p-4"
                     aria-label="Planning path"
@@ -2414,6 +2501,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                           : "You’ll get a reviewable starting point, not a final prescription."}
                     </p>
                   </div>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -2518,16 +2606,16 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
         {!displayed && !isGenerating && (
           <section
-            className="flex items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground"
+            className="flex flex-col items-center justify-center gap-1 px-4 text-center text-sm text-muted-foreground sm:flex-row sm:gap-2"
             aria-labelledby="lesson-preview-heading"
           >
             <h2
               id="lesson-preview-heading"
               className="font-medium text-foreground"
             >
-              Start with one classroom moment.
+              Your plan will appear here.
             </h2>
-            <p>Your first useful support will appear below.</p>
+            <p>Start with the lesson information above.</p>
           </section>
         )}
 
