@@ -68,7 +68,7 @@ function NavBar({
   const [location] = useLocation();
 
   const tabs = [
-    { label: "Lesson Planner", shortLabel: "Planner", href: "/" },
+    { label: "Lesson Planner", shortLabel: "Planner", href: "/planner" },
     {
       label: "Classroom Copilot",
       shortLabel: "Copilot",
@@ -324,12 +324,14 @@ function Router() {
   const [location] = useLocation();
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const adminOnly = location === "/admin" || location.endsWith("/admin");
-  const isLandingPreview =
-    location === "/landing-preview" || location.endsWith("/landing-preview");
+  const isLanding =
+    location === "/" ||
+    location === "/landing-preview" ||
+    location.endsWith("/landing-preview");
   const [requireAccessCode, setRequireAccessCode] = useState(false);
 
   useEffect(() => {
-    if (!ACCESS_GATE_ENABLED || adminOnly || isLandingPreview) return;
+    if (!ACCESS_GATE_ENABLED || adminOnly || isLanding) return;
     let cancelled = false;
     void fetch(resolveApiUrl("/api/access/config"), {
       signal: AbortSignal.timeout(10_000),
@@ -347,19 +349,19 @@ function Router() {
     return () => {
       cancelled = true;
     };
-  }, [adminOnly, isLandingPreview]);
+  }, [adminOnly, isLanding]);
 
-  if (isLandingPreview) {
+  if (isLanding) {
     return (
       <LandingPreview
         onExploreSample={() => {
           trackFunnelEvent("sample_opened", "landing");
           enterDemo();
           setOnboardingOpen(false);
-          navigate("/");
+          navigate("/planner");
         }}
-        onStartPlanning={() => navigate("/")}
-        onStartFromMaterials={() => navigate("/?start=materials")}
+        onStartPlanning={() => navigate("/planner")}
+        onStartFromMaterials={() => navigate("/planner?start=materials")}
       />
     );
   }
@@ -380,12 +382,13 @@ function Router() {
       <AccessGate
         onUnlock={(code, admin) => {
           unlock(code, admin);
-          if (admin) navigate(adminOnly ? "/admin" : "/");
+          if (admin) navigate(adminOnly ? "/admin" : "/planner");
         }}
         onDemo={() => {
           trackFunnelEvent("sample_opened", "landing");
           enterDemo();
           setOnboardingOpen(false);
+          navigate("/planner");
         }}
         adminOnly={adminOnly}
       />
@@ -420,7 +423,7 @@ function Router() {
       <div className="relative z-10 flex-1">
         <Switch>
           <Route
-            path="/"
+            path="/planner"
             component={() => (
               <Home accessCode={activeAccessCode} isDemo={isSampleMode} />
             )}
@@ -455,7 +458,7 @@ function Router() {
         onOpenChange={setOnboardingOpen}
         onStart={() => {
           setOnboardingOpen(false);
-          navigate("/");
+          navigate("/planner");
           window.setTimeout(() => {
             document
               .querySelector<HTMLInputElement>('[data-testid="input-topic"]')

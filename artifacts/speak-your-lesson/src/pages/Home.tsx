@@ -862,10 +862,20 @@ function ActivationSummary({
   const { lesson } = displayed;
 
   return (
-    <Card
-      className="overflow-hidden border-[var(--brand-blue)]/25 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(232,247,250,0.4))] shadow-[0_18px_48px_rgba(15,45,74,0.07)]"
+    <details
+      className="group overflow-hidden rounded-2xl border border-[var(--brand-blue)]/25 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(232,247,250,0.4))]"
       data-testid="activation-summary"
     >
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden sm:px-5">
+        <span className="flex items-center gap-2">
+          <span className="planner-label-icon bg-[var(--brand-teal)]/15 text-[var(--brand-teal-strong)]">
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
+          Explore why this sample support fits
+        </span>
+        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <Card className="rounded-none border-0 border-t border-[var(--brand-blue)]/15 bg-transparent shadow-none">
       <CardHeader className="border-b border-border/70 px-5 pb-4 pt-5 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-teal-strong)]">
@@ -995,7 +1005,8 @@ function ActivationSummary({
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </details>
   );
 }
 
@@ -1102,7 +1113,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
   const [sourceMaterialMode, setSourceMaterialMode] = useState<"paste" | "pdf">(
     "paste",
   );
-  const [captureMarketing, setCaptureMarketing] = useState(false);
+  const [captureMarketing] = useState(false);
   const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const [captureError, setCaptureError] = useState<string | null>(null);
   const [isRecentPlansOpen, setIsRecentPlansOpen] = useState(false);
@@ -1559,6 +1570,17 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
 
   const isGenerating = isPending && !isDemo;
   const canSubmit = !isGenerating && cooldownSecs === 0;
+
+  useEffect(() => {
+    if (!isGenerating || displayed) return;
+    const timer = window.setTimeout(() => {
+      document
+        .querySelector('[data-testid="generation-progress"]')
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [displayed, isGenerating]);
+
   const languagePreviewPlan = getPreviewLessonPlan(
     languagePreferences.teacher,
     languagePreferences.studentMaterials,
@@ -1682,102 +1704,213 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 >
                   <div className="space-y-6">
                     <div className="grid gap-4 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.25fr)]">
-                      <FormField control={form.control} name="topic" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-semibold">
-                            <span className="planner-label-icon bg-[var(--brand-blue)]/13 text-[var(--brand-blue-strong)]"><BookOpenText className="h-3.5 w-3.5" aria-hidden="true" /></span>
-                            Lesson focus <span className="font-normal text-muted-foreground">(optional)</span>
-                          </FormLabel>
-                          <FormControl><Input {...field} data-testid="input-topic" placeholder="e.g. Fractions, photosynthesis" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] shadow-none" /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
+                      <FormField
+                        control={form.control}
+                        name="topic"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-sm font-semibold">
+                              <span className="planner-label-icon bg-[var(--brand-blue)]/13 text-[var(--brand-blue-strong)]">
+                                <BookOpenText className="h-3.5 w-3.5" aria-hidden="true" />
+                              </span>
+                              Lesson focus <span className="font-normal text-muted-foreground">(optional)</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                data-testid="input-topic"
+                                placeholder="e.g. Fractions, photosynthesis"
+                                className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] shadow-none"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <FormField control={form.control} name="gradeLevel" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-semibold">
-                            <span className="planner-label-icon bg-[var(--brand-teal)]/16 text-[var(--brand-teal-strong)]"><Target className="h-3.5 w-3.5" aria-hidden="true" /></span>
-                            Grade
-                          </FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger data-testid="select-grade-level" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] text-sm shadow-none"><SelectValue placeholder="Select a grade" /></SelectTrigger></FormControl>
-                            <SelectContent>{(Object.values(GenerateLessonPlanBodyGradeLevel) as string[]).map((grade) => (<SelectItem key={grade} value={grade} className="text-sm">{grade}</SelectItem>))}</SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
+                      <FormField
+                        control={form.control}
+                        name="gradeLevel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-sm font-semibold">
+                              <span className="planner-label-icon bg-[var(--brand-teal)]/16 text-[var(--brand-teal-strong)]">
+                                <Target className="h-3.5 w-3.5" aria-hidden="true" />
+                              </span>
+                              Grade
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-grade-level" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] text-sm shadow-none">
+                                  <SelectValue placeholder="Select a grade" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(Object.values(GenerateLessonPlanBodyGradeLevel) as string[]).map((grade) => (
+                                  <SelectItem key={grade} value={grade} className="text-sm">{grade}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <FormField control={form.control} name="languageSupportLevel" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-semibold">
-                            <span className="planner-label-icon bg-[var(--brand-purple)]/18 text-[var(--brand-purple-strong)]"><Languages className="h-3.5 w-3.5" aria-hidden="true" /></span>
-                            Language support
-                          </FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger data-testid="select-language-support-level" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] text-sm shadow-none"><SelectValue placeholder="Choose support" /></SelectTrigger></FormControl>
-                            <SelectContent>{(Object.entries(GenerateLessonPlanBodyLanguageSupportLevel) as [string, string][]).map(([, value]) => (<SelectItem key={value} value={value} className="text-sm">Level {value} · {supportLevelLabels[value]}</SelectItem>))}</SelectContent>
-                          </Select>
-                          <p className="text-xs leading-5 text-muted-foreground">Choose the amount of language support students need for this task.</p>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
+                      <FormField
+                        control={form.control}
+                        name="languageSupportLevel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-sm font-semibold">
+                              <span className="planner-label-icon bg-[var(--brand-purple)]/18 text-[var(--brand-purple-strong)]">
+                                <Languages className="h-3.5 w-3.5" aria-hidden="true" />
+                              </span>
+                              Language support
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-language-support-level" className="planner-control min-h-11 rounded-xl border-black/[0.10] bg-[#f5f5f7] text-sm shadow-none">
+                                  <SelectValue placeholder="Choose support" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(Object.entries(GenerateLessonPlanBodyLanguageSupportLevel) as [string, string][]).map(([, value]) => (
+                                  <SelectItem key={value} value={value} className="text-sm">
+                                    Level {value} · {supportLevelLabels[value]}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs leading-5 text-muted-foreground">Choose the amount of language support students need for this task.</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
-                    <FormField control={form.control} name="notes" render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-end justify-between gap-3">
-                          <div>
-                            <FormLabel className="flex items-center gap-2 text-base font-semibold text-foreground">
-                              <span className="planner-label-icon h-7 w-7 bg-[var(--brand-sun)]/25 text-[#8a6100]"><MessageSquareQuote className="h-4 w-4" aria-hidden="true" /></span>
-                              What are students learning, and where do they need support?
-                            </FormLabel>
-                            <p id="classroom-need-guidance" className="mt-1 text-sm leading-5 text-muted-foreground">Include the task, what students can already do, and where they get stuck.</p>
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-end justify-between gap-3">
+                            <div>
+                              <FormLabel className="flex items-center gap-2 text-base font-semibold text-foreground">
+                                <span className="planner-label-icon h-7 w-7 bg-[var(--brand-sun)]/25 text-[#8a6100]">
+                                  <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
+                                </span>
+                                What are students learning, and where do they need support?
+                              </FormLabel>
+                              <p id="classroom-need-guidance" className="mt-1 text-sm leading-5 text-muted-foreground">
+                                Include the task, what students can already do, and where they get stuck.
+                              </p>
+                            </div>
+                            <span className={`shrink-0 text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "font-medium text-destructive" : "text-muted-foreground"}`}>
+                              {notesLength}/{MAX_NOTES_CHARS}
+                            </span>
                           </div>
-                          <span className={`shrink-0 text-xs tabular-nums ${notesLength > MAX_NOTES_CHARS * 0.9 ? "font-medium text-destructive" : "text-muted-foreground"}`}>{notesLength}/{MAX_NOTES_CHARS}</span>
-                        </div>
-                        <FormControl>
-                          <Textarea {...field} data-testid="input-notes" aria-describedby="classroom-need-guidance classroom-need-privacy" maxLength={MAX_NOTES_CHARS} placeholder="Paste a goal, task, notes, or describe what students can do and where they get stuck." className="planner-control min-h-[190px] resize-y rounded-2xl border-black/[0.10] bg-[#f5f5f7] text-base leading-relaxed shadow-none" onChange={(event) => {
-                            field.onChange(event);
-                            if (!form.getValues("topic").trim()) {
-                              form.setValue("topic", topicFromBrief(event.target.value), { shouldDirty: true, shouldValidate: true });
-                            }
-                          }} />
-                        </FormControl>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                          <p id="classroom-need-privacy" className="text-xs leading-relaxed text-muted-foreground">Please do not include student names or private information.</p>
-                          <FormMessage />
-                        </div>
-                      </FormItem>
-                    )} />
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              data-testid="input-notes"
+                              aria-describedby="classroom-need-guidance classroom-need-privacy"
+                              maxLength={MAX_NOTES_CHARS}
+                              placeholder="Paste a goal, task, notes, or describe what students can do and where they get stuck."
+                              className="planner-control min-h-[190px] resize-y rounded-2xl border-black/[0.10] bg-[#f5f5f7] text-base leading-relaxed shadow-none"
+                              onChange={(event) => {
+                                field.onChange(event);
+                                if (!form.getValues("topic").trim()) {
+                                  form.setValue("topic", topicFromBrief(event.target.value), {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                  });
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <p id="classroom-need-privacy" className="text-xs leading-relaxed text-muted-foreground">
+                              Please do not include student names or private information.
+                            </p>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
 
                     <details className="group rounded-2xl border border-black/[0.07] bg-[#f5f5f7]">
                       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-                        <span className="flex items-center gap-2"><span className="planner-label-icon bg-[var(--brand-blue)]/12 text-[var(--brand-blue-strong)]"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" /></span>More options</span>
+                        <span className="flex items-center gap-2">
+                          <span className="planner-label-icon bg-[var(--brand-blue)]/12 text-[var(--brand-blue-strong)]">
+                            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                          </span>
+                          More options
+                        </span>
                         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
                       </summary>
                       <div className="space-y-5 border-t border-black/[0.07] p-5">
-                        <FormField control={form.control} name="sourceMaterial" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-semibold">Lesson materials <span className="font-normal text-muted-foreground">(optional)</span></FormLabel>
-                            <FormControl><Textarea {...field} value={field.value ?? ""} data-testid="input-source-material" maxLength={MAX_SOURCE_MATERIAL_CHARS} placeholder="Paste the lesson goal, task directions, success criteria, or relevant planning notes." className="planner-control min-h-32 resize-y rounded-xl border-black/[0.10] bg-white text-sm leading-6 shadow-none" /></FormControl>
-                            <p className="text-xs leading-5 text-muted-foreground">Use this only for the relevant lesson text. Do not paste student records or identifiable student work.</p>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
+                        <FormField
+                          control={form.control}
+                          name="sourceMaterial"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold">Lesson materials <span className="font-normal text-muted-foreground">(optional)</span></FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  data-testid="input-source-material"
+                                  maxLength={MAX_SOURCE_MATERIAL_CHARS}
+                                  placeholder="Paste the lesson goal, task directions, success criteria, or relevant planning notes."
+                                  className="planner-control min-h-32 resize-y rounded-xl border-black/[0.10] bg-white text-sm leading-6 shadow-none"
+                                />
+                              </FormControl>
+                              <p className="text-xs leading-5 text-muted-foreground">Use this only for the relevant lesson text. Do not paste student records or identifiable student work.</p>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <fieldset>
                           <legend className="text-sm font-semibold text-foreground">Output languages</legend>
                           <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                            <label className="space-y-2 text-sm font-medium"><span className="block">Teacher guidance</span><select value={languagePreferences.teacher} onChange={(event) => { const language = event.target.value; if (isLanguage(language)) setLanguagePreferences((current) => ({ ...current, teacher: language })); }} className="planner-control min-h-11 w-full rounded-xl border border-black/[0.10] bg-white px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3]/30">{supportedLanguages.map((language) => <option key={language.code} value={language.code}>{language.name}</option>)}</select></label>
-                            <label className="space-y-2 text-sm font-medium"><span className="block">Student materials</span><select value={languagePreferences.studentMaterials} onChange={(event) => { const language = event.target.value; if (isLanguage(language)) setLanguagePreferences((current) => ({ ...current, studentMaterials: language })); }} className="planner-control min-h-11 w-full rounded-xl border border-black/[0.10] bg-white px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3]/30">{supportedLanguages.map((language) => <option key={language.code} value={language.code}>{language.name}</option>)}</select></label>
+                            <label className="space-y-2 text-sm font-medium">
+                              <span className="block">Teacher guidance</span>
+                              <select value={languagePreferences.teacher} onChange={(event) => {
+                                const language = event.target.value;
+                                if (isLanguage(language)) setLanguagePreferences((current) => ({ ...current, teacher: language }));
+                              }} className="planner-control min-h-11 w-full rounded-xl border border-black/[0.10] bg-white px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3]/30">
+                                {supportedLanguages.map((language) => <option key={language.code} value={language.code}>{language.name}</option>)}
+                              </select>
+                            </label>
+                            <label className="space-y-2 text-sm font-medium">
+                              <span className="block">Student materials</span>
+                              <select value={languagePreferences.studentMaterials} onChange={(event) => {
+                                const language = event.target.value;
+                                if (isLanguage(language)) setLanguagePreferences((current) => ({ ...current, studentMaterials: language }));
+                              }} className="planner-control min-h-11 w-full rounded-xl border border-black/[0.10] bg-white px-3 text-sm shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3]/30">
+                                {supportedLanguages.map((language) => <option key={language.code} value={language.code}>{language.name}</option>)}
+                              </select>
+                            </label>
                           </div>
                         </fieldset>
                       </div>
                     </details>
 
-                    {errorMsg && <div className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive" role="alert"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>{errorMsg}</span></div>}
-                    {cooldownSecs > 0 && !errorMsg && <div className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]" role="status">You can create another plan in {cooldownSecs} seconds. Your notes will stay in place.</div>}
+                    {errorMsg && (
+                      <div className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-sm text-destructive" role="alert">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{errorMsg}</span>
+                      </div>
+                    )}
+                    {cooldownSecs > 0 && !errorMsg && (
+                      <div className="rounded-xl border border-[var(--brand-blue)]/30 bg-[var(--brand-blue)]/10 px-3.5 py-3 text-sm text-[var(--brand-blue-strong)]" role="status">
+                        You can create another plan in {cooldownSecs} seconds. Your notes will stay in place.
+                      </div>
+                    )}
                     <div className="flex flex-col gap-3 border-t border-black/[0.08] pt-6 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-xs leading-relaxed text-muted-foreground">{isDemo ? "Sample mode shows a prepared example without using AI." : "You’ll get a reviewable starting point to adapt for your classroom."}</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        {isDemo ? "Sample mode shows a prepared example without using AI." : "You’ll get a reviewable starting point to adapt for your classroom."}
+                      </p>
                       <Button type="submit" disabled={!canSubmit} data-testid="button-generate" className="min-h-12 w-full shrink-0 rounded-full bg-[#0071e3] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,113,227,0.22)] hover:bg-[#0077ed] focus-visible:ring-[#0071e3]/35 sm:w-auto">
                         {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building your plan...</> : cooldownSecs > 0 ? `Wait ${cooldownSecs}s` : "Create my support plan"}
                       </Button>
@@ -2703,16 +2836,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </p>
               </div>
             </div>
-            {displayedDiagnosis && (
-              <PlanningDiagnosisCard
-                diagnosis={displayedDiagnosis}
-                isEditing={isEditingDiagnosis}
-                onToggleEditing={() =>
-                  setIsEditingDiagnosis((current) => !current)
-                }
-                onChange={updatePlanningDiagnosis}
-              />
-            )}
             {isDemo && !isSharedPlan && (
               <ActivationSummary
                 displayed={displayed}
@@ -2720,189 +2843,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 onUseWithLesson={useSampleWithLesson}
               />
             )}
-            {!isSharedPlan && (
-              <div className="flex items-end justify-between gap-4 border-b border-border/70 pb-2 pt-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
-                    {isDemo ? "Full lesson plan" : "Lesson plan"}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {isDemo
-                      ? "Review the complete sequence after the first useful move."
-                      : "Review the complete sequence and adapt the supports for your lesson."}
-                  </p>
-                </div>
-                <BookOpenText
-                  className="hidden h-5 w-5 text-muted-foreground sm:block"
-                  aria-hidden="true"
-                />
-              </div>
-            )}
-            <Card
-                className="border-[var(--brand-blue)]/20 bg-card shadow-none"
-                data-testid="plan-at-a-glance"
-              >
-                <CardHeader className="px-5 pb-3 pt-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-blue-strong)]">
-                    Your plan at a glance
-                  </p>
-                  <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                    <CardTitle className="text-xl font-semibold text-foreground">
-                      {displayed.lesson.title}
-                    </CardTitle>
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      <Badge
-                        variant="secondary"
-                        className="text-xs font-medium"
-                      >
-                        {displayed.gradeLevel}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs font-medium">
-                        Support Level {displayed.languageSupportLevel}
-                      </Badge>
-                    </div>
-                  </div>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    A quick read before you decide whether to save it.
-                  </p>
-                </CardHeader>
-                <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="rounded-2xl border border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/10 p-4">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
-                      <Target className="h-4 w-4" aria-hidden="true" />
-                      Learning goal
-                    </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayedDiagnosis?.learningGoal ?? displayed.lesson.contentObjective)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/10 p-4">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
-                      <Languages className="h-4 w-4" aria-hidden="true" />
-                      Language demand
-                    </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayedDiagnosis?.languageDemand ?? displayed.lesson.languageObjective)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-[var(--brand-blue)]/10 p-4">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
-                      <Sparkles className="h-4 w-4" aria-hidden="true" />
-                      Likely barrier
-                    </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayedDiagnosis?.likelyBarrier ?? displayed.lesson.teacherNotes)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 p-4">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
-                      <Layers3 className="h-4 w-4" aria-hidden="true" />
-                      Chosen scaffold
-                    </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayedDiagnosis?.chosenScaffold ?? displayed.lesson.scaffoldPlan)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[var(--brand-blue)]/25 bg-[var(--brand-blue)]/10 p-4">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
-                      <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
-                      Participation
-                    </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {participationFor(displayed.lesson)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[var(--brand-sun)]/30 bg-[var(--brand-sun)]/10 p-4">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-blue-strong)]">
-                      <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
-                      Check
-                    </p>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {compactLessonText(displayed.lesson.formativeAssessment)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            {!isSharedPlan && (
-              <Card className="border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/[0.045] shadow-none">
-                <CardContent className="p-5 sm:p-6">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-purple)]/15 text-[var(--brand-purple-strong)]">
-                      <UserRoundPlus className="h-5 w-5" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--brand-purple-strong)]">
-                        Save for later
-                      </p>
-                      <h2 className="mt-1 text-base font-semibold text-foreground">
-                        Save this plan for later
-                      </h2>
-                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                        Sign in with Google to access it from another device.
-                      </p>
-                    </div>
-                  </div>
-
-                  {captureNotice ? (
-                    <div
-                      className="mt-4 flex items-start gap-2.5 rounded-xl border border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/10 px-3.5 py-3 text-sm leading-relaxed text-[var(--brand-teal-strong)]"
-                      role="status"
-                    >
-                      <CheckCircle2
-                        className="mt-0.5 h-4 w-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>{captureNotice}</span>
-                    </div>
-                  ) : (
-                    <div className="mt-5 space-y-3">
-                      <GoogleSignInButton
-                        onCredential={handleAccountCredential}
-                      />
-                      <label className="flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={captureMarketing}
-                          onChange={(event) =>
-                            setCaptureMarketing(event.target.checked)
-                          }
-                          className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-[var(--brand-blue-strong)]"
-                        />
-                        <span>
-                          Send me occasional Scaffold updates and short feedback
-                          requests.
-                        </span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={continueWithoutSaving}
-                        className="min-h-10 text-left text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        Continue without syncing
-                      </button>
-                      <p className="text-[11px] leading-relaxed text-muted-foreground">
-                        This plan is saved in this browser. Sign in to access it
-                        on another device.
-                      </p>
-                      <p className="text-[11px] leading-relaxed text-muted-foreground">
-                        Your Google email is used to identify your account. It
-                        is not added to lesson prompts or student records.
-                      </p>
-                      {(captureError || accountError) && (
-                        <p
-                          className="text-xs leading-relaxed text-destructive"
-                          role="alert"
-                        >
-                          {captureError || accountError}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-            <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-blue-strong)]">
+                  Ready to use
+                </p>
                 {isEditing ? (
                   <Input
                     value={displayed.lesson.title}
@@ -2913,7 +2858,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                     className="h-11 max-w-xl bg-card text-lg font-semibold"
                   />
                 ) : (
-                  <h2 className="text-lg font-semibold text-foreground">
+                  <h2 className="text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">
                     {displayed.lesson.title}
                   </h2>
                 )}
@@ -2954,6 +2899,24 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                       {isEditing ? "Saved automatically" : "Saved to library"}
                     </span>
                   )}
+                </div>
+                <div className="mt-4 grid max-w-3xl gap-2.5 sm:grid-cols-2">
+                  <div className="rounded-xl border border-[var(--brand-teal)]/20 bg-[var(--brand-teal)]/10 px-3.5 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--brand-teal-strong)]">
+                      Goal
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {compactLessonText(displayed.lesson.contentObjective)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[var(--brand-purple)]/20 bg-[var(--brand-purple)]/10 px-3.5 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--brand-purple-strong)]">
+                      Use this support
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {compactLessonText(displayedDiagnosis?.chosenScaffold ?? displayed.lesson.scaffoldPlan)}
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
@@ -3058,7 +3021,6 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 Jump to
               </span>
               {[
-                ["#plan-overview", "Overview"],
                 ["#plan-supports", "Language supports"],
                 ["#lesson-flow", "Lesson flow"],
                 ["#plan-assessment", "Next steps"],
@@ -3073,7 +3035,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               ))}
             </nav>
 
-            {(isEditing || displayed.lesson.integratedUnitGoal) && (
+            {isEditing && (
               <Card className="border border-primary/20 bg-primary/[0.035] shadow-none">
                 <CardHeader className="pb-2 pt-4 px-4">
                   <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
@@ -3098,6 +3060,7 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </Card>
             )}
 
+            {isEditing && (
             <Card id="plan-overview" className="lesson-card scroll-mt-24">
               <CardHeader className="flex flex-row items-start justify-between gap-3 px-5 pb-4 pt-5">
                 <div>
@@ -3181,10 +3144,11 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
                 </div>
               </CardContent>
             </Card>
+            )}
 
-            {(isEditing ||
-              displayed.lesson.languageFunctionObjective ||
-              displayed.lesson.languageFeatureObjective) && (
+            {isEditing &&
+              (displayed.lesson.languageFunctionObjective ||
+                displayed.lesson.languageFeatureObjective) && (
               <div className="grid md:grid-cols-2 gap-4">
                 <Card className="lesson-card lesson-card--blue">
                   <CardHeader className="pb-2 pt-4 px-4">
@@ -3537,6 +3501,31 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               </Card>
             )}
 
+            {displayedDiagnosis && (
+              <details className="group overflow-hidden rounded-2xl border border-[var(--brand-blue)]/20 bg-white/70">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden sm:px-5">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="planner-label-icon h-8 w-8 bg-[var(--brand-blue)]/12 text-[var(--brand-blue-strong)]">
+                      <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-foreground">Why this plan?</span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">Review the generated reasoning and adjust it with your classroom evidence.</span>
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <div className="border-t border-[var(--brand-blue)]/15 p-3 sm:p-4">
+                  <PlanningDiagnosisCard
+                    diagnosis={displayedDiagnosis}
+                    isEditing={isEditingDiagnosis}
+                    onToggleEditing={() => setIsEditingDiagnosis((current) => !current)}
+                    onChange={updatePlanningDiagnosis}
+                  />
+                </div>
+              </details>
+            )}
+
             {displayed.lesson.sourcesUsed?.length > 0 && (
               <div className="flex items-center gap-2 px-1 text-xs leading-relaxed text-muted-foreground">
                 <LibraryBig
@@ -3557,6 +3546,36 @@ export default function Home({ accessCode, isDemo }: HomeProps) {
               your students, curriculum, school policies, and professional
               judgment.
             </p>
+            {!isSharedPlan && (
+              <details className="group overflow-hidden rounded-2xl border border-[var(--brand-purple)]/25 bg-[var(--brand-purple)]/[0.045] shadow-none">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                  <span className="flex items-center gap-2">
+                    <span className="planner-label-icon bg-[var(--brand-purple)]/15 text-[var(--brand-purple-strong)]">
+                      <UserRoundPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                    Save this plan across devices
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <div className="space-y-3 border-t border-[var(--brand-purple)]/15 px-5 py-5 sm:px-6">
+                  {captureNotice ? (
+                    <div className="flex items-start gap-2.5 rounded-xl border border-[var(--brand-teal)]/30 bg-[var(--brand-teal)]/10 px-3.5 py-3 text-sm leading-relaxed text-[var(--brand-teal-strong)]" role="status">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>{captureNotice}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm leading-relaxed text-muted-foreground">Sign in only if you want to open this plan on another device.</p>
+                      <GoogleSignInButton onCredential={handleAccountCredential} />
+                      <button type="button" onClick={continueWithoutSaving} className="min-h-10 text-left text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        Continue without syncing
+                      </button>
+                      {(captureError || accountError) && <p className="text-xs leading-relaxed text-destructive" role="alert">{captureError || accountError}</p>}
+                    </>
+                  )}
+                </div>
+              </details>
+            )}
             {!isSharedPlan && (
               <Card className="border-[var(--brand-teal)]/25 bg-[var(--brand-teal)]/[0.045] shadow-none">
                 <CardContent className="p-5 sm:p-6">
